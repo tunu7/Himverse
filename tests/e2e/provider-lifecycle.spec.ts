@@ -16,12 +16,26 @@ const experienceTitle = `Lifecycle walk ${run}`;
 
 let adminId: string | undefined;
 
+// The CLI's output depends on its environment: without --output-format it prints a
+// text table (CI) and with it a bare JSON array, but inside an AI-agent session it
+// wraps rows as { rows: [...] }. Accept both JSON shapes; fail loudly on anything else.
 function localSql(sql: string): unknown[] {
-  const out = execFileSync("npx", ["supabase", "db", "query", "--local", sql], {
-    encoding: "utf8",
-    stdio: ["ignore", "pipe", "ignore"],
-  });
-  return (JSON.parse(out) as { rows: unknown[] }).rows;
+  const out = execFileSync(
+    "npx",
+    ["supabase", "db", "query", "--local", "--output-format", "json", sql],
+    {
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"],
+    },
+  );
+  const parsed: unknown = JSON.parse(out);
+  if (Array.isArray(parsed)) {
+    return parsed;
+  }
+  if (parsed && typeof parsed === "object" && Array.isArray((parsed as { rows?: unknown }).rows)) {
+    return (parsed as { rows: unknown[] }).rows;
+  }
+  throw new Error(`Unexpected supabase db query output: ${out.slice(0, 200)}`);
 }
 
 async function signUp(page: Page, email: string, name: string) {
