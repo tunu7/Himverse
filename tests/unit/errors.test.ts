@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { AppError, ok, toFailure } from "@/lib/errors";
 
@@ -46,5 +46,36 @@ describe("toFailure", () => {
 describe("ok", () => {
   it("wraps data in a success result", () => {
     expect(ok({ id: "x" })).toEqual({ ok: true, data: { id: "x" } });
+  });
+});
+
+describe("toLoggedFailure / summarizeForLog", () => {
+  it("logs unexpected database errors without details or hints that may hold user data", async () => {
+    const { toLoggedFailure, summarizeForLog } = await import("@/lib/errors");
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const dbError = {
+      code: "XX000",
+      message: "internal error",
+      details: "Key (contact_email)=(person@example.test) caused a problem",
+      hint: "secret hint",
+    };
+    toLoggedFailure(
+      "test.event",
+      new AppError("INTERNAL", "Something went wrong.", { cause: dbError }),
+    );
+    const logged = JSON.stringify(spy.mock.calls);
+    expect(logged).toContain("XX000");
+    expect(logged).not.toContain("person@example.test");
+    expect(logged).not.toContain("secret hint");
+    expect(summarizeForLog("a string with data")).toEqual({ value: "string" });
+    spy.mockRestore();
+  });
+
+  it("does not log expected failures", async () => {
+    const { toLoggedFailure } = await import("@/lib/errors");
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    toLoggedFailure("test.event", new AppError("FORBIDDEN", "No."));
+    expect(spy).not.toHaveBeenCalled();
+    spy.mockRestore();
   });
 });

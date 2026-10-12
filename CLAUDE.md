@@ -26,8 +26,9 @@ supabase/           migrations/ and tests/ (pgTAP RLS tests)
 tests/              unit/, integration/, e2e/
 ```
 
-Only `src/app` and `src/lib` exist so far; other directories are created on first use (no empty
-placeholders). Details: [PROJECT_STRUCTURE](docs/architecture/PROJECT_STRUCTURE.md), [ARCHITECTURE](docs/architecture/ARCHITECTURE.md).
+`tests/integration/` doesn't exist yet; directories are created on first use (no empty placeholders).
+Authorization model: [ADR-0002](docs/decisions/ADR-0002-AUTHORIZATION-MODEL.md) (roles in `user_roles`,
+provider authority via membership, all enforced by RLS). Details: [PROJECT_STRUCTURE](docs/architecture/PROJECT_STRUCTURE.md), [ARCHITECTURE](docs/architecture/ARCHITECTURE.md).
 
 ## Non-negotiable rules
 
@@ -51,6 +52,7 @@ npm run dev            # local dev server
 npm run verify         # format:check + lint + typecheck + unit tests + build  (run before finishing)
 npm run test:e2e       # Playwright against a production build on :3100 (run `npm run build` first)
 npm run db:test        # pgTAP RLS tests (needs Docker + `npx supabase start`)
+npm run db:types       # regenerate src/types/database.ts after any migration
 ```
 
 Never claim a check passed unless you ran it in this session and saw it pass.

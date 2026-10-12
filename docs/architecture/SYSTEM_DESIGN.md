@@ -6,15 +6,22 @@ Describes how requests flow through the system. Components marked _(planned)_ do
 
 ### Read (catalogue page)
 
-`Browser → Vercel CDN (static shell) → Server Component → src/server/catalog (planned) → Supabase (RLS)`
+`Browser → Vercel CDN (static shell) → Server Component (inside <Suspense>) → src/server/catalog →
+anonymous Supabase client → RLS`
 
-Public catalogue data is cacheable (`'use cache'` with tags); invalidated via `updateTag`/`revalidateTag`
-when admins publish changes.
+`/explore` reads at request time (`await connection()`) through the cookie-less client in
+`src/lib/supabase/public.ts`, so visibility is decided only by the public RLS policies and builds need no
+database. Caching public catalogue data (`'use cache'` + tags, invalidated when providers or admins
+publish) is a later optimisation.
 
 ### Mutation (e.g. request booking)
 
-`Form → Server Action (src/features/bookings/actions.ts, planned) → Zod parse → auth check →
-src/server/bookings service → Supabase (RLS, unique idempotency key) → ActionResult`
+`Form (useActionState) → Server Action (src/features/<f>/actions.ts) → parseInput (Zod) →
+src/server/<domain> (requireUser/requireAdmin) → Supabase (RLS or a security-definer RPC) →
+ActionResult → refresh()`
+
+Implemented in Phase 1 for auth, profile, provider applications and experiences, and admin review.
+Bookings (Phase 3) add a unique idempotency key on top of the same path.
 
 ### AI generation
 
@@ -29,12 +36,21 @@ grounding check → persist itinerary version → return` — see [ITINERARY_GEN
 
 Supabase Auth with cookie sessions via `@supabase/ssr`:
 
-- `src/lib/supabase/server.ts` — user-context client for Server Components/Actions/Route Handlers.
-- `src/lib/supabase/client.ts` — browser client (publishable key).
-- `src/proxy.ts` _(planned, Phase 1)_ — refreshes the session cookie; optimistic redirects only. Real
-  authorization happens in server code and RLS, never only in the proxy.
+- `src/lib/supabase/server.ts` — user-context client for Server Components/Actions/Route Handlers. It
+  awaits `cookies()` and then `io()` before creating the client, so prerendering never touches env vars
+  or supabase-js's `Date.now()` session logic.
+- `src/lib/supabase/public.ts` — anonymous, cookie-less server client for public pages.
+- `src/lib/supabase/client.ts` — browser client (publishable key). Not used yet.
+- `src/proxy.ts` — refreshes the session cookie (`getClaims()`) on every non-asset request and redirects
+  signed-out visitors away from `/account`, `/provider`, `/admin`. Optimistic only.
+- `src/server/auth/session.ts` — `getCurrentUser()` (verified claims), `isCurrentUserAdmin()` (live
+  `user_roles` lookup, fails closed), `requireUser()`, `requireAdmin()`, `requireUserForPage()`. Real
+  authorization happens here and in RLS ([ADR-0002](../decisions/ADR-0002-AUTHORIZATION-MODEL.md)).
+- Sign-up/sign-in use email + password through Server Actions; `/auth/confirm` verifies email
+  confirmation links (token-hash flow). `next` redirects go through `safeRedirectPath()`.
 
 Session reads are request-time data: components reading them render behind `<Suspense>`.
+Non-admins requesting `/admin/*` get a 404, so the admin area isn't revealed.
 
 ## Data consistency
 

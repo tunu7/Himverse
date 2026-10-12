@@ -16,20 +16,28 @@ committed requirement until migrated.
 - **RLS enabled in the same migration that creates the table** ([AUTHORIZATION_AND_RLS](../security/AUTHORIZATION_AND_RLS.md)).
 - Generated types: `npx supabase gen types typescript --local > src/types/database.ts`.
 
-## Proposed entities
+## Entities
 
-| Table (proposed)     | Purpose                                                        | Phase |
-| -------------------- | -------------------------------------------------------------- | ----- |
-| `profiles`           | 1:1 with `auth.users`; display name, role                      | 1     |
-| `providers`          | Provider organisation; `verification_status`                   | 1     |
-| `provider_members`   | Users who can act for a provider                               | 1     |
-| `destinations`       | Curated places/areas (district, coordinates, seasonality)      | 1     |
-| `experiences`        | Bookable/visitable offerings; provider, destination, published | 1     |
-| `itinerary_requests` | Traveler's trip parameters                                     | 2     |
-| `itineraries`        | Versioned AI-generated plans (JSON validated, references IDs)  | 2     |
-| `availability_slots` | Authoritative availability per experience/date                 | 3     |
-| `bookings`           | Booking requests and lifecycle; idempotency key (unique)       | 3     |
-| `audit_log`          | Admin and sensitive actions                                    | 1     |
+Phase 1 tables are **implemented** (migrations `20261012131029_identity_and_roles`,
+`20261012131030_providers`, `20261012131031_catalog`); the rest are still proposed. Access rules:
+[AUTHORIZATION_AND_RLS](../security/AUTHORIZATION_AND_RLS.md). Local sample data: `supabase/seed.sql`
+(local only, no users or admins).
+
+| Table                      | Purpose                                                                         | Phase |
+| -------------------------- | ------------------------------------------------------------------------------- | ----- |
+| `profiles`                 | 1:1 with `auth.users`; display name (no role — see ADR-0002)                    | 1 ✅  |
+| `user_roles`               | Elevated roles (`admin`); no app write path                                     | 1 ✅  |
+| `providers`                | Public provider profile; `status` lifecycle                                     | 1 ✅  |
+| `provider_private_details` | Legal name, contact details; members and admins only                            | 1 ✅  |
+| `provider_members`         | Users who can act for a provider                                                | 1 ✅  |
+| `provider_status_events`   | Audit trail of provider status changes                                          | 1 ✅  |
+| `destinations`             | Admin-curated places (district, summary); coordinates/seasonality later         | 1 ✅  |
+| `experiences`              | Provider offerings; draft/published/archived; price in paise                    | 1 ✅  |
+| `itinerary_requests`       | Traveler's trip parameters                                                      | 2     |
+| `itineraries`              | Versioned AI-generated plans (JSON validated, references IDs)                   | 2     |
+| `availability_slots`       | Authoritative availability per experience/date                                  | 3     |
+| `bookings`                 | Booking requests and lifecycle; idempotency key (unique)                        | 3     |
+| `audit_log`                | General admin/sensitive actions (provider status uses `provider_status_events`) | later |
 
 ### Separation of trusted and AI-generated data
 
@@ -45,6 +53,6 @@ is unique.
 
 ## Open questions
 
-Role model: single `role` column vs role table (multi-role users such as a provider who also travels);
-availability granularity (date vs time slot vs capacity); geo data (PostGIS needed?); content
+The role and provider-authority model is decided in
+[ADR-0002](../decisions/ADR-0002-AUTHORIZATION-MODEL.md). Still open: availability granularity (date vs time slot vs capacity); geo data (PostGIS needed?); content
 localisation; media storage (Supabase Storage buckets and their policies).

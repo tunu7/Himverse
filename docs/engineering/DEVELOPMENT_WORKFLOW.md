@@ -36,13 +36,13 @@ Database migrations ship in the same PR as the code that needs them.
 
 ## Claude Code configuration
 
-| Path                        | Purpose                                                                                                        |
-| --------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| `CLAUDE.md`                 | Entry point; imports `AGENTS.md` (Next.js-managed block)                                                       |
-| `.claude/settings.json`     | Shared permissions: allows project checks, denies reading `.env*` secrets, force-push, remote DB push, deploys |
-| `.claude/rules/*.md`        | Path-scoped rules (`paths:` frontmatter) loaded when matching files are touched                                |
-| `.claude/skills/*/SKILL.md` | `implement-feature`, `db-migration-rls`, `verify`, `production-review`                                         |
-| `.claude/agents/`           | `security-reviewer` — read-only independent security pass                                                      |
+| Path                        | Purpose                                                                                                                                                                                                                                                                                                                                                              |
+| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `CLAUDE.md`                 | Entry point; imports `AGENTS.md` (Next.js-managed block)                                                                                                                                                                                                                                                                                                             |
+| `.claude/settings.json`     | Shared permissions: allows project checks and read-only git (exact `git diff`/`git branch` forms only); denies reading real env files, `supabase status`, `git diff --no-index`, remote DB push/link/secrets, force-push, branch force-delete and deploys. Deny rules are prefix matches, so unusual argument orders fall back to a prompt rather than being blocked |
+| `.claude/rules/*.md`        | Path-scoped rules (`paths:` frontmatter) loaded when matching files are touched                                                                                                                                                                                                                                                                                      |
+| `.claude/skills/*/SKILL.md` | `implement-feature`, `db-migration-rls`, `verify`, `production-review`                                                                                                                                                                                                                                                                                               |
+| `.claude/agents/`           | `security-reviewer` — read-only independent security pass                                                                                                                                                                                                                                                                                                            |
 
 Personal overrides go in `.claude/settings.local.json` (gitignored).
 

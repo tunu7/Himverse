@@ -1,16 +1,75 @@
 # Authorization and Row Level Security
 
-## Roles (proposed)
+## Roles
 
-| Role      | Can                                                                                                                       |
-| --------- | ------------------------------------------------------------------------------------------------------------------------- |
-| anonymous | Read published catalogue data from verified providers                                                                     |
-| traveler  | Above + own profile, own itinerary requests/itineraries, own bookings                                                     |
-| provider  | Traveler abilities + manage own provider profile, experiences, availability; read/respond to bookings for own experiences |
-| admin     | Verify providers, publish/unpublish catalogue, read for support; all actions audit-logged                                 |
+Decided in [ADR-0002](../decisions/ADR-0002-AUTHORIZATION-MODEL.md) and implemented in the Phase 1
+migrations under `supabase/migrations/`; behaviour is pinned by `supabase/tests/*.test.sql`.
 
-How roles are stored (column on `profiles` vs membership tables vs JWT custom claims) is an open question
-to settle by ADR in Phase 1. Provider authority comes from `provider_members`, not from a global role alone.
+| Actor           | Where authority comes from                                    | Can                                                                                                                                                                                                                                                                        |
+| --------------- | ------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| anonymous       | Nothing                                                       | Read verified providers, published destinations, and experiences that are published **and** from a verified provider **and** at a published destination                                                                                                                    |
+| traveler        | Being authenticated (implicit, no row)                        | Above, plus their own profile (read; update `display_name` only) and their own role rows (read)                                                                                                                                                                            |
+| provider member | `provider_members` row, combined with the provider's `status` | Edit the public profile (not while `pending_review` or `suspended`) and private details (only in `draft`/`rejected`, so reviewed identity can't change). Manage experiences; publish only while `verified` and never an experience an admin locked. Submit the application |
+| admin           | `user_roles` row with `role = 'admin'`                        | Read all; review providers through `review_provider`; manage destinations; unpublish/archive any experience, which sets a per-experience moderation lock only an admin can clear (SQL only for now)                                                                        |
+
+Roles are **never** read from `user_metadata`, `profiles`, or anything else the client supplies. Policies
+look them up live, so a change applies on the caller's next query.
+
+## Admin bootstrap runbook
+
+There is **no application path that grants admin**: no RPC, Server Action, route or UI, and `anon` and
+`authenticated` have no write privilege on `user_roles`. Admins are created only by the database owner
+running SQL directly. The Supabase secret key is not involved.
+
+**Prerequisite:** email confirmations must be **on** in that environment (Supabase dashboard → Auth).
+Otherwise anyone who registers an address first owns it, and identifying the admin by email proves nothing.
+
+**One-time creation of the first admin (per environment):**
+
+1. The future admin signs up through the normal app flow, confirms their email, **signs in**, and copies
+   the **Account ID** shown on `/account`. They send it to the project owner over a trusted channel
+   (in person, or an already-verified team chat), not over email alone.
+2. A project owner opens the target project's **SQL Editor** in the Supabase dashboard, or runs `psql`
+   against the local stack. Both connect as the `postgres` owner role. Do not use `npx supabase status`
+   in an agent session; it prints local keys.
+3. Check the account first. It must be the expected email, confirmed, and recently signed in:
+
+   ```sql
+   select id, email, email_confirmed_at, last_sign_in_at, created_at
+   from auth.users
+   where id = '00000000-0000-0000-0000-000000000000';  -- the Account ID from step 1
+   ```
+
+   Stop if the email doesn't match, `email_confirmed_at` is null, or `last_sign_in_at` is missing or old.
+
+4. Grant by **user id**, never by email. The `where not exists` guard creates an admin only if none exists
+   yet, so running it twice does nothing:
+
+   ```sql
+   insert into public.user_roles (user_id, role, granted_by)
+   select u.id, 'admin', null
+   from auth.users u
+   where u.id = '00000000-0000-0000-0000-000000000000'  -- the Account ID from step 1
+     and u.email_confirmed_at is not null
+     and not exists (select 1 from public.user_roles where role = 'admin')
+   returning user_id, role, granted_at;
+   ```
+
+5. Check that exactly one row was returned. If none came back, either an admin already exists or the
+   account isn't confirmed: investigate, don't force it.
+6. Ask the new admin to sign out and back in, then open `/admin/providers`. Record who ran the grant,
+   when, and for which Account ID in the team's operations log (not in the repo).
+
+**Later admins and revocation** use the same direct-SQL path, run by a project owner, without the
+`not exists` guard, always by verified user id with `granted_by` set to the granting admin's id:
+`insert into public.user_roles (user_id, role, granted_by) values (...)` /
+`delete from public.user_roles where user_id = ... and role = 'admin'`. Revocation applies on the user's
+next request. An in-app admin-management feature would need its own ADR (admin-only `security definer`
+function with an audit trail).
+
+Never paste these statements into application code, migrations or seed files that run in shared
+environments. Local `supabase/seed.sql` must not create admins either. Tests create their own users and
+roles inside a rolled-back transaction.
 
 ## RLS rules
 

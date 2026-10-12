@@ -12,28 +12,33 @@ One responsibility, one location. Directories are created when first needed — 
 ├── public/                       Static assets
 ├── src/
 │   ├── app/                      Routes, layouts, route handlers, error/loading boundaries
-│   ├── components/               Shared, feature-agnostic UI (planned)
-│   ├── features/<feature>/       Feature module (planned)
+│   ├── components/               Shared, feature-agnostic UI
+│   ├── features/<feature>/       Feature module (auth, account, providers, admin)
 │   │   ├── components/           Feature UI
 │   │   ├── actions.ts            Server Actions ("use server") — validate, authorize, call server/
 │   │   └── schemas.ts            Zod input schemas shared by form and action
-│   ├── server/<domain>/          "server-only" domain services and queries (planned)
+│   ├── server/<domain>/          "server-only" domain services and queries (auth, profiles, providers, catalog)
 │   ├── lib/
 │   │   ├── env.ts                Public env schema (+ server env parser)
 │   │   ├── env.server.ts         Server-only secret access
-│   │   ├── errors.ts             AppError, ActionResult
-│   │   └── supabase/             client.ts (browser), server.ts (user-context server client)
-│   ├── types/                    Truly shared types only, e.g. generated `database.ts` (planned)
-│   └── proxy.ts                  Session refresh (planned, Phase 1)
+│   │   ├── errors.ts             AppError, ActionResult, toLoggedFailure
+│   │   ├── validation.ts         parseInput (Zod + FormData)
+│   │   ├── redirect.ts           safeRedirectPath (open-redirect guard)
+│   │   ├── format.ts             Price/duration display helpers
+│   │   └── supabase/             client.ts (browser), server.ts (user context), public.ts (anonymous),
+│   │                             errors.ts (SQLSTATE → AppError)
+│   ├── types/                    Generated `database.ts` (`npm run db:types`; not hand-edited)
+│   └── proxy.ts                  Session refresh + optimistic redirects
 ├── supabase/
 │   ├── config.toml               Local Supabase config (`supabase init`)
 │   ├── migrations/               Timestamped SQL migrations (created by `supabase migration new`)
+│   ├── seed.sql                  Local-only sample catalogue (no users/admins)
 │   └── tests/                    pgTAP tests for RLS and constraints (`supabase test db`)
 ├── tests/
 │   ├── unit/                     Vitest, pure logic
 │   ├── integration/              Vitest, against local Supabase (planned)
 │   └── e2e/                      Playwright
-└── scripts/                      Developer/CI scripts (planned, only when needed)
+└── scripts/                      Developer/CI scripts (`write-local-env.mjs`)
 ```
 
 ## Placement rules

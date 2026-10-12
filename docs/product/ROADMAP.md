@@ -6,10 +6,12 @@ Phases are ordered; dates are intentionally omitted until the team commits to th
 
 Repository, documentation, Claude Code configuration, CI quality gates, minimal Next.js skeleton.
 
-## Phase 1 — Catalogue and accounts
+## Phase 1 — Catalogue and accounts (implemented locally 2026-10-12; not deployed)
 
-Auth (Supabase, `src/proxy.ts` session refresh), roles, provider and experience schema with RLS,
-admin curation tools, public catalogue browsing (T1, P1, A1).
+Done: email/password auth, `src/proxy.ts` session refresh, profiles, admin role (ADR-0002), provider
+applications and admin verification, destinations and experiences with RLS, `/explore` (T1, P1, A1
+minimum). Remaining for Phase 1: admin destination-editing UI (destinations are seed/SQL only),
+experience editing UI beyond create and status changes, provider staff invitations.
 
 ## Phase 2 — Itinerary generation
 

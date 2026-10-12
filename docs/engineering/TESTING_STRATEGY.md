@@ -32,5 +32,8 @@ Test what would hurt if it broke: business rules, authorization boundaries, and 
 ## Commands
 
 `npm test` · `npm run test:e2e` (after `npm run build`; port 3100) · `npm run db:test` (Docker +
-`npx supabase start`). CI runs unit tests, build and E2E on every PR; `db:test` joins CI with the
-first migration.
+`npx supabase start`). CI runs unit tests, pgTAP database tests, a generated-types drift check, the
+production build and E2E (against a throwaway local Supabase with `supabase/seed.sql`) on every PR.
+
+E2E tests that need data rely on `supabase/seed.sql`. Database tests must not: each pgTAP file creates
+its own fixtures and truncates seeded catalogue rows inside its rolled-back transaction.

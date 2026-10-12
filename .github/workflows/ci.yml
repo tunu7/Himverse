@@ -32,10 +32,10 @@ jobs:
       - run: npm run typecheck
       - run: npm test
 
-  build-and-e2e:
-    name: Production build and E2E
+  database-build-e2e:
+    name: Database tests, production build and E2E
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -43,6 +43,21 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      # Production build must not need a database or env vars.
+      - run: npm run build
+      # Local, throwaway Supabase stack (Docker is preinstalled on GitHub runners).
+      # Applies supabase/migrations and supabase/seed.sql. No remote project or secrets.
+      - name: Start local Supabase
+        run: npx supabase start -x realtime,storage-api,imgproxy,mailpit,postgres-meta,studio,edge-runtime,logflare,vector,supavisor
+      - name: Database and RLS tests (pgTAP)
+        run: npm run db:test
+      - name: Check generated database types are up to date
+        run: |
+          npm run db:types
+          git diff --exit-code -- src/types/database.ts
+      - name: Write .env.local for the local stack
+        run: npm run env:local
+      # Rebuild so NEXT_PUBLIC_* values for the local stack are inlined.
       - run: npm run build
       - name: Install Playwright Chromium
         run: npx playwright install --with-deps chromium

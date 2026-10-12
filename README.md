@@ -6,8 +6,9 @@ Travelers discover curated experiences from verified local providers, generate a
 grounded in our own tourism database, refine it to their budget and constraints, and book what is
 actually available.
 
-> **Status:** engineering foundation only. No product features, database schema or AI pipeline are
-> implemented yet. See [MVP scope](docs/product/MVP_SCOPE.md) and [roadmap](docs/product/ROADMAP.md).
+> **Status:** Phase 1 (identity, provider verification, catalogue, `/explore`) is implemented and
+> verified locally; not deployed. No bookings, payments or AI yet. See the
+> [roadmap](docs/product/ROADMAP.md).
 
 ## Tech stack
 
@@ -24,19 +25,22 @@ Rationale: [TECH_STACK](docs/architecture/TECH_STACK.md).
 
 ```bash
 npm ci
-cp .env.example .env.local        # then fill in values (see below)
+npx supabase start                 # Postgres, Auth, Studio in Docker; applies migrations + seed.sql
+npm run env:local                  # writes .env.local for the local stack (values not printed)
 npm run dev                        # http://localhost:3000
 ```
 
-### Local Supabase (optional until the first migration lands)
+Useful local commands:
 
 ```bash
-npx supabase start                 # starts Postgres, Auth, Studio in Docker
-npx supabase status                # prints API URL and publishable/secret keys for .env.local
+npx supabase db reset              # rebuild the LOCAL database from migrations + seed (local data only)
+npm run db:test                    # pgTAP RLS tests
+npm run db:types                   # regenerate src/types/database.ts after a migration
 ```
 
-The placeholder home page renders without any environment variables. Code that touches Supabase
-validates its variables on first use and fails with a clear message listing missing keys.
+The first administrator is created with a one-time SQL runbook, never from the app:
+[admin bootstrap runbook](docs/security/AUTHORIZATION_AND_RLS.md#admin-bootstrap-runbook).
+Local email confirmation is off; sign up at `/sign-up` and you're signed in immediately.
 
 ## Scripts
 
@@ -52,6 +56,8 @@ validates its variables on first use and fails with a clear message listing miss
 | `npm test`             | Vitest unit + integration tests                                  |
 | `npm run test:e2e`     | Playwright E2E against `next start` on port 3100 (build first)   |
 | `npm run db:test`      | Supabase pgTAP tests (`supabase/tests`), requires local Supabase |
+| `npm run db:types`     | Regenerate `src/types/database.ts` from the local schema         |
+| `npm run env:local`    | Write `.env.local` for the local Supabase stack                  |
 | `npm run verify`       | format:check → lint → typecheck → test → build (pre-PR gate)     |
 
 First E2E run on a machine: `npx playwright install chromium`.

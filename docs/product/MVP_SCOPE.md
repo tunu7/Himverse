@@ -5,15 +5,15 @@ and the other document must be corrected.
 
 ## In scope
 
-| Area      | Included                                                                                  |
-| --------- | ----------------------------------------------------------------------------------------- |
-| Region    | Arunachal Pradesh only                                                                    |
-| Accounts  | Supabase Auth (email sign-in); roles: traveler, provider, admin                           |
-| Catalogue | Admin-curated destinations and experiences; verified provider profiles; browse and filter |
-| Itinerary | AI-generated itinerary grounded in catalogue data; structured refinement; saved versions  |
-| Booking   | Booking requests for available experiences; provider confirm/decline; status tracking     |
-| Trip view | Traveler sees their itineraries, bookings and essential trip information                  |
-| Admin     | Minimal tools to verify providers and publish/unpublish catalogue items                   |
+| Area      | Included                                                                                                                                                                                                             |
+| --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Region    | Arunachal Pradesh only                                                                                                                                                                                               |
+| Accounts  | Supabase Auth (email sign-in); roles: traveler, provider, admin                                                                                                                                                      |
+| Catalogue | Admin-curated destinations; experiences managed by providers and publishable only while the provider is verified ([ADR-0002](../decisions/ADR-0002-AUTHORIZATION-MODEL.md)); admins can unpublish; browse and filter |
+| Itinerary | AI-generated itinerary grounded in catalogue data; structured refinement; saved versions                                                                                                                             |
+| Booking   | Booking requests for available experiences; provider confirm/decline; status tracking                                                                                                                                |
+| Trip view | Traveler sees their itineraries, bookings and essential trip information                                                                                                                                             |
+| Admin     | Minimal tools to verify providers and publish/unpublish catalogue items                                                                                                                                              |
 
 ## Out of scope for MVP
 

@@ -81,3 +81,44 @@ export function toFailure(error: unknown): Extract<ActionResult<never>, { ok: fa
     error: { code: "INTERNAL", message: "Something went wrong. Please try again." },
   };
 }
+
+/**
+ * Reduces an error to fields that are safe to log. Database errors carry
+ * `details`/`hint` text that can include user-supplied values (e.g.
+ * "Key (contact_email)=(...)"), so only identifying fields are kept.
+ */
+export function summarizeForLog(error: unknown): Record<string, unknown> | undefined {
+  if (error === undefined || error === null) {
+    return undefined;
+  }
+  if (typeof error !== "object") {
+    return { value: typeof error };
+  }
+  const { name, code, status, message } = error as Record<string, unknown>;
+  return {
+    ...(typeof name === "string" ? { name } : {}),
+    ...(typeof code === "string" || typeof code === "number" ? { code } : {}),
+    ...(typeof status === "number" ? { status } : {}),
+    ...(typeof message === "string" ? { message: message.slice(0, 300) } : {}),
+  };
+}
+
+/**
+ * `toFailure` plus server-side logging of unexpected errors. Use in the catch
+ * block of Server Actions. Expected failures (validation, auth, conflicts) are
+ * not logged as errors.
+ */
+export function toLoggedFailure(
+  event: string,
+  error: unknown,
+): Extract<ActionResult<never>, { ok: false }> {
+  const failure = toFailure(error);
+  if (failure.error.code === "INTERNAL" || failure.error.code === "UPSTREAM_UNAVAILABLE") {
+    console.error({
+      event,
+      code: failure.error.code,
+      cause: summarizeForLog(error instanceof AppError ? error.cause : error),
+    });
+  }
+  return failure;
+}

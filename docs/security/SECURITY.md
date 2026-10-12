@@ -20,7 +20,7 @@ public issues for vulnerabilities.
 ## Requirements
 
 1. **Secrets** only in Vercel/Supabase environment configuration and `.env.local` (gitignored). Secret
-   access goes through `src/lib/env.server.ts`. `.claude/settings.json` denies agents reading `.env*`.
+   access goes through `src/lib/env.server.ts`. `.claude/settings.json` denies agents reading real env files (`.env`, `.env.local*`, `.env.<environment>*`, `.envrc`), running `supabase status` (which prints local keys), and `git diff --no-index` (which can print untracked files). Only exact `git diff` forms are auto-allowed. `.env.example` stays readable.
 2. **Least privilege:** user-context Supabase client by default; secret-key client only for documented
    admin/system operations, reviewed in PR.
 3. **Authorization in depth:** RLS in the database **and** checks in Server Actions. `src/proxy.ts` is for

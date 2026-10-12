@@ -8,3 +8,4 @@ next-env.d.ts
 supabase/.temp/
 supabase/config.toml
 AGENTS.md
+src/types/database.ts
