@@ -18,7 +18,21 @@ export default defineConfig({
     baseURL,
     trace: "on-first-retry",
   },
-  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
+  projects: [
+    // Read-only checks against the seed run first, so specs that create or publish
+    // data (e.g. the provider lifecycle) cannot change the counts they assert.
+    {
+      name: "discovery",
+      testMatch: /discovery\.spec\.ts/,
+      use: { ...devices["Desktop Chrome"] },
+    },
+    {
+      name: "chromium",
+      testIgnore: /discovery\.spec\.ts/,
+      dependencies: ["discovery"],
+      use: { ...devices["Desktop Chrome"] },
+    },
+  ],
   webServer: {
     command: `npm run start -- --port ${PORT}`,
     url: baseURL,

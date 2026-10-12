@@ -19,13 +19,19 @@ async function AuthLinks() {
 export function SiteHeader() {
   return (
     <header className="border-b border-zinc-200 dark:border-zinc-800">
-      <nav className="mx-auto flex w-full max-w-4xl items-center justify-between gap-4 px-6 py-4 text-sm">
+      <nav
+        aria-label="Main"
+        className="mx-auto flex w-full max-w-4xl items-center justify-between gap-4 px-6 py-4 text-sm"
+      >
         <Link href="/" className="font-semibold text-zinc-900 dark:text-zinc-50">
           Himverse.AI
         </Link>
         <div className="flex items-center gap-5 text-zinc-700 dark:text-zinc-300">
-          <Link href="/explore" className="hover:underline">
-            Explore
+          <Link href="/destinations" className="hover:underline">
+            Destinations
+          </Link>
+          <Link href="/experiences" className="hover:underline">
+            Experiences
           </Link>
           <Suspense fallback={<span className="w-14" aria-hidden />}>
             <AuthLinks />

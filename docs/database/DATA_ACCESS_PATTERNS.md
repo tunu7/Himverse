@@ -5,7 +5,7 @@
 | Context                                                            | Client                                                         | RLS            |
 | ------------------------------------------------------------------ | -------------------------------------------------------------- | -------------- |
 | Server Component / Server Action / Route Handler acting for a user | `createSupabaseServerClient()` (`src/lib/supabase/server.ts`)  | Applies        |
-| Public page that must show only public rows (e.g. `/explore`)      | `createSupabasePublicClient()` (`src/lib/supabase/public.ts`)  | Applies (anon) |
+| Public page that must show only public rows (e.g. `/experiences`)  | `createSupabasePublicClient()` (`src/lib/supabase/public.ts`)  | Applies (anon) |
 | Client Component (realtime, auth UI only)                          | `createSupabaseBrowserClient()` (`src/lib/supabase/client.ts`) | Applies        |
 | System/admin job with documented justification                     | Secret-key client (does not exist; not needed by Phase 1)      | **Bypassed**   |
 
@@ -46,6 +46,30 @@ export async function listPublishedExperiences(filters: ExperienceFilters) {
 2. Insert with a unique constraint on `(traveler_id, idempotency_key)`.
 3. On unique violation, fetch and return the existing record instead of erroring.
 4. External calls (payments) pass the same key to the provider when supported.
+
+## Search, filtering and pagination
+
+Implemented for public discovery in `src/server/catalog/catalog.ts`:
+
+- **Full-text search:**
+  - generated `search_vector` columns (English config) with GIN indexes;
+  - queried with `textSearch(..., { type: "websearch" })`, so user text is a bound parameter for
+    `websearch_to_tsquery`, never PostgREST filter syntax;
+  - no relevance ranking yet (the query builder can't order by rank).
+- **Filters come from allow-lists** in `src/server/catalog/search-options.ts`:
+  - district, checked by format;
+  - category enum;
+  - budget and duration buckets as half-open ranges;
+  - sort keys, always tie-broken by `id` so pages are stable.
+- **Pagination:**
+  - offset-based with page numbers (`PAGE_SIZE` 12, `MAX_PAGE` 50) and `count: "exact"`;
+  - a page past the end (PostgREST `PGRST103`) is reported as `outOfRange` with the real total, not an
+    error;
+  - switch to keyset pagination if the catalogue grows to thousands of rows.
+- **No embedded aggregate counts** (`experiences(count)`) on tables with column-level grants: PostgREST
+  reads whole rows for them, which needs table-level SELECT. Count with a narrow second query
+  (`destination_id` only), as `countPublicExperiences` does.
+- **Invalid URL parameters** are dropped per field and reported to the user, never an error page.
 
 ## Caching
 

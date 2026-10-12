@@ -14,7 +14,10 @@ committed requirement until migrated.
 - Status columns use Postgres enums or `check` constraints; transitions enforced in DB where critical.
 - Foreign keys always indexed. Soft-delete only where there is a stated need.
 - **RLS enabled in the same migration that creates the table** ([AUTHORIZATION_AND_RLS](../security/AUTHORIZATION_AND_RLS.md)).
-- Generated types: `npx supabase gen types typescript --local > src/types/database.ts`.
+- Generated types: `npm run db:types` (`supabase gen types typescript --local`).
+- Searchable tables have a generated `search_vector tsvector` (English config) with a GIN index
+  (migration `20261012142919_discovery_search`). Any new column an API role must filter on needs an
+  explicit column grant and a `privileges.test.sql` snapshot update.
 
 ## Entities
 
@@ -33,10 +36,10 @@ Phase 1 tables are **implemented** (migrations `20261012131029_identity_and_role
 | `provider_status_events`   | Audit trail of provider status changes                                          | 1 ✅  |
 | `destinations`             | Admin-curated places (district, summary); coordinates/seasonality later         | 1 ✅  |
 | `experiences`              | Provider offerings; draft/published/archived; price in paise                    | 1 ✅  |
-| `itinerary_requests`       | Traveler's trip parameters                                                      | 2     |
-| `itineraries`              | Versioned AI-generated plans (JSON validated, references IDs)                   | 2     |
-| `availability_slots`       | Authoritative availability per experience/date                                  | 3     |
-| `bookings`                 | Booking requests and lifecycle; idempotency key (unique)                        | 3     |
+| `itinerary_requests`       | Traveler's trip parameters                                                      | 3     |
+| `itineraries`              | Versioned AI-generated plans (JSON validated, references IDs)                   | 3     |
+| `availability_slots`       | Authoritative availability per experience/date                                  | 4     |
+| `bookings`                 | Booking requests and lifecycle; idempotency key (unique)                        | 4     |
 | `audit_log`                | General admin/sensitive actions (provider status uses `provider_status_events`) | later |
 
 ### Separation of trusted and AI-generated data

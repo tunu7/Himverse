@@ -45,7 +45,7 @@ type ItineraryDraft = {
 - All IDs exist and are visible to travelers; no duplicates unless allowed.
 - Day count equals requested duration; items fit the day given experience durations.
 - Seasonality: experience available in the travel month.
-- Travel feasibility between destinations (requires a travel-time table — open question for Phase 2).
+- Travel feasibility between destinations (requires a travel-time table — open question for Phase 3).
 - Indicative total within budget band (prices from DB, never from model text).
 
 ## Refinement

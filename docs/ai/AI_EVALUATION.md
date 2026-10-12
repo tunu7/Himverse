@@ -4,7 +4,7 @@ Goal: know, before shipping a prompt/model change, whether itineraries got bette
 
 ## Evaluation set
 
-A version-controlled set of trip requests (planned location: `tests/ai-eval/`, created in Phase 2) covering:
+A version-controlled set of trip requests (planned location: `tests/ai-eval/`, created in Phase 3) covering:
 short/long trips, budget extremes, families with mobility constraints, monsoon/winter travel, interests
 with few matching experiences, conflicting constraints, and adversarial notes (prompt injection attempts).
 

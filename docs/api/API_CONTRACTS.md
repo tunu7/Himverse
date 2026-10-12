@@ -34,7 +34,17 @@ Server Actions are public HTTP endpoints: treat their arguments as untrusted, ex
 Must accept an idempotency key and be safe to retry ([DATA_ACCESS_PATTERNS](../database/DATA_ACCESS_PATTERNS.md#idempotency-bookings-payments)).
 Responses must never state "confirmed" unless the stored booking status is `confirmed`.
 
+## Public discovery URLs (implemented, Phase 2)
+
+Shareable GET URLs; parsing lives in `src/features/discovery/search-params.ts`, and invalid values are
+dropped per field and reported to the user.
+
+| Route           | Parameters                                                                                                                                                                                                                                                        |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/experiences`  | `q` (≤100 chars), `district`, `category` (enum), `budget` (`under-1000`, `1000-3000`, `3000-10000`, `10000-plus`), `duration` (`under-3h`, `half-day`, `full-day`, `multi-day`), `sort` (`newest`, `price-asc`, `price-desc`, `duration`, `title`), `page` (1–50) |
+| `/destinations` | `q`, `district`, `page`                                                                                                                                                                                                                                           |
+
 ## Planned contracts (to be specified in their phase)
 
-`catalog.listExperiences`, `itineraries.generate`, `itineraries.refine`, `bookings.request`,
+`itineraries.generate`, `itineraries.refine`, `bookings.request`,
 `bookings.respond` (provider), `admin.verifyProvider`.

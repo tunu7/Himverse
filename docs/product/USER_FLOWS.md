@@ -3,14 +3,20 @@
 Flows describe intended behaviour; none are implemented yet. Each flow lists the states the UI must
 handle explicitly (loading, empty, success, error).
 
-## T1 — Discover experiences (traveler, anonymous or signed in)
+## T1 — Discover destinations and experiences (traveler, anonymous or signed in) — implemented (Phase 2)
 
-1. Traveler opens the catalogue, filters by area, category, duration, budget or season.
-2. Sees published experiences from verified providers only.
-3. Opens an experience detail page: description, provider, indicative price, duration, seasonality,
-   access notes.
+1. Traveler browses `/destinations` (search, region) or `/experiences` (search, region, category,
+   budget, duration, sort), with pagination and shareable URLs.
+2. Sees only published destinations and experiences from verified providers at published destinations.
+3. Opens a detail page:
+   - **Destination:** description, district, and its public experiences.
+   - **Experience:** description, category, duration, indicative price, location and provider.
 
-States: loading skeleton; empty results with filter reset; error with retry.
+States: loading placeholder; empty results with "clear all filters"; out-of-range page with a link back;
+ignored-parameter notice; not-found detail pages; error with retry.
+
+Not yet available: seasonality and access notes (no schema yet), imagery (needs a storage ADR),
+relevance-ranked search.
 
 ## T2 — Generate an itinerary (signed-in traveler)
 

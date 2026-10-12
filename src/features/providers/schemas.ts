@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import type { ExperienceCategory } from "@/server/catalog/catalog";
+import { EXPERIENCE_CATEGORIES } from "@/server/catalog/search-options";
 
 const slug = (max: number) =>
   z
@@ -28,22 +28,7 @@ export const providerApplicationSchema = z.strictObject({
 
 export const providerIdSchema = z.strictObject({ providerId: z.uuid() });
 
-export const EXPERIENCE_CATEGORIES = [
-  "culture",
-  "nature",
-  "adventure",
-  "trekking",
-  "wildlife",
-  "food_and_drink",
-  "festivals",
-  "wellness",
-  "other",
-] as const satisfies readonly ExperienceCategory[];
-
-// Compile-time guard: fails if the database enum gains a value not listed above.
-type MissingCategory = Exclude<ExperienceCategory, (typeof EXPERIENCE_CATEGORIES)[number]>;
-const _allCategoriesListed: MissingCategory extends never ? true : never = true;
-void _allCategoriesListed;
+export { EXPERIENCE_CATEGORIES };
 
 export const newExperienceSchema = z.strictObject({
   providerId: z.uuid(),

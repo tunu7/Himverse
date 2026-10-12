@@ -4,7 +4,7 @@ import { AppError } from "@/lib/errors";
 import { toAppError } from "@/lib/supabase/errors";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { requireAdmin, requireUser } from "@/server/auth/session";
-import type { ExperienceCategory } from "@/server/catalog/catalog";
+import type { ExperienceCategory } from "@/server/catalog/search-options";
 import {
   canPublishExperience,
   isValidReview,

@@ -10,7 +10,7 @@ Status: minimal. No logging library or monitoring vendor is installed yet.
   Log user IDs, not emails or phone numbers.
 - Supabase logs (Postgres, Auth, API) are available in the Supabase dashboard.
 
-## Planned (Phase 4, each via ADR)
+## Planned (Phase 5, each via ADR)
 
 - Error tracking vendor with source maps and release tagging.
 - Next.js `instrumentation.ts` with OpenTelemetry for traces across Server Actions, DB and AI calls.

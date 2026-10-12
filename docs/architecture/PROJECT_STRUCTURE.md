@@ -13,7 +13,7 @@ One responsibility, one location. Directories are created when first needed — 
 ├── src/
 │   ├── app/                      Routes, layouts, route handlers, error/loading boundaries
 │   ├── components/               Shared, feature-agnostic UI
-│   ├── features/<feature>/       Feature module (auth, account, providers, admin)
+│   ├── features/<feature>/       Feature module (auth, account, providers, admin, discovery)
 │   │   ├── components/           Feature UI
 │   │   ├── actions.ts            Server Actions ("use server") — validate, authorize, call server/
 │   │   └── schemas.ts            Zod input schemas shared by form and action

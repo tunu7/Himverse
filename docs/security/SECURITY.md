@@ -30,7 +30,7 @@ public issues for vulnerabilities.
    sanitised and the use is reviewed. AI text is rendered as text, never HTML.
 6. **Server Actions are public endpoints** — authenticate and authorize inside each one.
 7. **Webhooks** verify signatures on the raw body and are idempotent.
-8. **Headers:** add a Content Security Policy and security headers before launch (Phase 4) — see
+8. **Headers:** add a Content Security Policy and security headers before launch (Phase 5) — see
    `node_modules/next/dist/docs/01-app/02-guides/content-security-policy.md`.
 9. **Dependencies:** lockfile committed; `npm audit` reviewed in PRs that change dependencies; no
    abandoned packages.

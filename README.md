@@ -6,8 +6,9 @@ Travelers discover curated experiences from verified local providers, generate a
 grounded in our own tourism database, refine it to their budget and constraints, and book what is
 actually available.
 
-> **Status:** Phase 1 (identity, provider verification, catalogue, `/explore`) is implemented and
-> verified locally; not deployed. No bookings, payments or AI yet. See the
+> **Status:** Phase 1 (identity, provider verification, catalogue) is implemented and green in CI;
+> Phase 2 (public discovery: `/destinations`, `/experiences`, search and filters) is implemented
+> locally. Not deployed. No bookings, payments or AI yet. See the
 > [roadmap](docs/product/ROADMAP.md).
 
 ## Tech stack

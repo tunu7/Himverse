@@ -25,28 +25,28 @@ export type Database = {
           Tables: {
             "destinations": {
                   Row: {
-                    "created_at": string,"description": string,"district": string,"id": string,"is_published": boolean,"name": string,"slug": string,"summary": string,"updated_at": string
+                    "created_at": string,"description": string,"district": string,"id": string,"is_published": boolean,"name": string,"search_vector": unknown,"slug": string,"summary": string,"updated_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "created_at"?: string,"description"?: string,"district": string,"id"?: string,"is_published"?: boolean,"name": string,"slug": string,"summary"?: string,"updated_at"?: string
+                    "created_at"?: string,"description"?: string,"district": string,"id"?: string,"is_published"?: boolean,"name": string,"search_vector"?: never,"slug": string,"summary"?: string,"updated_at"?: string
                   }
                   Update: {
-                    "created_at"?: string,"description"?: string,"district"?: string,"id"?: string,"is_published"?: boolean,"name"?: string,"slug"?: string,"summary"?: string,"updated_at"?: string
+                    "created_at"?: string,"description"?: string,"district"?: string,"id"?: string,"is_published"?: boolean,"name"?: string,"search_vector"?: never,"slug"?: string,"summary"?: string,"updated_at"?: string
                   }
                   Relationships: [
                     
                   ]
                 },"experiences": {
                   Row: {
-                    "category": Database["public"]['Enums']["experience_category"],"created_at": string,"created_by": string | null,"currency": string,"description": string,"destination_id": string,"duration_minutes": number,"id": string,"moderation_locked": boolean,"price_from_minor": number | null,"provider_id": string,"published_at": string | null,"slug": string,"status": Database["public"]['Enums']["experience_status"],"summary": string,"title": string,"updated_at": string
+                    "category": Database["public"]['Enums']["experience_category"],"created_at": string,"created_by": string | null,"currency": string,"description": string,"destination_id": string,"duration_minutes": number,"id": string,"moderation_locked": boolean,"price_from_minor": number | null,"provider_id": string,"published_at": string | null,"search_vector": unknown,"slug": string,"status": Database["public"]['Enums']["experience_status"],"summary": string,"title": string,"updated_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "category": Database["public"]['Enums']["experience_category"],"created_at"?: string,"created_by"?: string | null,"currency"?: string,"description"?: string,"destination_id": string,"duration_minutes": number,"id"?: string,"moderation_locked"?: boolean,"price_from_minor"?: number | null,"provider_id": string,"published_at"?: string | null,"slug": string,"status"?: Database["public"]['Enums']["experience_status"],"summary"?: string,"title": string,"updated_at"?: string
+                    "category": Database["public"]['Enums']["experience_category"],"created_at"?: string,"created_by"?: string | null,"currency"?: string,"description"?: string,"destination_id": string,"duration_minutes": number,"id"?: string,"moderation_locked"?: boolean,"price_from_minor"?: number | null,"provider_id": string,"published_at"?: string | null,"search_vector"?: never,"slug": string,"status"?: Database["public"]['Enums']["experience_status"],"summary"?: string,"title": string,"updated_at"?: string
                   }
                   Update: {
-                    "category"?: Database["public"]['Enums']["experience_category"],"created_at"?: string,"created_by"?: string | null,"currency"?: string,"description"?: string,"destination_id"?: string,"duration_minutes"?: number,"id"?: string,"moderation_locked"?: boolean,"price_from_minor"?: number | null,"provider_id"?: string,"published_at"?: string | null,"slug"?: string,"status"?: Database["public"]['Enums']["experience_status"],"summary"?: string,"title"?: string,"updated_at"?: string
+                    "category"?: Database["public"]['Enums']["experience_category"],"created_at"?: string,"created_by"?: string | null,"currency"?: string,"description"?: string,"destination_id"?: string,"duration_minutes"?: number,"id"?: string,"moderation_locked"?: boolean,"price_from_minor"?: number | null,"provider_id"?: string,"published_at"?: string | null,"search_vector"?: never,"slug"?: string,"status"?: Database["public"]['Enums']["experience_status"],"summary"?: string,"title"?: string,"updated_at"?: string
                   }
                   Relationships: [
                     {

@@ -31,7 +31,7 @@ returns a plan that references those IDs.
 - Rate-limit generation per user; cap tokens per request; track cost.
 - Do not send unnecessary personal data to the provider; check the provider's data retention terms.
 
-## Open questions (resolve via ADR before Phase 2)
+## Open questions (resolve via ADR before Phase 3)
 
 - Model provider and model (quality vs cost vs latency for Indian users); use of an AI gateway for
   provider fallback and spend tracking.

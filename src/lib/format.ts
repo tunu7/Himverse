@@ -22,3 +22,9 @@ export function formatDuration(minutes: number): string {
   }
   return rest === 0 ? `${hours} h` : `${hours} h ${rest} min`;
 }
+
+/** "food_and_drink" -> "Food and drink". */
+export function formatCategory(category: string): string {
+  const words = category.replaceAll("_", " ");
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}

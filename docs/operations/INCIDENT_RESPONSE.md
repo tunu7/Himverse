@@ -34,7 +34,7 @@ review logs for the exposure window.
 
 ### AI producing harmful or false content
 
-Disable generation (feature flag or env toggle, to be added in Phase 2), keep existing itineraries
+Disable generation (feature flag or env toggle, to be added in Phase 3), keep existing itineraries
 viewable, add eval cases reproducing the output.
 
 ## Contacts

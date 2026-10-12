@@ -139,13 +139,13 @@ select results_eq(
      where table_schema = 'public' and grantee in ('anon', 'authenticated')
      group by 1, 2, 3 order by 1, 2, 3 $$,
   $$ values
-       ('destinations', 'anon', 'SELECT', 'created_at,description,district,id,is_published,name,slug,summary,updated_at'),
+       ('destinations', 'anon', 'SELECT', 'created_at,description,district,id,is_published,name,search_vector,slug,summary,updated_at'),
        ('destinations', 'authenticated', 'INSERT', 'description,district,is_published,name,slug,summary'),
-       ('destinations', 'authenticated', 'SELECT', 'created_at,description,district,id,is_published,name,slug,summary,updated_at'),
+       ('destinations', 'authenticated', 'SELECT', 'created_at,description,district,id,is_published,name,search_vector,slug,summary,updated_at'),
        ('destinations', 'authenticated', 'UPDATE', 'description,district,is_published,name,slug,summary'),
-       ('experiences', 'anon', 'SELECT', 'category,created_at,currency,description,destination_id,duration_minutes,id,moderation_locked,price_from_minor,provider_id,published_at,slug,status,summary,title,updated_at'),
+       ('experiences', 'anon', 'SELECT', 'category,created_at,currency,description,destination_id,duration_minutes,id,moderation_locked,price_from_minor,provider_id,published_at,search_vector,slug,status,summary,title,updated_at'),
        ('experiences', 'authenticated', 'INSERT', 'category,description,destination_id,duration_minutes,price_from_minor,provider_id,slug,status,summary,title'),
-       ('experiences', 'authenticated', 'SELECT', 'category,created_at,currency,description,destination_id,duration_minutes,id,moderation_locked,price_from_minor,provider_id,published_at,slug,status,summary,title,updated_at'),
+       ('experiences', 'authenticated', 'SELECT', 'category,created_at,currency,description,destination_id,duration_minutes,id,moderation_locked,price_from_minor,provider_id,published_at,search_vector,slug,status,summary,title,updated_at'),
        ('experiences', 'authenticated', 'UPDATE', 'category,description,destination_id,duration_minutes,price_from_minor,slug,status,summary,title'),
        ('profiles', 'authenticated', 'SELECT', 'created_at,display_name,id,updated_at'),
        ('profiles', 'authenticated', 'UPDATE', 'display_name'),

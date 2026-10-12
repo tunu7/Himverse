@@ -9,10 +9,17 @@ Describes how requests flow through the system. Components marked _(planned)_ do
 `Browser → Vercel CDN (static shell) → Server Component (inside <Suspense>) → src/server/catalog →
 anonymous Supabase client → RLS`
 
-`/explore` reads at request time (`await connection()`) through the cookie-less client in
-`src/lib/supabase/public.ts`, so visibility is decided only by the public RLS policies and builds need no
-database. Caching public catalogue data (`'use cache'` + tags, invalidated when providers or admins
-publish) is a later optimisation.
+Discovery pages (`/experiences`, `/destinations` and their `[slug]` detail pages) read at request
+time inside `<Suspense>` through the cookie-less client in `src/lib/supabase/public.ts`, so visibility is
+decided only by the public RLS policies and builds need no database. URL search params are parsed by
+`src/features/discovery/search-params.ts`; queries are built in `src/server/catalog/catalog.ts` (see
+[DATA_ACCESS_PATTERNS](../database/DATA_ACCESS_PATTERNS.md#search-filtering-and-pagination)).
+
+- Not-found detail pages call `notFound()` inside the streamed Suspense boundary, so they return HTTP
+  200 with `noindex` (a Cache Components trade-off), not 404.
+- `/explore` permanently redirects to `/experiences` (`next.config.ts`).
+- Caching public catalogue data (`'use cache'` + tags, invalidated when providers or admins publish) is
+  a later optimisation.
 
 ### Mutation (e.g. request booking)
 
@@ -21,7 +28,7 @@ src/server/<domain> (requireUser/requireAdmin) → Supabase (RLS or a security-d
 ActionResult → refresh()`
 
 Implemented in Phase 1 for auth, profile, provider applications and experiences, and admin review.
-Bookings (Phase 3) add a unique idempotency key on top of the same path.
+Bookings (Phase 4) add a unique idempotency key on top of the same path.
 
 ### AI generation
 
