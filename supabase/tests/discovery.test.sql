@@ -6,7 +6,7 @@ create extension if not exists pgtap with schema extensions;
 
 select plan(12);
 
-truncate public.experiences, public.destinations, public.provider_status_events,
+truncate public.itinerary_items, public.experiences, public.destinations, public.provider_status_events,
   public.provider_private_details, public.provider_members, public.providers;
 
 -- Fixtures: every experience mentions "rafting" so search alone can't hide anything.

@@ -1,5 +1,7 @@
 import { execFileSync } from "node:child_process";
 
+// Next.js 16 (Cache Components) keeps up to 3 previous routes mounted but hidden
+// (React <Activity>), so test-id lookups only match visible elements.
 import { expect, type Page, test } from "@playwright/test";
 
 // Critical journey: apply → admin verifies → provider publishes → visible on /explore →
@@ -82,7 +84,9 @@ test("provider lifecycle: verify, publish, suspend", async ({ page }) => {
   await page.getByLabel("Contact email").fill(providerEmail);
   await page.getByRole("button", { name: "Save application as draft" }).click();
   await page.getByRole("button", { name: "Submit for review" }).click();
-  await expect(page.getByTestId("provider-status")).toContainText("Pending review");
+  await expect(page.getByTestId("provider-status").filter({ visible: true })).toContainText(
+    "Pending review",
+  );
 
   // A new account is not an admin.
   await signUp(page, adminEmail, "Lifecycle Admin");
@@ -91,7 +95,7 @@ test("provider lifecycle: verify, publish, suspend", async ({ page }) => {
 
   // Runbook: grant by the Account ID shown on /account.
   await page.goto("/account");
-  adminId = (await page.getByTestId("account-id").textContent())?.trim();
+  adminId = (await page.getByTestId("account-id").filter({ visible: true }).textContent())?.trim();
   expect(adminId).toMatch(UUID);
   const granted = localSql(
     `insert into public.user_roles (user_id, role, granted_by)
@@ -113,7 +117,9 @@ test("provider lifecycle: verify, publish, suspend", async ({ page }) => {
   // Provider publishes an experience; it appears publicly.
   await signIn(page, providerEmail);
   await page.goto("/provider");
-  await expect(page.getByTestId("provider-status")).toContainText("Verified");
+  await expect(page.getByTestId("provider-status").filter({ visible: true })).toContainText(
+    "Verified",
+  );
   await page.getByText("Add an experience").click();
   await page.getByLabel("Title").fill(experienceTitle);
   await page.getByLabel("Short web address").fill(`lifecycle-walk-${run}`);
@@ -141,7 +147,9 @@ test("provider lifecycle: verify, publish, suspend", async ({ page }) => {
   // Provider sees the suspension and cannot republish.
   await signIn(page, providerEmail);
   await page.goto("/provider");
-  await expect(page.getByTestId("provider-status")).toContainText("Suspended");
+  await expect(page.getByTestId("provider-status").filter({ visible: true })).toContainText(
+    "Suspended",
+  );
   await expect(page.getByText("Reviewer note: Verification documents expired")).toBeVisible();
   await expect(
     page

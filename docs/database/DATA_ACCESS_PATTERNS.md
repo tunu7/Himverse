@@ -56,7 +56,7 @@ Implemented for public discovery in `src/server/catalog/catalog.ts`:
   - queried with `textSearch(..., { type: "websearch" })`, so user text is a bound parameter for
     `websearch_to_tsquery`, never PostgREST filter syntax;
   - no relevance ranking yet (the query builder can't order by rank).
-- **Filters come from allow-lists** in `src/server/catalog/search-options.ts`:
+- **Filters come from allow-lists** in `src/lib/catalog-options.ts`:
   - district, checked by format;
   - category enum;
   - budget and duration buckets as half-open ranges;

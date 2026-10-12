@@ -21,10 +21,12 @@ duration filters, sorting, pagination and shareable URLs; destination and experi
 `/explore` redirects to `/experiences` (T1). Text-only for now: imagery needs a storage design (ADR).
 Inserted before itinerary generation, so later phases shifted by one.
 
-## Phase 3 — Itinerary generation
+## Phase 3 — Itinerary generation (implemented locally 2026-10-12; not deployed)
 
-AI provider ADR, retrieval from catalogue, structured generation and validation, grounding checks,
-evaluation dataset, refinement and versioning (T2, T3).
+Done: ADR-0003 (Vercel AI Gateway + AI SDK 7), deterministic retrieval, versioned prompt, `itinerary.v1`
+structured output, grounding and budget checks, an ownership- and visibility-checking save RPC, refine,
+regenerate and restore versions, rate limits, `/itineraries`. Verified with a mock model only.
+Remaining: live-model evaluation set and smoke test (needs an AI Gateway key), streaming progress.
 
 ## Phase 4 — Booking
 

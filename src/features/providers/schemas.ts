@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { EXPERIENCE_CATEGORIES } from "@/server/catalog/search-options";
+import { EXPERIENCE_CATEGORIES } from "@/lib/catalog-options";
 
 const slug = (max: number) =>
   z

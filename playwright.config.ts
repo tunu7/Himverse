@@ -37,6 +37,8 @@ export default defineConfig({
     command: `npm run start -- --port ${PORT}`,
     url: baseURL,
     reuseExistingServer: false,
+    // Deterministic AI model for E2E (refused in production by getAiEnv).
+    env: { AI_PROVIDER: "mock" },
     timeout: 120_000,
   },
 });

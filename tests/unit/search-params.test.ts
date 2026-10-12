@@ -6,7 +6,7 @@ import {
   parseDestinationSearchParams,
   parseExperienceSearchParams,
 } from "@/features/discovery/search-params";
-import { MAX_PAGE, pageCountFor, QUERY_MAX_LENGTH } from "@/server/catalog/search-options";
+import { MAX_PAGE, pageCountFor, QUERY_MAX_LENGTH } from "@/lib/catalog-options";
 
 describe("parseExperienceSearchParams", () => {
   it("defaults to newest, page 1, no filters", () => {

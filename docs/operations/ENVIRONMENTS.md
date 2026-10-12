@@ -14,12 +14,15 @@ Preview deployments must **never** point at the production database.
 Defined and documented in [.env.example](../../.env.example); validated in `src/lib/env.ts` and
 `src/lib/env.server.ts`.
 
-| Variable                               | Exposure | Notes                                            |
-| -------------------------------------- | -------- | ------------------------------------------------ |
-| `NEXT_PUBLIC_SITE_URL`                 | Public   | Per environment; used for auth redirects         |
-| `NEXT_PUBLIC_SUPABASE_URL`             | Public   | Supabase API URL                                 |
-| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Public   | Publishable (formerly anon) key; RLS applies     |
-| `SUPABASE_SECRET_KEY`                  | Server   | Secret (formerly service_role) key; bypasses RLS |
+| Variable                               | Exposure | Notes                                                                            |
+| -------------------------------------- | -------- | -------------------------------------------------------------------------------- |
+| `NEXT_PUBLIC_SITE_URL`                 | Public   | Per environment; used for auth redirects                                         |
+| `NEXT_PUBLIC_SUPABASE_URL`             | Public   | Supabase API URL                                                                 |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Public   | Publishable (formerly anon) key; RLS applies                                     |
+| `SUPABASE_SECRET_KEY`                  | Server   | Secret (formerly service_role) key; bypasses RLS                                 |
+| `AI_PROVIDER`                          | Server   | `gateway` (default) or `mock` (tests only; refused when `VERCEL_ENV=production`) |
+| `AI_ITINERARY_MODEL`                   | Server   | Gateway model string; default `anthropic/claude-sonnet-5.5`                      |
+| `AI_GATEWAY_API_KEY`                   | Server   | Local only; on Vercel the gateway uses OIDC. Never `NEXT_PUBLIC_`                |
 
 ## Rules
 

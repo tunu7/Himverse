@@ -5,16 +5,18 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(41);
+select plan(49);
 
 -- Inventory: new objects must be added to these lists (and reviewed) ----------
 select tables_are('public', array[
   'profiles', 'user_roles', 'providers', 'provider_members', 'provider_private_details',
-  'provider_status_events', 'destinations', 'experiences'
+  'provider_status_events', 'destinations', 'experiences',
+  'itineraries', 'itinerary_versions', 'itinerary_items', 'itinerary_generations'
 ], 'public tables are exactly the reviewed set');
 
 select functions_are('public', array[
-  'create_provider_application', 'submit_provider_application', 'review_provider'
+  'create_provider_application', 'submit_provider_application', 'review_provider',
+  'save_itinerary_version', 'record_itinerary_generation'
 ], 'public (RPC-exposed) functions are exactly the reviewed set');
 
 select is_empty(
@@ -39,6 +41,14 @@ select table_privs_are('public', 'destinations', 'anon', array['SELECT'], 'anon:
 select table_privs_are('public', 'destinations', 'authenticated', array['SELECT', 'DELETE'], 'authenticated: destinations select/delete (+ column insert/update), admin-only by RLS');
 select table_privs_are('public', 'experiences', 'anon', array[]::text[], 'anon: experiences via column grants only');
 select table_privs_are('public', 'experiences', 'authenticated', array[]::text[], 'authenticated: experiences via column grants only');
+select table_privs_are('public', 'itineraries', 'anon', array[]::text[], 'anon: no itinerary privileges');
+select table_privs_are('public', 'itineraries', 'authenticated', array['SELECT', 'DELETE'], 'authenticated: itineraries select/delete (+ column update); inserts via RPC');
+select table_privs_are('public', 'itinerary_versions', 'anon', array[]::text[], 'anon: no itinerary version privileges');
+select table_privs_are('public', 'itinerary_versions', 'authenticated', array['SELECT'], 'authenticated: itinerary versions read-only (immutable)');
+select table_privs_are('public', 'itinerary_items', 'anon', array[]::text[], 'anon: no itinerary item privileges');
+select table_privs_are('public', 'itinerary_items', 'authenticated', array['SELECT'], 'authenticated: itinerary items read-only (immutable)');
+select table_privs_are('public', 'itinerary_generations', 'anon', array[]::text[], 'anon: no generation log privileges');
+select table_privs_are('public', 'itinerary_generations', 'authenticated', array['SELECT'], 'authenticated: generation log read-only; written via RPC');
 
 -- Sensitive columns -----------------------------------------------------------
 select ok(not has_column_privilege('authenticated', 'public.providers', 'status', 'UPDATE'), 'nobody updates providers.status directly');
@@ -123,9 +133,12 @@ select results_eq(
        ('private', 'is_provider_member(p_provider_id uuid)', 'authenticated'),
        ('private', 'is_provider_verified(p_provider_id uuid)', 'anon'),
        ('private', 'is_provider_verified(p_provider_id uuid)', 'authenticated'),
+       ('private', 'owns_itinerary(p_itinerary_id uuid)', 'authenticated'),
        ('private', 'provider_accepts_detail_changes(p_provider_id uuid)', 'authenticated'),
        ('public', 'create_provider_application(p_slug text, p_display_name text, p_description text, p_district text, p_legal_name text, p_contact_email text, p_contact_phone text)', 'authenticated'),
+       ('public', 'record_itinerary_generation(p_itinerary_id uuid, p_outcome itinerary_generation_outcome, p_error_code text, p_model text, p_prompt_version text, p_latency_ms integer, p_input_tokens integer, p_output_tokens integer)', 'authenticated'),
        ('public', 'review_provider(p_provider_id uuid, p_decision provider_status, p_note text)', 'authenticated'),
+       ('public', 'save_itinerary_version(p_itinerary_id uuid, p_title text, p_kind itinerary_version_kind, p_preferences jsonb, p_plan jsonb, p_schema_version text, p_prompt_version text, p_model text, p_travelers integer, p_warnings jsonb, p_items jsonb)', 'authenticated'),
        ('public', 'submit_provider_application(p_provider_id uuid)', 'authenticated') $$,
   'API roles can execute exactly the reviewed functions');
 
@@ -147,6 +160,11 @@ select results_eq(
        ('experiences', 'authenticated', 'INSERT', 'category,description,destination_id,duration_minutes,price_from_minor,provider_id,slug,status,summary,title'),
        ('experiences', 'authenticated', 'SELECT', 'category,created_at,currency,description,destination_id,duration_minutes,id,moderation_locked,price_from_minor,provider_id,published_at,search_vector,slug,status,summary,title,updated_at'),
        ('experiences', 'authenticated', 'UPDATE', 'category,description,destination_id,duration_minutes,price_from_minor,slug,status,summary,title'),
+       ('itineraries', 'authenticated', 'SELECT', 'created_at,current_version_id,id,owner_id,title,updated_at'),
+       ('itineraries', 'authenticated', 'UPDATE', 'current_version_id,title'),
+       ('itinerary_generations', 'authenticated', 'SELECT', 'created_at,error_code,id,input_tokens,itinerary_id,latency_ms,model,outcome,output_tokens,prompt_version,user_id'),
+       ('itinerary_items', 'authenticated', 'SELECT', 'day_number,destination_id,destination_name_snapshot,duration_snapshot_minutes,experience_id,experience_title_snapshot,id,position,price_snapshot_minor,rationale,time_of_day,version_id'),
+       ('itinerary_versions', 'authenticated', 'SELECT', 'created_at,currency,estimated_total_minor,id,itinerary_id,kind,model,plan,preferences,prompt_version,schema_version,travelers,unpriced_item_count,version_number,warnings'),
        ('profiles', 'authenticated', 'SELECT', 'created_at,display_name,id,updated_at'),
        ('profiles', 'authenticated', 'UPDATE', 'display_name'),
        ('provider_members', 'authenticated', 'SELECT', 'created_at,member_role,provider_id,user_id'),

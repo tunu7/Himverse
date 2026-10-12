@@ -18,7 +18,7 @@ ignored-parameter notice; not-found detail pages; error with retry.
 Not yet available: seasonality and access notes (no schema yet), imagery (needs a storage ADR),
 relevance-ranked search.
 
-## T2 — Generate an itinerary (signed-in traveler)
+## T2 — Generate an itinerary (signed-in traveler) — implemented (Phase 3, mock-verified)
 
 1. Traveler enters trip parameters: start date or month, duration, group size, budget band,
    interests, pace, constraints (mobility, diet, altitude tolerance).
@@ -30,7 +30,7 @@ relevance-ranked search.
 
 States: progress while generating; partial failure ("we couldn't fit X"); hard failure with retry.
 
-## T3 — Refine an itinerary
+## T3 — Refine an itinerary — implemented (Phase 3, mock-verified)
 
 1. Traveler adjusts parameters or asks for changes (e.g. "less driving", "add a monastery visit").
 2. A new itinerary version is created; previous versions remain viewable.

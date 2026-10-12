@@ -6,9 +6,9 @@ Travelers discover curated experiences from verified local providers, generate a
 grounded in our own tourism database, refine it to their budget and constraints, and book what is
 actually available.
 
-> **Status:** Phase 1 (identity, provider verification, catalogue) is implemented and green in CI;
-> Phase 2 (public discovery: `/destinations`, `/experiences`, search and filters) is implemented
-> locally. Not deployed. No bookings, payments or AI yet. See the
+> **Status:** Phases 1–2 (identity, provider verification, catalogue, public discovery) are green in
+> CI. Phase 3 (AI itineraries at `/itineraries`, via Vercel AI Gateway) is implemented locally and
+> verified with a mock model only. Not deployed. No bookings or payments yet. See the
 > [roadmap](docs/product/ROADMAP.md).
 
 ## Tech stack

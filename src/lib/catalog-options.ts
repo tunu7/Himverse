@@ -1,7 +1,8 @@
 /**
- * Shared catalogue vocabulary for discovery and provider forms: categories,
- * budget/duration buckets, sort keys and result limits. Pure and free of
- * `server-only` so client forms can import it; it holds no data access.
+ * Shared catalogue vocabulary for discovery, provider and itinerary forms:
+ * categories, budget/duration buckets, sort keys and result limits. Lives in
+ * src/lib (not src/server) because client components import it; it is pure and
+ * holds no data access.
  */
 import type { Database } from "@/types/database";
 

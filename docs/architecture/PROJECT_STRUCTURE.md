@@ -13,7 +13,7 @@ One responsibility, one location. Directories are created when first needed — 
 ├── src/
 │   ├── app/                      Routes, layouts, route handlers, error/loading boundaries
 │   ├── components/               Shared, feature-agnostic UI
-│   ├── features/<feature>/       Feature module (auth, account, providers, admin, discovery)
+│   ├── features/<feature>/       Feature module (auth, account, providers, admin, discovery, itineraries)
 │   │   ├── components/           Feature UI
 │   │   ├── actions.ts            Server Actions ("use server") — validate, authorize, call server/
 │   │   └── schemas.ts            Zod input schemas shared by form and action
@@ -25,6 +25,8 @@ One responsibility, one location. Directories are created when first needed — 
 │   │   ├── validation.ts         parseInput (Zod + FormData)
 │   │   ├── redirect.ts           safeRedirectPath (open-redirect guard)
 │   │   ├── format.ts             Price/duration display helpers
+│   │   ├── catalog-options.ts    Shared catalogue vocabulary (categories, buckets, sorts, limits)
+│   │   ├── itinerary-options.ts  Itinerary limits and paces (shared by server and client forms)
 │   │   └── supabase/             client.ts (browser), server.ts (user context), public.ts (anonymous),
 │   │                             errors.ts (SQLSTATE → AppError)
 │   ├── types/                    Generated `database.ts` (`npm run db:types`; not hand-edited)
@@ -56,3 +58,6 @@ One responsibility, one location. Directories are created when first needed — 
 | Unit tests                                   | `tests/unit/` mirroring `src/`   |
 
 No workspace monorepo: one package keeps tooling simple ([ADR-0001](../decisions/ADR-0001-MODULAR-MONOLITH.md)).
+
+Pure constants used by both client components and server code live in `src/lib`, never in
+`src/server`: client code must not import from `src/server/**`.

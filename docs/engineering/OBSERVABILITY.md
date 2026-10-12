@@ -4,6 +4,13 @@ Status: minimal. No logging library or monitoring vendor is installed yet.
 
 ## Now
 
+- **AI itineraries:** every model-calling attempt is logged in `itinerary_generations`:
+  - outcome, error code, model, prompt version, latency and token counts;
+  - no prompt text or personal data.
+
+  Use it for success rate, latency and cost tracking. Unexpected errors are logged by
+  `toLoggedFailure` with only name, code, status and message.
+
 - Server logs go to Vercel function logs via `console` with structured objects:
   `console.error({ event: "booking.request_failed", requestId, userId, code, err })`.
 - **Never log** secrets, tokens, full cookies, payment data, or full AI prompts containing personal data.

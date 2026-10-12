@@ -8,19 +8,23 @@ The model **composes and explains**; it does not supply facts. Places, experienc
 availability and booking status come from our database. The model receives candidate items with IDs and
 returns a plan that references those IDs.
 
-## Components (planned, `src/server/itineraries/`)
+## Components (implemented, `src/server/itineraries/`)
 
-1. **Input schema** — validated trip parameters.
-2. **Retriever** — SQL/filters over published catalogue data (region, season, duration, budget, interests).
-   Semantic search (pgvector) only if structured filters prove insufficient — via ADR.
-3. **Prompt builder** — versioned prompt templates (`prompt_version` stored with each output). User free text
-   is placed in clearly delimited data sections, never concatenated into instructions.
-4. **Model client** — single adapter module so the provider can be swapped; timeouts and bounded retries.
-5. **Output validator** — Zod schema for the itinerary structure (structured output / JSON mode).
-6. **Grounding check** — every referenced ID exists, is published, from a verified provider, and fits
-   constraints (dates/season, durations, travel time); otherwise reject or repair.
-7. **Persistence** — store validated itinerary versions separate from curated data with metadata
-   (model, prompt version, latency, token usage, validation outcome).
+See [ITINERARY_GENERATION](ITINERARY_GENERATION.md) for the module map and checks, and
+[ADR-0003](../decisions/ADR-0003-AI-ITINERARY-GENERATION.md) for the decisions.
+
+1. **Input schema:** validated trip preferences.
+2. **Retriever:** deterministic SQL filters over public catalogue data (region, interests, duration,
+   budget). Semantic search only via a future ADR.
+3. **Prompt builder:** versioned (`itinerary-v1`), stored with each version. Records appear as aliases;
+   traveller text is fenced as data.
+4. **Model client:** the `ItineraryModel` interface, with the Vercel AI Gateway adapter (AI SDK 7) and a
+   deterministic test mock. Timeout, bounded retries, capped output.
+5. **Output validator:** Zod schema `itinerary.v1`.
+6. **Grounding check:** aliases, dates, capacity, multi-day items and budget from database prices, plus
+   the save RPC's visibility re-check.
+7. **Persistence:** immutable itinerary versions and items, separate from curated data. A generation log
+   records model, prompt version, latency, tokens and outcome (no prompt text).
 
 ## Safety rules
 
@@ -31,11 +35,14 @@ returns a plan that references those IDs.
 - Rate-limit generation per user; cap tokens per request; track cost.
 - Do not send unnecessary personal data to the provider; check the provider's data retention terms.
 
-## Open questions (resolve via ADR before Phase 3)
+## Decided (ADR-0003)
 
-- Model provider and model (quality vs cost vs latency for Indian users); use of an AI gateway for
-  provider fallback and spend tracking.
-- SDK choice (provider SDK vs a provider-agnostic SDK).
-- Streaming partial itineraries vs returning complete validated results.
-- Cost ceiling per itinerary and per user per day.
-- Language support for prompts and outputs.
+- **Provider:** Vercel AI Gateway through AI SDK 7, model `anthropic/claude-sonnet-5.5` (configurable).
+- **Results:** complete, validated results are returned (no partial streaming).
+- **Limits:** 10 generations per hour and 30 per day per user; output tokens capped per request.
+
+## Open questions
+
+- Monetary cost ceiling per itinerary. This needs real usage data, so a gateway key first.
+- Language support for prompts and outputs (English only today).
+- The gateway's zero-data-retention settings for production.

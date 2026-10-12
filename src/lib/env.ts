@@ -19,7 +19,29 @@ const serverEnvSchema = z.object({
   SUPABASE_SECRET_KEY: z.string().min(1),
 });
 
+// AI settings (ADR-0003). Kept separate from serverEnvSchema so AI code never
+// depends on the Supabase secret key. The mock provider exists for automated
+// tests and is refused in Vercel production.
+export const DEFAULT_ITINERARY_MODEL = "anthropic/claude-sonnet-5.5";
+
+const aiEnvSchema = z
+  .object({
+    AI_PROVIDER: z.enum(["gateway", "mock"]).default("gateway"),
+    AI_ITINERARY_MODEL: z
+      .string()
+      .regex(/^[a-z0-9-]+\/[a-z0-9.-]+$/)
+      .default(DEFAULT_ITINERARY_MODEL),
+    // Optional: on Vercel the gateway authenticates with OIDC instead.
+    AI_GATEWAY_API_KEY: z.string().min(1).optional(),
+    VERCEL_ENV: z.string().optional(),
+  })
+  .refine((env) => !(env.AI_PROVIDER === "mock" && env.VERCEL_ENV === "production"), {
+    path: ["AI_PROVIDER"],
+    message: "The mock AI provider is not allowed in production.",
+  });
+
 export type PublicEnv = z.infer<typeof publicEnvSchema>;
+export type AiEnv = z.infer<typeof aiEnvSchema>;
 export type ServerEnv = z.infer<typeof serverEnvSchema>;
 
 export class EnvValidationError extends Error {
@@ -46,6 +68,10 @@ export function parsePublicEnv(source: Record<string, unknown>): PublicEnv {
 
 export function parseServerEnv(source: Record<string, unknown>): ServerEnv {
   return parse(serverEnvSchema, source);
+}
+
+export function parseAiEnv(source: Record<string, unknown>): AiEnv {
+  return parse(aiEnvSchema, source);
 }
 
 let cachedPublicEnv: PublicEnv | undefined;

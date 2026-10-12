@@ -9,7 +9,7 @@ import {
   EXPERIENCE_CATEGORIES,
   EXPERIENCE_SORTS,
   type ExperienceFilters,
-} from "@/server/catalog/search-options";
+} from "@/lib/catalog-options";
 
 // Plain GET forms: work without JavaScript and every state is a shareable URL.
 

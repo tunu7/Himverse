@@ -1,3 +1,5 @@
+// Next.js 16 (Cache Components) keeps up to 3 previous routes mounted but hidden
+// (React <Activity>), so test-id lookups only match visible elements.
 import { expect, test } from "@playwright/test";
 
 test("protected pages redirect signed-out visitors to sign in", async ({ page }) => {
@@ -36,9 +38,13 @@ test("a new user can sign up, edit their profile and apply as a provider", async
   await page.getByLabel("Contact email").fill(email);
   await page.getByRole("button", { name: "Save application as draft" }).click();
 
-  await expect(page.getByTestId("provider-status")).toContainText("Draft");
+  await expect(page.getByTestId("provider-status").filter({ visible: true })).toContainText(
+    "Draft",
+  );
   await page.getByRole("button", { name: "Submit for review" }).click();
-  await expect(page.getByTestId("provider-status")).toContainText("Pending review");
+  await expect(page.getByTestId("provider-status").filter({ visible: true })).toContainText(
+    "Pending review",
+  );
   await expect(page.getByRole("button", { name: "Submit for review" })).toHaveCount(0);
 });
 

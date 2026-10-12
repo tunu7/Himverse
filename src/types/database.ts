@@ -63,6 +63,98 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"itineraries": {
+                  Row: {
+                    "created_at": string,"current_version_id": string | null,"id": string,"owner_id": string,"title": string,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"current_version_id"?: string | null,"id"?: string,"owner_id": string,"title": string,"updated_at"?: string
+                  }
+                  Update: {
+                    "created_at"?: string,"current_version_id"?: string | null,"id"?: string,"owner_id"?: string,"title"?: string,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "itineraries_current_version_fk"
+      columns: ["current_version_id","id"]
+isOneToOne: false
+      referencedRelation: "itinerary_versions"
+      referencedColumns: ["id","itinerary_id"]
+    }
+                  ]
+                },"itinerary_generations": {
+                  Row: {
+                    "created_at": string,"error_code": string | null,"id": number,"input_tokens": number | null,"itinerary_id": string | null,"latency_ms": number | null,"model": string | null,"outcome": Database["public"]['Enums']["itinerary_generation_outcome"],"output_tokens": number | null,"prompt_version": string | null,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"error_code"?: string | null,"id"?: never,"input_tokens"?: number | null,"itinerary_id"?: string | null,"latency_ms"?: number | null,"model"?: string | null,"outcome": Database["public"]['Enums']["itinerary_generation_outcome"],"output_tokens"?: number | null,"prompt_version"?: string | null,"user_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"error_code"?: string | null,"id"?: never,"input_tokens"?: number | null,"itinerary_id"?: string | null,"latency_ms"?: number | null,"model"?: string | null,"outcome"?: Database["public"]['Enums']["itinerary_generation_outcome"],"output_tokens"?: number | null,"prompt_version"?: string | null,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "itinerary_generations_itinerary_id_fkey"
+      columns: ["itinerary_id"]
+isOneToOne: false
+      referencedRelation: "itineraries"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"itinerary_items": {
+                  Row: {
+                    "day_number": number,"destination_id": string | null,"destination_name_snapshot": string,"duration_snapshot_minutes": number,"experience_id": string | null,"experience_title_snapshot": string,"id": string,"position": number,"price_snapshot_minor": number | null,"rationale": string,"time_of_day": Database["public"]['Enums']["itinerary_time_of_day"],"version_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "day_number": number,"destination_id"?: string | null,"destination_name_snapshot": string,"duration_snapshot_minutes": number,"experience_id"?: string | null,"experience_title_snapshot": string,"id"?: string,"position": number,"price_snapshot_minor"?: number | null,"rationale"?: string,"time_of_day": Database["public"]['Enums']["itinerary_time_of_day"],"version_id": string
+                  }
+                  Update: {
+                    "day_number"?: number,"destination_id"?: string | null,"destination_name_snapshot"?: string,"duration_snapshot_minutes"?: number,"experience_id"?: string | null,"experience_title_snapshot"?: string,"id"?: string,"position"?: number,"price_snapshot_minor"?: number | null,"rationale"?: string,"time_of_day"?: Database["public"]['Enums']["itinerary_time_of_day"],"version_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "itinerary_items_destination_id_fkey"
+      columns: ["destination_id"]
+isOneToOne: false
+      referencedRelation: "destinations"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "itinerary_items_experience_id_fkey"
+      columns: ["experience_id"]
+isOneToOne: false
+      referencedRelation: "experiences"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "itinerary_items_version_id_fkey"
+      columns: ["version_id"]
+isOneToOne: false
+      referencedRelation: "itinerary_versions"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"itinerary_versions": {
+                  Row: {
+                    "created_at": string,"currency": string,"estimated_total_minor": number,"id": string,"itinerary_id": string,"kind": Database["public"]['Enums']["itinerary_version_kind"],"model": string,"plan": NonNullable<Json>,"preferences": NonNullable<Json>,"prompt_version": string,"schema_version": string,"travelers": number,"unpriced_item_count": number,"version_number": number,"warnings": NonNullable<Json>
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"currency"?: string,"estimated_total_minor": number,"id"?: string,"itinerary_id": string,"kind": Database["public"]['Enums']["itinerary_version_kind"],"model": string,"plan": NonNullable<Json>,"preferences": NonNullable<Json>,"prompt_version": string,"schema_version": string,"travelers": number,"unpriced_item_count": number,"version_number": number,"warnings"?: NonNullable<Json>
+                  }
+                  Update: {
+                    "created_at"?: string,"currency"?: string,"estimated_total_minor"?: number,"id"?: string,"itinerary_id"?: string,"kind"?: Database["public"]['Enums']["itinerary_version_kind"],"model"?: string,"plan"?: NonNullable<Json>,"preferences"?: NonNullable<Json>,"prompt_version"?: string,"schema_version"?: string,"travelers"?: number,"unpriced_item_count"?: number,"version_number"?: number,"warnings"?: NonNullable<Json>
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "itinerary_versions_itinerary_id_fkey"
+      columns: ["itinerary_id"]
+isOneToOne: false
+      referencedRelation: "itineraries"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"profiles": {
                   Row: {
                     "created_at": string,"display_name": string,"id": string,"updated_at": string
@@ -174,15 +266,23 @@ isOneToOne: false
             "create_provider_application":
 { Args: { "p_contact_email": string,"p_contact_phone": string,"p_description": string,"p_display_name": string,"p_district": string,"p_legal_name": string,"p_slug": string }; Returns: string
                            },
+"record_itinerary_generation":
+{ Args: { "p_error_code": string,"p_input_tokens": number,"p_itinerary_id": string,"p_latency_ms": number,"p_model": string,"p_outcome": Database["public"]['Enums']["itinerary_generation_outcome"],"p_output_tokens": number,"p_prompt_version": string }; Returns: undefined
+                           },
 "review_provider":
 { Args: { "p_decision": Database["public"]['Enums']["provider_status"],"p_note"?: string,"p_provider_id": string }; Returns: Database["public"]['Enums']["provider_status"]
+                           },
+"save_itinerary_version":
+{ Args: { "p_items": Json,"p_itinerary_id": string,"p_kind": Database["public"]['Enums']["itinerary_version_kind"],"p_model": string,"p_plan": Json,"p_preferences": Json,"p_prompt_version": string,"p_schema_version": string,"p_title": string,"p_travelers": number,"p_warnings": Json }; Returns: {
+              "estimated_total_minor": number,"itinerary_id": string,"unpriced_item_count": number,"version_id": string,"version_number": number
+            }[]
                            },
 "submit_provider_application":
 { Args: { "p_provider_id": string }; Returns: Database["public"]['Enums']["provider_status"]
                            }
           }
           Enums: {
-            "app_role": "admin","experience_category": "culture"|"nature"|"adventure"|"trekking"|"wildlife"|"food_and_drink"|"festivals"|"wellness"|"other","experience_status": "draft"|"published"|"archived","provider_member_role": "owner","provider_status": "draft"|"pending_review"|"verified"|"rejected"|"suspended"
+            "app_role": "admin","experience_category": "culture"|"nature"|"adventure"|"trekking"|"wildlife"|"food_and_drink"|"festivals"|"wellness"|"other","experience_status": "draft"|"published"|"archived","itinerary_generation_outcome": "succeeded"|"failed_validation"|"failed_upstream"|"failed_timeout"|"failed_save","itinerary_time_of_day": "morning"|"afternoon"|"evening"|"full_day","itinerary_version_kind": "generate"|"refine"|"regenerate","provider_member_role": "owner","provider_status": "draft"|"pending_review"|"verified"|"rejected"|"suspended"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -302,7 +402,7 @@ export const Constants = {
           }
         },"public": {
           Enums: {
-            "app_role": ["admin"],"experience_category": ["culture", "nature", "adventure", "trekking", "wildlife", "food_and_drink", "festivals", "wellness", "other"],"experience_status": ["draft", "published", "archived"],"provider_member_role": ["owner"],"provider_status": ["draft", "pending_review", "verified", "rejected", "suspended"]
+            "app_role": ["admin"],"experience_category": ["culture", "nature", "adventure", "trekking", "wildlife", "food_and_drink", "festivals", "wellness", "other"],"experience_status": ["draft", "published", "archived"],"itinerary_generation_outcome": ["succeeded", "failed_validation", "failed_upstream", "failed_timeout", "failed_save"],"itinerary_time_of_day": ["morning", "afternoon", "evening", "full_day"],"itinerary_version_kind": ["generate", "refine", "regenerate"],"provider_member_role": ["owner"],"provider_status": ["draft", "pending_review", "verified", "rejected", "suspended"]
           }
         }
 } as const

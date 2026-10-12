@@ -19,10 +19,11 @@ immutable once accepted — to change a decision, write a new ADR that supersede
 
 ## Index
 
-| ADR                                     | Title                                                                | Status   |
-| --------------------------------------- | -------------------------------------------------------------------- | -------- |
-| [0001](ADR-0001-MODULAR-MONOLITH.md)    | Start as a modular monolith                                          | Accepted |
-| [0002](ADR-0002-AUTHORIZATION-MODEL.md) | Authorization model: database-enforced roles and provider membership | Accepted |
+| ADR                                         | Title                                                                | Status   |
+| ------------------------------------------- | -------------------------------------------------------------------- | -------- |
+| [0001](ADR-0001-MODULAR-MONOLITH.md)        | Start as a modular monolith                                          | Accepted |
+| [0002](ADR-0002-AUTHORIZATION-MODEL.md)     | Authorization model: database-enforced roles and provider membership | Accepted |
+| [0003](ADR-0003-AI-ITINERARY-GENERATION.md) | AI itinerary generation: provider, grounding and persistence         | Accepted |
 
 ## Template
 

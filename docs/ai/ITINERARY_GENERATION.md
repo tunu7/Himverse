@@ -1,59 +1,87 @@
 # Itinerary Generation
 
-Pipeline design for flows T2/T3 in [USER_FLOWS](../product/USER_FLOWS.md). Not implemented.
+Implemented in Phase 3 for flows T2 and T3 in [USER_FLOWS](../product/USER_FLOWS.md). Decision record:
+[ADR-0003](../decisions/ADR-0003-AI-ITINERARY-GENERATION.md).
 
-## Pipeline
+## Pipeline (`src/server/itineraries/pipeline.ts`)
 
 ```
-validated TripRequest
-  → retrieve candidates (published experiences + destinations, filtered by region/season/budget/interests)
-  → build prompt (versioned template, candidates as structured data with IDs)
-  → model call (structured output, timeout)
-  → Zod validate ItineraryDraft
-  → grounding + constraint checks
-      ├─ pass → persist itinerary version → return
-      └─ fail → one repair attempt with specific errors → re-validate → else return partial/failed result
+preferences (Zod, server-side) → rate limit (10/h, 30/day) → retrieve (deterministic, public only)
+  → none? stop with "no suitable inventory" (no model call, nothing invented)
+  → prompt (itinerary-v1: aliases only, notes fenced) → model (45 s timeout, capped tokens)
+  → schema check (itinerary.v1) → grounding + constraint checks
+      ├─ pass → save_itinerary_version RPC (re-checks visibility + ownership, DB snapshots) → log
+      └─ fail → one repair attempt with the specific errors → re-check → else fail, nothing saved
 ```
 
-## Input (draft shape)
+| Module           | Responsibility                                                                           |
+| ---------------- | ---------------------------------------------------------------------------------------- |
+| `preferences.ts` | Trip preference schema (dates in IST, 1–14 days, 1–12 travellers, INR only, notes ≤ 500) |
+| `retrieval.ts`   | Candidate experiences and destinations through the anonymous client; capped at 40 and 10 |
+| `prompt.ts`      | Versioned system and user prompt, alias maps, repair prompt, size cap                    |
+| `schemas.ts`     | `itinerary.v1` model output schema; stored plan schema                                   |
+| `validate.ts`    | Deterministic grounding, date, capacity, multi-day and budget checks; cost estimate      |
+| `model/`         | `ItineraryModel` interface, AI Gateway adapter, deterministic mock, factory              |
+| `repository.ts`  | RPC calls, owner-scoped reads, current-version changes, delete                           |
+| `service.ts`     | Wires real dependencies into the pipeline                                                |
 
-`startDate | travelMonth`, `durationDays (1–30)`, `groupSize (1–20)`, `budgetBand`, `interests[]`,
-`pace (relaxed|moderate|packed)`, `constraints` (mobility, diet, altitude), optional free-text note
-(length-limited, treated as data).
+## Input
 
-## Output (draft shape)
+`place` (anywhere, a district or a destination), `startDate`, `durationDays`, `adults`, `children`,
+optional `budget` (₹, total for experiences), `currency` (INR), `interests` (categories), `pace`
+(relaxed 6 h, moderate 9 h or packed 11 h of activities per day), `limitedMobility`, optional `origin`,
+optional `notes`.
+
+## Model output (`itinerary.v1`)
 
 ```ts
-type ItineraryDraft = {
+{
+  title: string;            // ≤ 80
+  summary: string;          // ≤ 800
   days: Array<{
-    dayNumber: number;
-    baseDestinationId: string; // must exist in destinations
-    items: Array<{
-      experienceId: string; // must exist, be published, provider verified
-      timeOfDay: "morning" | "afternoon" | "evening" | "full_day";
-      rationale: string; // short, rendered as plain text
-    }>;
-    travelNotes?: string;
+    day: number;            // 1..N, each exactly once
+    base: "D1" | "D2" | …;  // destination alias from the request
+    items: Array<{ experience: "E1" | …; timeOfDay: "morning" | "afternoon" | "evening" | "full_day"; rationale: string }>;
+    note?: string;
   }>;
-  summary: string;
-  warnings: string[]; // e.g. "Sela Pass may be snowbound in January"
-};
+  cautions: string[];       // things the traveller should check; never stated as facts
+}
 ```
 
-## Grounding and constraint checks (deterministic code, unit-tested)
+The model never sees or returns database IDs, prices or dates.
 
-- All IDs exist and are visible to travelers; no duplicates unless allowed.
-- Day count equals requested duration; items fit the day given experience durations.
-- Seasonality: experience available in the travel month.
-- Travel feasibility between destinations (requires a travel-time table — open question for Phase 3).
-- Indicative total within budget band (prices from DB, never from model text).
+## Checks (deterministic, unit-tested)
 
-## Refinement
+- Every alias exists in the retrieved set. Hallucinated aliases or IDs are rejected.
+- Exactly N days numbered 1..N. Dates are computed from the start date, not taken from the model.
+- Every item is at the day's base destination, and no experience appears twice.
+- Each day's activity minutes stay within the pace's capacity.
+- A multi-day experience (≥ 24 h) is alone on its first day, its covered days stay empty, and it fits
+  before the trip ends.
+- **Budget:** the sum of per-person database prices × travellers must be ≤ the budget. Unpriced items
+  are excluded and flagged.
+- The save RPC re-checks that every experience is publicly visible now and at the stated destination,
+  and snapshots title, price and duration from the database.
 
-Refinement creates a new version from the previous version + change request, using the same pipeline.
-Versions are immutable; the traveler can view and restore earlier versions.
+## Refinement and versions
+
+- **Refine** takes a change request (≤ 500 characters), with optional pace and budget changes. It
+  re-retrieves, re-expresses the previous plan in fresh aliases (dropping anything no longer
+  available), and runs the same pipeline.
+- **Regenerate** re-runs the pipeline with the stored preferences.
+- **Every success is a new, immutable version.** The owner can view any version, make it current, or
+  delete the itinerary. A trip whose dates have passed can't be refined.
 
 ## Presentation
 
-Label as AI-suggested. Show indicative prices from DB. Booking CTAs go through the booking flow, which
-checks authoritative availability.
+- A fixed notice says the plan is AI-suggested and not a booking, and that availability, travel times
+  and permits (including Inner Line Permits) are unverified.
+- Prices are shown as indicative "from" prices per person. Items that have since been hidden show as
+  "no longer available".
+- Model text is rendered as plain text.
+
+## Not yet done
+
+- Seasonality and travel-time data (no schema).
+- Streaming progress.
+- Live-model evaluation (needs credentials; see [AI_EVALUATION](AI_EVALUATION.md)).

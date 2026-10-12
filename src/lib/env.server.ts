@@ -1,6 +1,6 @@
 import "server-only";
 
-import { parseServerEnv, type ServerEnv } from "./env";
+import { type AiEnv, parseAiEnv, parseServerEnv, type ServerEnv } from "./env";
 
 let cachedServerEnv: ServerEnv | undefined;
 
@@ -13,4 +13,17 @@ export function getServerEnv(): ServerEnv {
     SUPABASE_SECRET_KEY: process.env.SUPABASE_SECRET_KEY,
   });
   return cachedServerEnv;
+}
+
+let cachedAiEnv: AiEnv | undefined;
+
+/** AI provider settings, including the optional AI Gateway key (server-only). */
+export function getAiEnv(): AiEnv {
+  cachedAiEnv ??= parseAiEnv({
+    AI_PROVIDER: process.env.AI_PROVIDER || undefined,
+    AI_ITINERARY_MODEL: process.env.AI_ITINERARY_MODEL || undefined,
+    AI_GATEWAY_API_KEY: process.env.AI_GATEWAY_API_KEY || undefined,
+    VERCEL_ENV: process.env.VERCEL_ENV || undefined,
+  });
+  return cachedAiEnv;
 }

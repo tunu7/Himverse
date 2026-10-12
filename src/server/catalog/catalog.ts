@@ -10,7 +10,7 @@ import {
   type ExperienceFilters,
   PAGE_SIZE,
   pageCountFor,
-} from "@/server/catalog/search-options";
+} from "@/lib/catalog-options";
 
 // Every read here uses the anonymous, cookie-less client: RLS alone decides
 // visibility (published experience + verified provider + published

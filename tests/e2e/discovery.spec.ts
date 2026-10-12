@@ -1,3 +1,5 @@
+// Next.js 16 (Cache Components) keeps up to 3 previous routes mounted but hidden
+// (React <Activity>), so test-id lookups only match visible elements.
 import { expect, type Page, test } from "@playwright/test";
 
 // Read-only checks against the local seed (supabase/seed.sql): 17 public experiences
@@ -5,14 +7,14 @@ import { expect, type Page, test } from "@playwright/test";
 // Playwright project before specs that create data (see playwright.config.ts). Locally,
 // run `npx supabase db reset` first if earlier runs were interrupted.
 
-const cards = (page: Page) => page.getByTestId("experience-card");
+const cards = (page: Page) => page.getByTestId("experience-card").filter({ visible: true });
 // Results stream in behind Suspense: wait for the summary before reading cards.
 const titles = async (page: Page) => {
   await expect(summary(page)).toBeVisible();
   return (await cards(page).getByRole("heading").allTextContents()).map((t) => t.trim());
 };
 // The results summary (not the "Loading…" placeholder, which is also role=status).
-const summary = (page: Page) => page.getByTestId("results-summary");
+const summary = (page: Page) => page.getByTestId("results-summary").filter({ visible: true });
 
 test.describe("experience search", () => {
   test("lists public experiences with pagination", async ({ page }) => {
@@ -150,9 +152,13 @@ test.describe("experience detail", () => {
 test.describe("destinations", () => {
   const destinationTitles = async (page: Page) => {
     await expect(summary(page)).toBeVisible();
-    return (await page.getByTestId("destination-card").getByRole("heading").allTextContents()).map(
-      (t) => t.trim(),
-    );
+    return (
+      await page
+        .getByTestId("destination-card")
+        .filter({ visible: true })
+        .getByRole("heading")
+        .allTextContents()
+    ).map((t) => t.trim());
   };
 
   test("lists only published destinations with public experience counts", async ({ page }) => {
@@ -167,7 +173,10 @@ test.describe("destinations", () => {
     ]);
     // Ziro has 4 public experiences; its draft experience is not counted.
     await expect(
-      page.getByTestId("destination-card").filter({ hasText: "Ziro Valley" }),
+      page
+        .getByTestId("destination-card")
+        .filter({ visible: true })
+        .filter({ hasText: "Ziro Valley" }),
     ).toContainText("4 experiences");
   });
 

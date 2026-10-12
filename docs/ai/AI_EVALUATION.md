@@ -2,6 +2,14 @@
 
 Goal: know, before shipping a prompt/model change, whether itineraries got better or worse.
 
+**Status (Phase 3):**
+
+- Deterministic checks are automated: unit tests with a mock model, plus E2E tests with
+  `AI_PROVIDER=mock`.
+- **No real-model evaluation has been run yet; there are no credentials.**
+- The evaluation set below and a live smoke test are the first tasks once an AI Gateway key is
+  available.
+
 ## Evaluation set
 
 A version-controlled set of trip requests (planned location: `tests/ai-eval/`, created in Phase 3) covering:

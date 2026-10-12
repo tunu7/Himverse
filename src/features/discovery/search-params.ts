@@ -12,7 +12,7 @@ import {
   type ExperienceSort,
   MAX_PAGE,
   QUERY_MAX_LENGTH,
-} from "@/server/catalog/search-options";
+} from "@/lib/catalog-options";
 
 /**
  * URL search-parameter contract for /experiences and /destinations.
