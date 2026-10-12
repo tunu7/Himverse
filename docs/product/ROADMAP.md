@@ -28,10 +28,12 @@ structured output, grounding and budget checks, an ownership- and visibility-che
 regenerate and restore versions, rate limits, `/itineraries`. Verified with a mock model only.
 Remaining: live-model evaluation set and smoke test (needs an AI Gateway key), streaming progress.
 
-## Phase 4 — Booking
+## Phase 4 — Booking (implemented locally 2026-10-12; not deployed)
 
-Availability model, booking request lifecycle with idempotency, provider booking management,
-notifications; payment integration once the provider is chosen by ADR (T4, P2, T5).
+Done (ADR-0004): provider-managed dated slots, request → provider confirm/decline with a final price,
+traveller and provider cancellation, 48 h expiry and completion through a `pg_cron` sweep,
+idempotent requests, no overbooking (row locks + check constraint), audited history, `/bookings` and
+`/provider/bookings`. No payments. Open business questions: [BOOKING_POLICY](BOOKING_POLICY.md).
 
 ## Phase 5 — MVP hardening and launch
 

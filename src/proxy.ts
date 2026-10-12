@@ -12,7 +12,7 @@ import type { Database } from "@/types/database";
  * Server Action / page via src/server/auth/session.ts and in the database via
  * RLS (ADR-0002); a matcher change here must never weaken security.
  */
-const PROTECTED_PREFIXES = ["/account", "/provider", "/admin", "/itineraries"];
+const PROTECTED_PREFIXES = ["/account", "/provider", "/admin", "/itineraries", "/bookings"];
 
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });

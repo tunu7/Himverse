@@ -28,3 +28,15 @@ export function formatCategory(category: string): string {
   const words = category.replaceAll("_", " ");
   return words.charAt(0).toUpperCase() + words.slice(1);
 }
+
+/** "Sat 7 Nov 2026" or "Sat 7 Nov 2026, 09:30" for a slot date (local to India). */
+export function formatSlot(startsOn: string, startTime: string | null): string {
+  const date = new Intl.DateTimeFormat("en-IN", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(`${startsOn}T00:00:00Z`));
+  return startTime ? `${date}, ${startTime.slice(0, 5)}` : date;
+}

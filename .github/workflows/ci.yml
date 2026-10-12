@@ -51,6 +51,8 @@ jobs:
         run: npx supabase start -x realtime,storage-api,imgproxy,mailpit,postgres-meta,studio,edge-runtime,logflare,vector,supavisor
       - name: Database and RLS tests (pgTAP)
         run: npm run db:test
+      - name: Integration tests (parallel connections, e.g. booking concurrency)
+        run: npm run test:integration
       - name: Check generated database types are up to date
         run: |
           npm run db:types

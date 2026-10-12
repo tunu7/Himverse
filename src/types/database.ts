@@ -23,7 +23,79 @@ export type Database = {
           }
         },"public": {
           Tables: {
-            "destinations": {
+            "availability_slots": {
+                  Row: {
+                    "capacity": number,"created_at": string,"experience_id": string,"id": string,"seats_confirmed": number,"start_time": string | null,"starts_on": string,"status": Database["public"]['Enums']["availability_slot_status"],"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "capacity": number,"created_at"?: string,"experience_id": string,"id"?: string,"seats_confirmed"?: number,"start_time"?: string | null,"starts_on": string,"status"?: Database["public"]['Enums']["availability_slot_status"],"updated_at"?: string
+                  }
+                  Update: {
+                    "capacity"?: number,"created_at"?: string,"experience_id"?: string,"id"?: string,"seats_confirmed"?: number,"start_time"?: string | null,"starts_on"?: string,"status"?: Database["public"]['Enums']["availability_slot_status"],"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "availability_slots_experience_id_fkey"
+      columns: ["experience_id"]
+isOneToOne: false
+      referencedRelation: "experiences"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"booking_events": {
+                  Row: {
+                    "actor_id": string | null,"actor_role": Database["public"]['Enums']["booking_actor"],"booking_id": string,"created_at": string,"from_status": Database["public"]['Enums']["booking_status"] | null,"id": number,"note": string | null,"to_status": Database["public"]['Enums']["booking_status"]
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "actor_id"?: string | null,"actor_role": Database["public"]['Enums']["booking_actor"],"booking_id": string,"created_at"?: string,"from_status"?: Database["public"]['Enums']["booking_status"] | null,"id"?: never,"note"?: string | null,"to_status": Database["public"]['Enums']["booking_status"]
+                  }
+                  Update: {
+                    "actor_id"?: string | null,"actor_role"?: Database["public"]['Enums']["booking_actor"],"booking_id"?: string,"created_at"?: string,"from_status"?: Database["public"]['Enums']["booking_status"] | null,"id"?: never,"note"?: string | null,"to_status"?: Database["public"]['Enums']["booking_status"]
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "booking_events_booking_id_fkey"
+      columns: ["booking_id"]
+isOneToOne: false
+      referencedRelation: "bookings"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"bookings": {
+                  Row: {
+                    "adults": number,"cancellation_reason": string | null,"cancelled_by": Database["public"]['Enums']["booking_actor"] | null,"children": number,"confirmed_total_minor": number | null,"contact_phone": string,"created_at": string,"currency": string,"estimated_total_minor": number | null,"experience_id": string,"experience_title": string,"id": string,"idempotency_key": string,"party_size": number | null,"provider_id": string,"provider_note": string | null,"reference": string,"request_expires_at": string,"slot_id": string,"slot_start_time": string | null,"slot_starts_on": string,"status": Database["public"]['Enums']["booking_status"],"traveler_id": string,"traveler_name": string,"traveler_note": string,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "adults": number,"cancellation_reason"?: string | null,"cancelled_by"?: Database["public"]['Enums']["booking_actor"] | null,"children"?: number,"confirmed_total_minor"?: number | null,"contact_phone": string,"created_at"?: string,"currency"?: string,"estimated_total_minor"?: number | null,"experience_id": string,"experience_title": string,"id"?: string,"idempotency_key": string,"party_size"?: never,"provider_id": string,"provider_note"?: string | null,"reference": string,"request_expires_at": string,"slot_id": string,"slot_start_time"?: string | null,"slot_starts_on": string,"status"?: Database["public"]['Enums']["booking_status"],"traveler_id": string,"traveler_name": string,"traveler_note"?: string,"updated_at"?: string
+                  }
+                  Update: {
+                    "adults"?: number,"cancellation_reason"?: string | null,"cancelled_by"?: Database["public"]['Enums']["booking_actor"] | null,"children"?: number,"confirmed_total_minor"?: number | null,"contact_phone"?: string,"created_at"?: string,"currency"?: string,"estimated_total_minor"?: number | null,"experience_id"?: string,"experience_title"?: string,"id"?: string,"idempotency_key"?: string,"party_size"?: never,"provider_id"?: string,"provider_note"?: string | null,"reference"?: string,"request_expires_at"?: string,"slot_id"?: string,"slot_start_time"?: string | null,"slot_starts_on"?: string,"status"?: Database["public"]['Enums']["booking_status"],"traveler_id"?: string,"traveler_name"?: string,"traveler_note"?: string,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "bookings_experience_id_fkey"
+      columns: ["experience_id"]
+isOneToOne: false
+      referencedRelation: "experiences"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "bookings_provider_id_fkey"
+      columns: ["provider_id"]
+isOneToOne: false
+      referencedRelation: "providers"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "bookings_slot_id_fkey"
+      columns: ["slot_id"]
+isOneToOne: false
+      referencedRelation: "availability_slots"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"destinations": {
                   Row: {
                     "created_at": string,"description": string,"district": string,"id": string,"is_published": boolean,"name": string,"search_vector": unknown,"slug": string,"summary": string,"updated_at": string
                   }
@@ -263,11 +335,22 @@ isOneToOne: false
             [_ in never]: never
           }
           Functions: {
-            "create_provider_application":
+            "cancel_booking":
+{ Args: { "p_booking_id": string,"p_reason": string }; Returns: Database["public"]['Enums']["booking_status"]
+                           },
+"create_provider_application":
 { Args: { "p_contact_email": string,"p_contact_phone": string,"p_description": string,"p_display_name": string,"p_district": string,"p_legal_name": string,"p_slug": string }; Returns: string
                            },
 "record_itinerary_generation":
 { Args: { "p_error_code": string,"p_input_tokens": number,"p_itinerary_id": string,"p_latency_ms": number,"p_model": string,"p_outcome": Database["public"]['Enums']["itinerary_generation_outcome"],"p_output_tokens": number,"p_prompt_version": string }; Returns: undefined
+                           },
+"request_booking":
+{ Args: { "p_adults": number,"p_children": number,"p_contact_phone": string,"p_idempotency_key": string,"p_note": string,"p_slot_id": string }; Returns: {
+              "booking_id": string,"booking_reference": string,"booking_status": Database["public"]['Enums']["booking_status"],"replayed": boolean
+            }[]
+                           },
+"respond_to_booking":
+{ Args: { "p_booking_id": string,"p_decision": Database["public"]['Enums']["booking_status"],"p_final_total_minor": number,"p_note": string }; Returns: Database["public"]['Enums']["booking_status"]
                            },
 "review_provider":
 { Args: { "p_decision": Database["public"]['Enums']["provider_status"],"p_note"?: string,"p_provider_id": string }; Returns: Database["public"]['Enums']["provider_status"]
@@ -282,7 +365,7 @@ isOneToOne: false
                            }
           }
           Enums: {
-            "app_role": "admin","experience_category": "culture"|"nature"|"adventure"|"trekking"|"wildlife"|"food_and_drink"|"festivals"|"wellness"|"other","experience_status": "draft"|"published"|"archived","itinerary_generation_outcome": "succeeded"|"failed_validation"|"failed_upstream"|"failed_timeout"|"failed_save","itinerary_time_of_day": "morning"|"afternoon"|"evening"|"full_day","itinerary_version_kind": "generate"|"refine"|"regenerate","provider_member_role": "owner","provider_status": "draft"|"pending_review"|"verified"|"rejected"|"suspended"
+            "app_role": "admin","availability_slot_status": "open"|"closed","booking_actor": "traveler"|"provider"|"system","booking_status": "requested"|"confirmed"|"declined"|"cancelled"|"expired"|"completed","experience_category": "culture"|"nature"|"adventure"|"trekking"|"wildlife"|"food_and_drink"|"festivals"|"wellness"|"other","experience_status": "draft"|"published"|"archived","itinerary_generation_outcome": "succeeded"|"failed_validation"|"failed_upstream"|"failed_timeout"|"failed_save","itinerary_time_of_day": "morning"|"afternoon"|"evening"|"full_day","itinerary_version_kind": "generate"|"refine"|"regenerate","provider_member_role": "owner","provider_status": "draft"|"pending_review"|"verified"|"rejected"|"suspended"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -402,7 +485,7 @@ export const Constants = {
           }
         },"public": {
           Enums: {
-            "app_role": ["admin"],"experience_category": ["culture", "nature", "adventure", "trekking", "wildlife", "food_and_drink", "festivals", "wellness", "other"],"experience_status": ["draft", "published", "archived"],"itinerary_generation_outcome": ["succeeded", "failed_validation", "failed_upstream", "failed_timeout", "failed_save"],"itinerary_time_of_day": ["morning", "afternoon", "evening", "full_day"],"itinerary_version_kind": ["generate", "refine", "regenerate"],"provider_member_role": ["owner"],"provider_status": ["draft", "pending_review", "verified", "rejected", "suspended"]
+            "app_role": ["admin"],"availability_slot_status": ["open", "closed"],"booking_actor": ["traveler", "provider", "system"],"booking_status": ["requested", "confirmed", "declined", "cancelled", "expired", "completed"],"experience_category": ["culture", "nature", "adventure", "trekking", "wildlife", "food_and_drink", "festivals", "wellness", "other"],"experience_status": ["draft", "published", "archived"],"itinerary_generation_outcome": ["succeeded", "failed_validation", "failed_upstream", "failed_timeout", "failed_save"],"itinerary_time_of_day": ["morning", "afternoon", "evening", "full_day"],"itinerary_version_kind": ["generate", "refine", "regenerate"],"provider_member_role": ["owner"],"provider_status": ["draft", "pending_review", "verified", "rejected", "suspended"]
           }
         }
 } as const

@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
 import { LoadingBlock } from "@/components/page-shell";
+import { ExperienceBooking } from "@/features/bookings/components/experience-booking";
 import { formatCategory, formatDuration, formatPriceFrom } from "@/lib/format";
 import { getPublicExperience } from "@/server/catalog/catalog";
 
@@ -80,9 +81,22 @@ async function ExperienceDetail({ params }: PageProps<"/experiences/[slug]">) {
       ) : null}
 
       <p className="rounded-md bg-zinc-100 p-3 text-sm text-zinc-700 dark:bg-zinc-900 dark:text-zinc-300">
-        Prices are indicative and availability isn&apos;t guaranteed. Booking isn&apos;t available
-        yet.
+        Prices are indicative and availability isn&apos;t guaranteed until the provider confirms
+        your booking.
       </p>
+
+      <section className="flex flex-col gap-3" aria-labelledby="book-heading">
+        <h2 id="book-heading" className="text-lg font-semibold">
+          Request to book
+        </h2>
+        <Suspense fallback={<LoadingBlock label="Loading dates…" />}>
+          <ExperienceBooking
+            experienceId={experience.id}
+            experienceSlug={experience.slug}
+            priceFromMinor={experience.priceFromMinor}
+          />
+        </Suspense>
+      </section>
     </article>
   );
 }

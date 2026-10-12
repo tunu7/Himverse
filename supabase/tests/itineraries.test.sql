@@ -5,7 +5,7 @@ create extension if not exists pgtap with schema extensions;
 
 select plan(35);
 
-truncate public.itinerary_items, public.experiences, public.destinations, public.provider_status_events,
+truncate public.booking_events, public.bookings, public.availability_slots, public.itinerary_items, public.experiences, public.destinations, public.provider_status_events,
   public.provider_private_details, public.provider_members, public.providers;
 
 -- Fixtures ----------------------------------------------------------------------

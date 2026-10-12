@@ -13,7 +13,7 @@ One responsibility, one location. Directories are created when first needed — 
 ├── src/
 │   ├── app/                      Routes, layouts, route handlers, error/loading boundaries
 │   ├── components/               Shared, feature-agnostic UI
-│   ├── features/<feature>/       Feature module (auth, account, providers, admin, discovery, itineraries)
+│   ├── features/<feature>/       Feature module (auth, account, providers, admin, discovery, itineraries, bookings)
 │   │   ├── components/           Feature UI
 │   │   ├── actions.ts            Server Actions ("use server") — validate, authorize, call server/
 │   │   └── schemas.ts            Zod input schemas shared by form and action
@@ -27,6 +27,7 @@ One responsibility, one location. Directories are created when first needed — 
 │   │   ├── format.ts             Price/duration display helpers
 │   │   ├── catalog-options.ts    Shared catalogue vocabulary (categories, buckets, sorts, limits)
 │   │   ├── itinerary-options.ts  Itinerary limits and paces (shared by server and client forms)
+│   │   ├── booking-options.ts    Booking rules and status display (shared)
 │   │   └── supabase/             client.ts (browser), server.ts (user context), public.ts (anonymous),
 │   │                             errors.ts (SQLSTATE → AppError)
 │   ├── types/                    Generated `database.ts` (`npm run db:types`; not hand-edited)

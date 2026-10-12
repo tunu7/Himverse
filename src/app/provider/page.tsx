@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Suspense } from "react";
 
 import { LoadingBlock, PageShell } from "@/components/page-shell";
@@ -7,9 +8,12 @@ import {
   ProviderApplicationForm,
   SubmitForReviewForm,
 } from "@/features/providers/components/provider-forms";
-import { formatDuration, formatPriceFrom } from "@/lib/format";
+import { AddSlotForm, SlotStatusButton } from "@/features/bookings/components/booking-forms";
+import { formatDuration, formatPriceFrom, formatSlot } from "@/lib/format";
 import { requireUserForPage } from "@/server/auth/session";
+import { listSlotsForExperiences, type ProviderSlot } from "@/server/bookings/repository";
 import { listPublishedDestinations } from "@/server/catalog/catalog";
+import { todayInTripZone } from "@/server/itineraries/preferences";
 import { listMyProviders, type MyProvider } from "@/server/providers/providers";
 import { canSubmitForReview, PROVIDER_STATUS_LABELS } from "@/server/providers/status";
 
@@ -32,10 +36,24 @@ async function ProviderWorkspace() {
     );
   }
 
+  const slots = await listSlotsForExperiences(
+    providers.flatMap((p) => p.experiences.map((e) => e.id)),
+  );
+  const minDate = todayInTripZone(new Date());
+
   return (
     <div className="flex flex-col gap-10">
+      <Link href="/provider/bookings" className="self-start underline">
+        View booking requests
+      </Link>
       {providers.map((p) => (
-        <ProviderSection key={p.id} provider={p} destinations={destinations} />
+        <ProviderSection
+          key={p.id}
+          provider={p}
+          destinations={destinations}
+          slots={slots}
+          minDate={minDate}
+        />
       ))}
     </div>
   );
@@ -44,10 +62,15 @@ async function ProviderWorkspace() {
 function ProviderSection({
   provider,
   destinations,
+  slots,
+  minDate,
 }: {
   provider: MyProvider;
   destinations: Awaited<ReturnType<typeof listPublishedDestinations>>;
+  slots: readonly ProviderSlot[];
+  minDate: string;
 }) {
+  const bookable = provider.experiences.filter((e) => e.status !== "archived");
   const verified = provider.status === "verified";
   return (
     <section className="flex flex-col gap-4" aria-labelledby={`provider-${provider.id}`}>
@@ -131,6 +154,46 @@ function ProviderSection({
           </p>
         ) : null}
       </div>
+
+      {bookable.length > 0 ? (
+        <section className="flex flex-col gap-3" aria-label="Dates for booking">
+          <h3 className="font-semibold">Dates for booking</h3>
+          {!verified ? (
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">
+              Travellers can book dates once your provider is verified and the experience is
+              published.
+            </p>
+          ) : null}
+          {bookable.map((e) => {
+            const experienceSlots = slots.filter((s) => s.experienceId === e.id);
+            return (
+              <div
+                key={e.id}
+                data-testid="slot-manager"
+                className="flex flex-col gap-2 rounded-md border border-zinc-200 p-3 dark:border-zinc-800"
+              >
+                <p className="font-medium">{e.title}</p>
+                {experienceSlots.length === 0 ? (
+                  <p className="text-sm text-zinc-600 dark:text-zinc-400">No dates yet.</p>
+                ) : (
+                  <ul className="flex flex-col gap-1 text-sm">
+                    {experienceSlots.map((s) => (
+                      <li key={s.id} className="flex flex-wrap items-center gap-3">
+                        <span>
+                          {formatSlot(s.startsOn, s.startTime)} · {s.capacity - s.seatsLeft}/
+                          {s.capacity} seats confirmed · {s.status}
+                        </span>
+                        <SlotStatusButton slotId={s.id} status={s.status} />
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <AddSlotForm experienceId={e.id} minDate={minDate} />
+              </div>
+            );
+          })}
+        </section>
+      ) : null}
 
       <details className="rounded-md border border-zinc-200 p-4 dark:border-zinc-800">
         <summary className="cursor-pointer font-medium">Add an experience</summary>

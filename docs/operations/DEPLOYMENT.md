@@ -15,8 +15,10 @@ Status: **not deployed.** No Vercel project, GitHub remote or Supabase cloud pro
 2. Import the repository in Vercel (framework: Next.js; build `npm run build`; install `npm ci`).
 3. Create Supabase projects; set environment variables in Vercel per environment (Preview, Production)
    from [.env.example](../../.env.example).
-4. Configure Supabase Auth site URL and redirect URLs for production and preview domains.
-5. Enable branch protection on `main`: require CI checks and one review.
+4. Enable the `pg_cron` extension (Database → Extensions) before applying the bookings migration;
+   it schedules `himverse-booking-sweep` every 15 minutes.
+5. Configure Supabase Auth site URL and redirect URLs for production and preview domains.
+6. Enable branch protection on `main`: require CI checks and one review.
 
 ## Releasing
 

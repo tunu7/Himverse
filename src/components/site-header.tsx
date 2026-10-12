@@ -36,6 +36,9 @@ export function SiteHeader() {
           <Link href="/itineraries" className="hover:underline">
             Trips
           </Link>
+          <Link href="/bookings" className="hover:underline">
+            Bookings
+          </Link>
           <Suspense fallback={<span className="w-14" aria-hidden />}>
             <AuthLinks />
           </Suspense>

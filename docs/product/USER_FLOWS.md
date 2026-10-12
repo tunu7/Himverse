@@ -35,7 +35,7 @@ States: progress while generating; partial failure ("we couldn't fit X"); hard f
 1. Traveler adjusts parameters or asks for changes (e.g. "less driving", "add a monastery visit").
 2. A new itinerary version is created; previous versions remain viewable.
 
-## T4 — Request a booking
+## T4 — Request a booking — implemented (Phase 4; see BOOKING_POLICY.md)
 
 1. From an itinerary item or experience page, traveler selects date and group size.
 2. Server checks availability from authoritative data and creates a booking request with an
@@ -54,7 +54,7 @@ essential trip information (permit guidance scope is an open question in the [PR
 Provider signs up, submits profile and verification details; admin verifies (A1). Unverified providers
 cannot publish experiences.
 
-## P2 — Provider manages bookings
+## P2 — Provider manages bookings — implemented (Phase 4)
 
 Provider sees incoming requests for their experiences only, confirms or declines with optional note,
 and manages availability.

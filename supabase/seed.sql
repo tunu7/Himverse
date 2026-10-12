@@ -104,3 +104,15 @@ values
    'Ziro night sky (sample, hidden: draft experience)', '', 'nature', 120, 70000, 'draft'),
   ('5eed0000-0000-4000-8000-0000000000a1', '5eed0000-0000-4000-8000-000000000008', 'demo-anini-drive',
    'Anini valley drive (sample, hidden: destination draft)', 'Rafting and drives', 'adventure', 600, 500000, 'published');
+
+-- Bookable dates (Phase 4), relative to today in India so the seed never goes stale.
+-- tests/e2e/bookings.spec.ts relies on these.
+insert into public.availability_slots (experience_id, starts_on, capacity)
+select e.id, private.today_ist() + d.offset_days, d.capacity
+from public.experiences e
+join (values
+  ('demo-siang-rafting', 5, 6),
+  ('demo-siang-rafting', 12, 6),
+  ('demo-ziro-village-walk', 7, 8),
+  ('demo-sela-pass-day-trip', 9, 4)
+) as d(slug, offset_days, capacity) on d.slug = e.slug;

@@ -6,9 +6,9 @@ Travelers discover curated experiences from verified local providers, generate a
 grounded in our own tourism database, refine it to their budget and constraints, and book what is
 actually available.
 
-> **Status:** Phases 1–2 (identity, provider verification, catalogue, public discovery) are green in
-> CI. Phase 3 (AI itineraries at `/itineraries`, via Vercel AI Gateway) is implemented locally and
-> verified with a mock model only. Not deployed. No bookings or payments yet. See the
+> **Status:** Phases 1–3 (identity, provider verification, catalogue, discovery, AI itineraries) are
+> green in CI; the AI is verified with a mock model only. Phase 4 (bookings: request → provider
+> confirmation, no payments) is implemented locally. Not deployed. See the
 > [roadmap](docs/product/ROADMAP.md).
 
 ## Tech stack
@@ -45,21 +45,22 @@ Local email confirmation is off; sign up at `/sign-up` and you're signed in imme
 
 ## Scripts
 
-| Script                 | Purpose                                                          |
-| ---------------------- | ---------------------------------------------------------------- |
-| `npm run dev`          | Development server                                               |
-| `npm run build`        | Production build                                                 |
-| `npm run start`        | Serve the production build                                       |
-| `npm run lint`         | ESLint (Next.js core-web-vitals + TypeScript rules)              |
-| `npm run typecheck`    | Generate route types and run `tsc --noEmit`                      |
-| `npm run format`       | Prettier write                                                   |
-| `npm run format:check` | Prettier check (used in CI)                                      |
-| `npm test`             | Vitest unit + integration tests                                  |
-| `npm run test:e2e`     | Playwright E2E against `next start` on port 3100 (build first)   |
-| `npm run db:test`      | Supabase pgTAP tests (`supabase/tests`), requires local Supabase |
-| `npm run db:types`     | Regenerate `src/types/database.ts` from the local schema         |
-| `npm run env:local`    | Write `.env.local` for the local Supabase stack                  |
-| `npm run verify`       | format:check → lint → typecheck → test → build (pre-PR gate)     |
+| Script                     | Purpose                                                               |
+| -------------------------- | --------------------------------------------------------------------- |
+| `npm run dev`              | Development server                                                    |
+| `npm run build`            | Production build                                                      |
+| `npm run start`            | Serve the production build                                            |
+| `npm run lint`             | ESLint (Next.js core-web-vitals + TypeScript rules)                   |
+| `npm run typecheck`        | Generate route types and run `tsc --noEmit`                           |
+| `npm run format`           | Prettier write                                                        |
+| `npm run format:check`     | Prettier check (used in CI)                                           |
+| `npm test`                 | Vitest unit + integration tests                                       |
+| `npm run test:integration` | Concurrency tests over parallel DB connections (needs local Supabase) |
+| `npm run test:e2e`         | Playwright E2E against `next start` on port 3100 (build first)        |
+| `npm run db:test`          | Supabase pgTAP tests (`supabase/tests`), requires local Supabase      |
+| `npm run db:types`         | Regenerate `src/types/database.ts` from the local schema              |
+| `npm run env:local`        | Write `.env.local` for the local Supabase stack                       |
+| `npm run verify`           | format:check → lint → typecheck → test → build (pre-PR gate)          |
 
 First E2E run on a machine: `npx playwright install chromium`.
 

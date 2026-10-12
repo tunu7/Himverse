@@ -4,12 +4,12 @@ Test what would hurt if it broke: business rules, authorization boundaries, and 
 
 ## Layers
 
-| Layer       | Tool                       | Location             | What to test                                                                         |
-| ----------- | -------------------------- | -------------------- | ------------------------------------------------------------------------------------ |
-| Unit        | Vitest                     | `tests/unit/`        | Pure logic: schemas, pricing, state transitions, AI output validation, error mapping |
-| Integration | Vitest + local Supabase    | `tests/integration/` | `src/server` services against a real DB (planned, Phase 1)                           |
-| Database    | pgTAP (`supabase test db`) | `supabase/tests/`    | RLS policies per role, constraints, triggers, DB functions                           |
-| E2E         | Playwright (Chromium)      | `tests/e2e/`         | Critical journeys against a production build                                         |
+| Layer       | Tool                           | Location             | What to test                                                                                                            |
+| ----------- | ------------------------------ | -------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Unit        | Vitest                         | `tests/unit/`        | Pure logic: schemas, pricing, state transitions, AI output validation, error mapping                                    |
+| Integration | Vitest + `pg` + local Supabase | `tests/integration/` | Behaviour that needs parallel connections (booking concurrency); `npm run test:integration`, run in the CI database job |
+| Database    | pgTAP (`supabase test db`)     | `supabase/tests/`    | RLS policies per role, constraints, triggers, DB functions                                                              |
+| E2E         | Playwright (Chromium)          | `tests/e2e/`         | Critical journeys against a production build                                                                            |
 
 ## Requirements
 

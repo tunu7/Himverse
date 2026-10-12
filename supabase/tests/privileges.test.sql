@@ -5,18 +5,20 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(49);
+select plan(55);
 
 -- Inventory: new objects must be added to these lists (and reviewed) ----------
 select tables_are('public', array[
   'profiles', 'user_roles', 'providers', 'provider_members', 'provider_private_details',
   'provider_status_events', 'destinations', 'experiences',
-  'itineraries', 'itinerary_versions', 'itinerary_items', 'itinerary_generations'
+  'itineraries', 'itinerary_versions', 'itinerary_items', 'itinerary_generations',
+  'availability_slots', 'bookings', 'booking_events'
 ], 'public tables are exactly the reviewed set');
 
 select functions_are('public', array[
   'create_provider_application', 'submit_provider_application', 'review_provider',
-  'save_itinerary_version', 'record_itinerary_generation'
+  'save_itinerary_version', 'record_itinerary_generation',
+  'request_booking', 'respond_to_booking', 'cancel_booking'
 ], 'public (RPC-exposed) functions are exactly the reviewed set');
 
 select is_empty(
@@ -49,6 +51,12 @@ select table_privs_are('public', 'itinerary_items', 'anon', array[]::text[], 'an
 select table_privs_are('public', 'itinerary_items', 'authenticated', array['SELECT'], 'authenticated: itinerary items read-only (immutable)');
 select table_privs_are('public', 'itinerary_generations', 'anon', array[]::text[], 'anon: no generation log privileges');
 select table_privs_are('public', 'itinerary_generations', 'authenticated', array['SELECT'], 'authenticated: generation log read-only; written via RPC');
+select table_privs_are('public', 'availability_slots', 'anon', array['SELECT'], 'anon: slots read-only (RLS: open, upcoming, public)');
+select table_privs_are('public', 'availability_slots', 'authenticated', array['SELECT'], 'authenticated: slots select (+ column insert/update for members)');
+select table_privs_are('public', 'bookings', 'anon', array[]::text[], 'anon: no booking privileges');
+select table_privs_are('public', 'bookings', 'authenticated', array['SELECT'], 'authenticated: bookings read-only; all writes via RPC');
+select table_privs_are('public', 'booking_events', 'anon', array[]::text[], 'anon: no booking event privileges');
+select table_privs_are('public', 'booking_events', 'authenticated', array['SELECT'], 'authenticated: booking events read-only; written via RPC');
 
 -- Sensitive columns -----------------------------------------------------------
 select ok(not has_column_privilege('authenticated', 'public.providers', 'status', 'UPDATE'), 'nobody updates providers.status directly');
@@ -125,18 +133,27 @@ select results_eq(
      where n.nspname in ('public', 'private') and has_function_privilege(r.rolname, p.oid, 'EXECUTE')
      order by 1, 2, 3 $$,
   $$ values
+       ('private', 'can_view_booking(p_booking_id uuid)', 'authenticated'),
        ('private', 'has_role(p_role app_role)', 'anon'),
        ('private', 'has_role(p_role app_role)', 'authenticated'),
        ('private', 'is_destination_published(p_destination_id uuid)', 'anon'),
        ('private', 'is_destination_published(p_destination_id uuid)', 'authenticated'),
+       ('private', 'is_experience_member(p_experience_id uuid)', 'authenticated'),
+       ('private', 'is_experience_public(p_experience_id uuid)', 'anon'),
+       ('private', 'is_experience_public(p_experience_id uuid)', 'authenticated'),
        ('private', 'is_provider_member(p_provider_id uuid)', 'anon'),
        ('private', 'is_provider_member(p_provider_id uuid)', 'authenticated'),
        ('private', 'is_provider_verified(p_provider_id uuid)', 'anon'),
        ('private', 'is_provider_verified(p_provider_id uuid)', 'authenticated'),
        ('private', 'owns_itinerary(p_itinerary_id uuid)', 'authenticated'),
        ('private', 'provider_accepts_detail_changes(p_provider_id uuid)', 'authenticated'),
+       ('private', 'today_ist()', 'anon'),
+       ('private', 'today_ist()', 'authenticated'),
+       ('public', 'cancel_booking(p_booking_id uuid, p_reason text)', 'authenticated'),
        ('public', 'create_provider_application(p_slug text, p_display_name text, p_description text, p_district text, p_legal_name text, p_contact_email text, p_contact_phone text)', 'authenticated'),
        ('public', 'record_itinerary_generation(p_itinerary_id uuid, p_outcome itinerary_generation_outcome, p_error_code text, p_model text, p_prompt_version text, p_latency_ms integer, p_input_tokens integer, p_output_tokens integer)', 'authenticated'),
+       ('public', 'request_booking(p_slot_id uuid, p_adults integer, p_children integer, p_contact_phone text, p_note text, p_idempotency_key uuid)', 'authenticated'),
+       ('public', 'respond_to_booking(p_booking_id uuid, p_decision booking_status, p_final_total_minor bigint, p_note text)', 'authenticated'),
        ('public', 'review_provider(p_provider_id uuid, p_decision provider_status, p_note text)', 'authenticated'),
        ('public', 'save_itinerary_version(p_itinerary_id uuid, p_title text, p_kind itinerary_version_kind, p_preferences jsonb, p_plan jsonb, p_schema_version text, p_prompt_version text, p_model text, p_travelers integer, p_warnings jsonb, p_items jsonb)', 'authenticated'),
        ('public', 'submit_provider_application(p_provider_id uuid)', 'authenticated') $$,
@@ -152,6 +169,12 @@ select results_eq(
      where table_schema = 'public' and grantee in ('anon', 'authenticated')
      group by 1, 2, 3 order by 1, 2, 3 $$,
   $$ values
+       ('availability_slots', 'anon', 'SELECT', 'capacity,created_at,experience_id,id,seats_confirmed,start_time,starts_on,status,updated_at'),
+       ('availability_slots', 'authenticated', 'INSERT', 'capacity,experience_id,start_time,starts_on'),
+       ('availability_slots', 'authenticated', 'SELECT', 'capacity,created_at,experience_id,id,seats_confirmed,start_time,starts_on,status,updated_at'),
+       ('availability_slots', 'authenticated', 'UPDATE', 'capacity,status'),
+       ('booking_events', 'authenticated', 'SELECT', 'actor_id,actor_role,booking_id,created_at,from_status,id,note,to_status'),
+       ('bookings', 'authenticated', 'SELECT', 'adults,cancellation_reason,cancelled_by,children,confirmed_total_minor,contact_phone,created_at,currency,estimated_total_minor,experience_id,experience_title,id,idempotency_key,party_size,provider_id,provider_note,reference,request_expires_at,slot_id,slot_start_time,slot_starts_on,status,traveler_id,traveler_name,traveler_note,updated_at'),
        ('destinations', 'anon', 'SELECT', 'created_at,description,district,id,is_published,name,search_vector,slug,summary,updated_at'),
        ('destinations', 'authenticated', 'INSERT', 'description,district,is_published,name,slug,summary'),
        ('destinations', 'authenticated', 'SELECT', 'created_at,description,district,id,is_published,name,search_vector,slug,summary,updated_at'),
