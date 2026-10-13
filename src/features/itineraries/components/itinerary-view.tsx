@@ -36,7 +36,7 @@ export function ItineraryPlan({ itinerary }: { itinerary: ItineraryView }) {
         </p>
       </section>
 
-      <dl className="grid gap-4 rounded-xl border border-line bg-surface shadow-xs p-5 sm:grid-cols-3">
+      <dl className="grid gap-4 rounded-2xl border border-line bg-surface p-5 sm:grid-cols-3">
         <div>
           <dt className="text-xs font-medium tracking-wide text-subtle uppercase">Dates</dt>
           <dd className="font-medium">
@@ -72,7 +72,7 @@ export function ItineraryPlan({ itinerary }: { itinerary: ItineraryView }) {
           <li
             key={day.dayNumber}
             data-testid="itinerary-day"
-            className="rounded-xl border border-line bg-surface shadow-xs p-5"
+            className="rounded-2xl border border-line bg-surface p-5"
           >
             <h2 className="text-lg font-semibold">
               Day {day.dayNumber} · {formatDate(day.date)}

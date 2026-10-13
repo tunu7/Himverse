@@ -59,7 +59,7 @@ async function SignUpContent({ searchParams }: PageProps<"/sign-up">) {
 export default function SignUpPage(props: PageProps<"/sign-up">) {
   return (
     <main className="flex flex-col gap-6">
-      <h1 className="text-3xl font-semibold tracking-tight text-fg">Create your account</h1>
+      <h1 className="text-4xl font-semibold tracking-[-0.03em] text-fg">Create your account</h1>
       <Suspense fallback={<LoadingBlock label="Loading…" variant="form" />}>
         <SignUpContent {...props} />
       </Suspense>

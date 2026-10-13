@@ -5,6 +5,7 @@ import { Suspense } from "react";
 
 import { buttonClass } from "@/components/form-feedback";
 import { LoadingBlock, PageMain } from "@/components/page-shell";
+import { DestinationBand } from "@/features/discovery/components/destination-card";
 import { ExperienceCard } from "@/features/discovery/components/experience-card";
 import { experiencesHref } from "@/features/discovery/search-params";
 import { getPublicDestination } from "@/server/catalog/catalog";
@@ -25,28 +26,33 @@ async function DestinationDetail({ params }: PageProps<"/destinations/[slug]">) 
   }
 
   return (
-    <article className="flex flex-col gap-8">
-      <header className="flex flex-col gap-2">
+    <article className="flex flex-col gap-10">
+      <DestinationBand slug={destination.slug} className="h-40 rounded-3xl sm:h-56" />
+      <header className="-mt-2 flex flex-col gap-3">
         <p className="text-sm text-muted">
           <Link
             href="/destinations"
-            className="font-medium text-accent underline-offset-4 hover:underline"
+            className="font-medium text-fg-soft transition-colors hover:text-accent"
           >
             Destinations
           </Link>{" "}
           / {destination.district} district
         </p>
-        <h1 className="text-3xl font-semibold tracking-tight text-fg sm:text-4xl">
+        <h1 className="text-4xl font-semibold tracking-[-0.035em] text-fg sm:text-6xl">
           {destination.name}
         </h1>
-        {destination.summary ? <p className="text-lg text-fg-soft">{destination.summary}</p> : null}
+        {destination.summary ? (
+          <p className="max-w-2xl text-lg leading-8 text-muted">{destination.summary}</p>
+        ) : null}
       </header>
 
       {destination.description ? (
-        <p className="whitespace-pre-line text-fg-soft">{destination.description}</p>
+        <p className="max-w-3xl leading-7 whitespace-pre-line text-fg-soft">
+          {destination.description}
+        </p>
       ) : null}
 
-      <aside className="flex flex-col items-start gap-3 rounded-2xl border border-accent/25 bg-accent-soft p-5 sm:flex-row sm:items-center sm:justify-between">
+      <aside className="reveal flex flex-col items-start gap-4 rounded-3xl border border-accent/15 bg-accent-soft p-6 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm font-medium text-accent-soft-fg">
           Want a day-by-day plan for {destination.name}? Our AI planner builds one from these
           experiences.
@@ -58,7 +64,7 @@ async function DestinationDetail({ params }: PageProps<"/destinations/[slug]">) 
 
       <section className="flex flex-col gap-4" aria-labelledby="destination-experiences">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <h2 id="destination-experiences" className="text-xl font-semibold">
+          <h2 id="destination-experiences" className="text-2xl font-semibold tracking-[-0.02em]">
             Experiences in {destination.name}
           </h2>
           {destination.experiences.length > 0 ? (
@@ -73,7 +79,7 @@ async function DestinationDetail({ params }: PageProps<"/destinations/[slug]">) 
         {destination.experiences.length === 0 ? (
           <p className="text-muted">No experiences are published here yet.</p>
         ) : (
-          <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {destination.experiences.map((experience) => (
               <ExperienceCard key={experience.id} experience={experience} />
             ))}

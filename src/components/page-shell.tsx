@@ -18,11 +18,13 @@ export function PageShell({
     <main
       className={`mx-auto flex w-full ${widths[width]} flex-1 flex-col gap-8 px-4 py-10 sm:px-6 sm:py-14`}
     >
-      <header className="flex flex-col gap-2">
-        <h1 className="text-3xl font-semibold tracking-tight text-fg sm:text-4xl">{title}</h1>
-        {description ? <p className="max-w-2xl text-muted">{description}</p> : null}
+      <header className="flex animate-rise flex-col gap-3 border-b border-line pb-8">
+        <h1 className="text-4xl font-semibold tracking-[-0.03em] text-fg sm:text-5xl">{title}</h1>
+        {description ? (
+          <p className="max-w-2xl text-base leading-7 text-muted sm:text-lg">{description}</p>
+        ) : null}
       </header>
-      {children}
+      <div className="flex animate-rise flex-col gap-8 [animation-delay:90ms]">{children}</div>
     </main>
   );
 }
@@ -37,7 +39,7 @@ export function PageMain({
 }) {
   return (
     <main
-      className={`mx-auto flex w-full ${widths[width]} flex-1 flex-col gap-8 px-4 py-10 sm:px-6 sm:py-14`}
+      className={`mx-auto flex w-full ${widths[width]} flex-1 animate-rise flex-col gap-8 px-4 py-10 sm:px-6 sm:py-14`}
     >
       {children}
     </main>
@@ -71,15 +73,21 @@ export function LoadingBlock({
 function CardsSkeleton() {
   return (
     <>
-      <Skeleton className="h-28 w-full rounded-xl" />
+      <Skeleton className="h-28 w-full rounded-2xl" />
       <Skeleton className="h-4 w-32" />
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {Array.from({ length: 6 }, (_, i) => (
-          <div key={i} className="flex flex-col gap-3 rounded-xl border border-line p-5">
-            <Skeleton className="h-5 w-3/4" />
-            <Skeleton className="h-4 w-1/2" />
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="mt-4 h-4 w-2/3" />
+          <div
+            key={i}
+            className="flex flex-col gap-3 overflow-hidden rounded-2xl border border-line"
+          >
+            <Skeleton className="h-36 w-full rounded-none" />
+            <div className="flex flex-col gap-3 p-5">
+              <Skeleton className="h-5 w-3/4" />
+              <Skeleton className="h-4 w-1/2" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="mt-4 h-4 w-2/3" />
+            </div>
           </div>
         ))}
       </div>
@@ -95,7 +103,7 @@ function DetailSkeleton() {
         <Skeleton className="h-9 w-2/3" />
         <Skeleton className="h-5 w-full max-w-xl" />
       </div>
-      <div className="grid gap-4 rounded-xl border border-line p-5 sm:grid-cols-2">
+      <div className="grid gap-4 rounded-2xl border border-line p-5 sm:grid-cols-2">
         {Array.from({ length: 4 }, (_, i) => (
           <div key={i} className="flex flex-col gap-2">
             <Skeleton className="h-3 w-20" />
@@ -103,7 +111,7 @@ function DetailSkeleton() {
           </div>
         ))}
       </div>
-      <Skeleton className="h-24 w-full rounded-xl" />
+      <Skeleton className="h-24 w-full rounded-2xl" />
     </>
   );
 }
@@ -114,7 +122,7 @@ function ListSkeleton() {
       {Array.from({ length: 4 }, (_, i) => (
         <div
           key={i}
-          className="flex items-center justify-between gap-4 rounded-xl border border-line p-4"
+          className="flex items-center justify-between gap-4 rounded-2xl border border-line p-4"
         >
           <div className="flex flex-1 flex-col gap-2">
             <Skeleton className="h-5 w-1/2" />
@@ -133,10 +141,10 @@ function FormSkeleton() {
       {Array.from({ length: 3 }, (_, i) => (
         <div key={i} className="flex flex-col gap-2">
           <Skeleton className="h-4 w-24" />
-          <Skeleton className="h-10 w-full rounded-lg" />
+          <Skeleton className="h-11 w-full rounded-xl" />
         </div>
       ))}
-      <Skeleton className="h-10 w-32 rounded-lg" />
+      <Skeleton className="h-10 w-32 rounded-full" />
     </div>
   );
 }

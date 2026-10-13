@@ -80,7 +80,7 @@ async function ReviewQueue({ searchParams }: PageProps<"/admin/providers">) {
             return (
               <li
                 key={p.id}
-                className="flex flex-col gap-4 rounded-2xl border border-line bg-surface p-5 shadow-xs"
+                className="flex flex-col gap-4 rounded-2xl border border-line bg-surface p-5"
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="flex flex-col gap-1">

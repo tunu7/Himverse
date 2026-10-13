@@ -51,7 +51,7 @@ async function BookingDetail({ params }: PageProps<"/bookings/[id]">) {
         />
       </header>
 
-      <dl className="grid gap-4 rounded-xl border border-line bg-surface shadow-xs p-5 sm:grid-cols-2">
+      <dl className="grid gap-4 rounded-2xl border border-line bg-surface p-5 sm:grid-cols-2">
         <div>
           <dt className="text-xs font-medium tracking-wide text-subtle uppercase">Date</dt>
           <dd className="font-medium">{formatSlot(booking.slotStartsOn, booking.slotStartTime)}</dd>

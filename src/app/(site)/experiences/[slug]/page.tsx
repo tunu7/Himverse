@@ -5,6 +5,7 @@ import { Suspense } from "react";
 
 import { LoadingBlock, PageMain } from "@/components/page-shell";
 import { ExperienceBooking } from "@/features/bookings/components/experience-booking";
+import { CategoryBand } from "@/features/discovery/components/category-visual";
 import { formatCategory, formatDuration, formatPriceFrom } from "@/lib/format";
 import { getPublicExperience } from "@/server/catalog/catalog";
 
@@ -25,35 +26,38 @@ async function ExperienceDetail({ params }: PageProps<"/experiences/[slug]">) {
   const price = formatPriceFrom(experience.priceFromMinor);
 
   return (
-    <article className="flex flex-col gap-6">
-      <header className="flex flex-col gap-2">
+    <article className="flex flex-col gap-8">
+      <CategoryBand category={experience.category} className="h-44 rounded-3xl sm:h-60" />
+      <header className="flex flex-col gap-3">
         <p className="text-sm text-muted">
           <Link
             href="/experiences"
-            className="font-medium text-accent underline-offset-4 hover:underline"
+            className="font-medium text-fg-soft transition-colors hover:text-accent"
           >
             Experiences
           </Link>{" "}
           / {formatCategory(experience.category)}
         </p>
-        <h1 className="text-3xl font-semibold tracking-tight text-fg sm:text-4xl">
+        <h1 className="text-4xl font-semibold tracking-[-0.035em] text-fg sm:text-5xl">
           {experience.title}
         </h1>
-        {experience.summary ? <p className="text-lg text-fg-soft">{experience.summary}</p> : null}
+        {experience.summary ? (
+          <p className="text-lg leading-8 text-muted">{experience.summary}</p>
+        ) : null}
       </header>
 
-      <dl className="grid gap-4 rounded-xl border border-line bg-surface shadow-xs p-5 sm:grid-cols-2">
-        <div>
+      <dl className="grid gap-px sm:grid-cols-2 overflow-hidden rounded-3xl border border-line bg-line">
+        <div className="flex flex-col gap-1 bg-surface p-5">
           <dt className="text-xs font-medium tracking-wide text-subtle uppercase">
             Indicative price
           </dt>
           <dd className="font-medium">{price ? `From ${price}` : "Price on request"}</dd>
         </div>
-        <div>
+        <div className="flex flex-col gap-1 bg-surface p-5">
           <dt className="text-xs font-medium tracking-wide text-subtle uppercase">Duration</dt>
           <dd className="font-medium">{formatDuration(experience.durationMinutes)}</dd>
         </div>
-        <div>
+        <div className="flex flex-col gap-1 bg-surface p-5">
           <dt className="text-xs font-medium tracking-wide text-subtle uppercase">Location</dt>
           <dd className="font-medium">
             <Link
@@ -65,7 +69,7 @@ async function ExperienceDetail({ params }: PageProps<"/experiences/[slug]">) {
             , {experience.destination.district}
           </dd>
         </div>
-        <div>
+        <div className="flex flex-col gap-1 bg-surface p-5">
           <dt className="text-xs font-medium tracking-wide text-subtle uppercase">Provider</dt>
           <dd className="font-medium">
             {experience.provider.displayName}
@@ -79,18 +83,21 @@ async function ExperienceDetail({ params }: PageProps<"/experiences/[slug]">) {
 
       {experience.description ? (
         <section className="flex flex-col gap-2">
-          <h2 className="text-lg font-semibold">About this experience</h2>
-          <p className="whitespace-pre-line text-fg-soft">{experience.description}</p>
+          <h2 className="text-xl font-semibold tracking-tight">About this experience</h2>
+          <p className="leading-7 whitespace-pre-line text-fg-soft">{experience.description}</p>
         </section>
       ) : null}
 
-      <p className="rounded-lg border border-line bg-surface-muted p-4 text-sm text-fg-soft">
+      <p className="rounded-2xl bg-surface-muted p-4 text-sm text-fg-soft">
         Prices are indicative and availability isn&apos;t guaranteed until the provider confirms
         your booking.
       </p>
 
-      <section className="flex flex-col gap-3" aria-labelledby="book-heading">
-        <h2 id="book-heading" className="text-lg font-semibold">
+      <section
+        className="flex flex-col gap-4 rounded-3xl border border-line bg-surface p-5 sm:p-7"
+        aria-labelledby="book-heading"
+      >
+        <h2 id="book-heading" className="text-xl font-semibold tracking-tight">
           Request to book
         </h2>
         <Suspense fallback={<LoadingBlock label="Loading dates…" variant="form" />}>

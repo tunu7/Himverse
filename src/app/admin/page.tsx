@@ -34,7 +34,7 @@ function Stat({
       {hint ? <p className="text-sm text-muted">{hint}</p> : null}
     </>
   );
-  const className = `flex flex-col gap-1 rounded-2xl border bg-surface p-5 shadow-xs ${
+  const className = `flex flex-col gap-1 rounded-2xl border bg-surface p-5 ${
     attention ? "border-accent/40 ring-1 ring-accent/20" : "border-line"
   }`;
   return href ? (

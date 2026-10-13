@@ -65,7 +65,7 @@ export function ProviderApplicationForm() {
         <textarea name="description" rows={4} maxLength={4000} className={inputClass} />
         <FieldError errors={errors("description")} />
       </label>
-      <fieldset className="flex flex-col gap-4 rounded-xl border border-line bg-surface shadow-xs p-5">
+      <fieldset className="flex flex-col gap-4 rounded-2xl border border-line bg-surface p-5">
         <legend className="px-1 text-sm font-medium">
           Private — seen only by you and Himverse admins
         </legend>

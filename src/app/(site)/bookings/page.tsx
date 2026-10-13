@@ -30,7 +30,7 @@ async function BookingList() {
       {bookings.map((b) => (
         <li
           key={b.id}
-          className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line bg-surface shadow-xs p-5"
+          className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-line bg-surface p-5"
         >
           <div>
             <Link

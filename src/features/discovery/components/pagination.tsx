@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 const linkClass =
-  "rounded-lg border border-line-strong bg-surface px-3 py-1.5 text-sm font-medium transition-colors hover:bg-surface-muted";
+  "rounded-full border border-line bg-surface px-4 py-2 text-sm font-medium transition duration-200 hover:-translate-y-px hover:border-line-strong hover:shadow-sm";
 
 export function Pagination({
   page,

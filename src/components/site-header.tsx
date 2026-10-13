@@ -2,7 +2,8 @@ import Link from "next/link";
 import { Suspense } from "react";
 
 import { AccountMenu } from "@/components/account-menu";
-import { NavLinkItems, NavLinks } from "@/components/nav-links";
+import { BrandLogo } from "@/components/brand";
+import { MobileMenu, MobileNav, NavLinkItems, NavLinks } from "@/components/nav-links";
 import { signOut } from "@/features/auth/actions";
 import { getCurrentUser, isCurrentUserAdmin, isCurrentUserPartner } from "@/server/auth/session";
 
@@ -13,13 +14,13 @@ async function AuthLinks() {
       <span className="flex items-center gap-1">
         <Link
           href="/sign-up?as=partner"
-          className="hidden rounded-md px-2.5 py-1.5 text-muted transition-colors hover:bg-surface-muted hover:text-fg md:inline-block"
+          className="hidden rounded-full px-3.5 py-1.5 text-muted transition-colors hover:text-fg lg:inline-block"
         >
           List your experiences
         </Link>
         <Link
           href="/sign-in"
-          className="rounded-full bg-accent px-3.5 py-1.5 font-semibold text-white transition-colors hover:bg-accent-hover dark:text-zinc-950"
+          className="rounded-full bg-fg px-4 py-1.5 font-medium text-canvas transition duration-200 hover:bg-accent hover:text-on-accent"
         >
           Sign in
         </Link>
@@ -39,44 +40,27 @@ async function AuthLinks() {
   return <AccountMenu initial={(user.email ?? "?").slice(0, 1)} links={links} signOut={signOut} />;
 }
 
-function BrandMark() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true" className="size-6 text-accent">
-      <path d="M2 20 9 7l4 7 2.5-4L22 20Z" fill="currentColor" opacity="0.25" />
-      <path
-        d="M2 20 9 7l4 7 2.5-4L22 20Z"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
 export function SiteHeader() {
   return (
-    <header className="sticky top-0 z-40 border-b border-line bg-canvas/85 backdrop-blur supports-[backdrop-filter]:bg-canvas/70">
+    <header className="sticky top-0 z-40 border-b border-line/70 bg-canvas/75 backdrop-blur-xl backdrop-saturate-150">
       <nav
         aria-label="Main"
-        className="mx-auto flex w-full max-w-6xl flex-wrap items-center gap-x-2 gap-y-2 px-4 py-3 text-sm sm:px-6"
+        className="mx-auto flex h-16 w-full max-w-6xl items-center gap-3 px-4 text-sm sm:px-6"
       >
-        <Link
-          href="/"
-          className="order-1 flex items-center gap-2 font-semibold tracking-tight text-fg"
-        >
-          <BrandMark />
-          Himverse.AI
+        <Link href="/" className="group text-[15px] text-fg">
+          <BrandLogo />
         </Link>
-        {/* Mobile: brand and account on the first row, links scroll on the second. */}
-        <div className="order-3 -mx-2 flex w-[calc(100%+1rem)] items-center gap-1 overflow-x-auto sm:order-2 sm:mx-0 sm:ml-auto sm:w-auto">
+        <div className="mx-auto hidden items-center gap-0.5 md:flex">
           <Suspense fallback={<NavLinkItems pathname={null} />}>
             <NavLinks />
           </Suspense>
         </div>
-        <div className="order-2 ml-auto sm:order-3 sm:ml-0">
+        <div className="ml-auto flex items-center gap-2 md:ml-0">
           <Suspense fallback={<span className="inline-block w-16" aria-hidden />}>
             <AuthLinks />
+          </Suspense>
+          <Suspense fallback={<MobileMenu pathname={null} />}>
+            <MobileNav />
           </Suspense>
         </div>
       </nav>

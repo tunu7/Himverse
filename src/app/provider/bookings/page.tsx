@@ -31,7 +31,7 @@ function Group({
             <li
               key={b.id}
               data-testid="provider-booking"
-              className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line bg-surface shadow-xs p-4"
+              className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-line bg-surface p-4"
             >
               <div>
                 <Link

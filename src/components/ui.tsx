@@ -30,12 +30,26 @@ export function PendingLabel({
 }
 
 export function Skeleton({ className = "" }: { className?: string }) {
-  return <div aria-hidden="true" className={`animate-pulse rounded-md bg-skeleton ${className}`} />;
+  return <div aria-hidden="true" className={`shimmer rounded-lg bg-skeleton ${className}`} />;
 }
 
 export function EmptyState({ title, children }: { title: string; children?: React.ReactNode }) {
   return (
-    <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-line-strong px-6 py-10 text-center">
+    <div className="flex animate-fade flex-col items-center gap-3 rounded-2xl border border-dashed border-line-strong bg-surface/50 px-6 py-14 text-center">
+      <span
+        aria-hidden="true"
+        className="flex size-11 items-center justify-center rounded-full bg-surface-muted text-subtle"
+      >
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.6"
+          className="size-5"
+        >
+          <path d="M3 19 9.5 8l4 6.5L16 11l5 8Z" strokeLinejoin="round" />
+        </svg>
+      </span>
       <p className="font-medium text-fg">{title}</p>
       {children ? <div className="text-sm text-muted">{children}</div> : null}
     </div>

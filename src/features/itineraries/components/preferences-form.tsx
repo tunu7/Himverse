@@ -36,10 +36,10 @@ export function PreferencesForm({
 
       <fieldset
         disabled={pending}
-        className="grid gap-4 rounded-2xl border border-line bg-surface p-5 shadow-xs disabled:opacity-60 sm:p-6 sm:grid-cols-2"
+        className="grid gap-4 rounded-2xl border border-line bg-surface p-5 disabled:opacity-60 sm:p-6 sm:grid-cols-2"
       >
         <legend className="mb-4 flex items-center gap-2 text-base font-semibold text-fg">
-          <span className="flex size-6 items-center justify-center rounded-full bg-accent text-xs font-bold text-white dark:text-zinc-950">
+          <span className="flex size-6 items-center justify-center rounded-full bg-accent text-xs font-bold text-on-accent">
             1
           </span>
           Where and when
@@ -92,10 +92,10 @@ export function PreferencesForm({
 
       <fieldset
         disabled={pending}
-        className="grid gap-4 rounded-2xl border border-line bg-surface p-5 shadow-xs disabled:opacity-60 sm:p-6 sm:grid-cols-3"
+        className="grid gap-4 rounded-2xl border border-line bg-surface p-5 disabled:opacity-60 sm:p-6 sm:grid-cols-3"
       >
         <legend className="mb-4 flex items-center gap-2 text-base font-semibold text-fg">
-          <span className="flex size-6 items-center justify-center rounded-full bg-accent text-xs font-bold text-white dark:text-zinc-950">
+          <span className="flex size-6 items-center justify-center rounded-full bg-accent text-xs font-bold text-on-accent">
             2
           </span>
           Who and budget
@@ -134,10 +134,10 @@ export function PreferencesForm({
 
       <fieldset
         disabled={pending}
-        className="flex flex-col gap-4 rounded-2xl border border-line bg-surface p-5 shadow-xs disabled:opacity-60 sm:p-6"
+        className="flex flex-col gap-4 rounded-2xl border border-line bg-surface p-5 disabled:opacity-60 sm:p-6"
       >
         <legend className="mb-4 flex items-center gap-2 text-base font-semibold text-fg">
-          <span className="flex size-6 items-center justify-center rounded-full bg-accent text-xs font-bold text-white dark:text-zinc-950">
+          <span className="flex size-6 items-center justify-center rounded-full bg-accent text-xs font-bold text-on-accent">
             3
           </span>
           Interests and pace

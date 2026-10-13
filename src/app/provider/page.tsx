@@ -26,7 +26,7 @@ async function ProviderWorkspace() {
   if (providers.length === 0) {
     return (
       <div className="grid gap-8 lg:grid-cols-[1fr_20rem]">
-        <section className="flex flex-col gap-4 rounded-2xl border border-line bg-surface p-6 shadow-xs">
+        <section className="flex flex-col gap-4 rounded-2xl border border-line bg-surface p-6">
           <h2 className="text-lg font-semibold text-fg">Apply to become a partner</h2>
           <p className="text-sm text-muted">
             Tell us about your business. Our team reviews every application before anything you
@@ -43,7 +43,7 @@ async function ProviderWorkspace() {
               ["Publish", "Add experiences and open dates. Travellers request; you confirm."],
             ].map(([title, body], i) => (
               <li key={title} className="flex gap-3">
-                <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-accent text-xs font-bold text-white dark:text-zinc-950">
+                <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-accent text-xs font-bold text-on-accent">
                   {i + 1}
                 </span>
                 <span>
@@ -125,7 +125,7 @@ function ProviderSection({
               return (
                 <li
                   key={e.id}
-                  className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line bg-surface shadow-xs p-4"
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-line bg-surface p-4"
                 >
                   <div>
                     <p className="font-medium">{e.title}</p>
@@ -186,7 +186,7 @@ function ProviderSection({
               <div
                 key={e.id}
                 data-testid="slot-manager"
-                className="flex flex-col gap-2 rounded-xl border border-line bg-surface shadow-xs p-4"
+                className="flex flex-col gap-2 rounded-2xl border border-line bg-surface p-4"
               >
                 <p className="font-medium">{e.title}</p>
                 {experienceSlots.length === 0 ? (
@@ -211,7 +211,7 @@ function ProviderSection({
         </section>
       ) : null}
 
-      <details className="rounded-xl border border-line bg-surface shadow-xs p-5">
+      <details className="rounded-2xl border border-line bg-surface p-5">
         <summary className="cursor-pointer font-medium">Add an experience</summary>
         <div className="pt-4">
           <NewExperienceForm providerId={provider.id} destinations={destinations} />

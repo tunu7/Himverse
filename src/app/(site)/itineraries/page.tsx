@@ -27,7 +27,7 @@ async function ItineraryList() {
       </Link>
       <ul className="flex flex-col gap-3">
         {itineraries.map((it) => (
-          <li key={it.id} className="rounded-xl border border-line bg-surface shadow-xs p-5">
+          <li key={it.id} className="rounded-2xl border border-line bg-surface p-5">
             <Link
               href={`/itineraries/${it.id}`}
               className="font-semibold text-fg underline-offset-4 hover:text-accent hover:underline"

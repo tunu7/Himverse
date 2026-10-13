@@ -23,25 +23,40 @@ const STEPS = [
   },
 ] as const;
 
+const PROMISES = [
+  { title: "Verified providers", body: "Every partner is reviewed by our team." },
+  { title: "Grounded AI", body: "Plans use only experiences in our catalogue." },
+  { title: "No surprises", body: "Providers confirm dates and the final price." },
+] as const;
+
 function SectionHeading({
+  eyebrow,
   title,
   subtitle,
   href,
   linkLabel,
 }: {
+  eyebrow: string;
   title: string;
   subtitle: string;
   href: string;
   linkLabel: string;
 }) {
   return (
-    <div className="flex flex-wrap items-end justify-between gap-3">
-      <div className="flex flex-col gap-1">
-        <h2 className="text-2xl font-semibold tracking-tight text-fg sm:text-3xl">{title}</h2>
+    <div className="reveal flex flex-wrap items-end justify-between gap-4">
+      <div className="flex flex-col gap-2">
+        <p className="text-xs font-medium tracking-[0.18em] text-accent uppercase">{eyebrow}</p>
+        <h2 className="text-3xl font-semibold tracking-[-0.03em] text-fg sm:text-4xl">{title}</h2>
         <p className="text-muted">{subtitle}</p>
       </div>
-      <Link href={href} className="text-sm font-semibold text-accent hover:underline">
-        {linkLabel} →
+      <Link
+        href={href}
+        className="group inline-flex items-center gap-1.5 rounded-full border border-line px-4 py-2 text-sm font-medium text-fg transition duration-200 hover:border-line-strong hover:shadow-sm"
+      >
+        {linkLabel}
+        <span aria-hidden="true" className="transition-transform group-hover:translate-x-0.5">
+          →
+        </span>
       </Link>
     </div>
   );
@@ -52,8 +67,8 @@ function CardRowSkeleton({ count }: { count: number }) {
     <div role="status" className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
       <span className="sr-only">Loading…</span>
       {Array.from({ length: count }, (_, i) => (
-        <div key={i} className="overflow-hidden rounded-2xl border border-line">
-          <Skeleton className="h-28 w-full rounded-none" />
+        <div key={i} className="overflow-hidden rounded-3xl border border-line">
+          <Skeleton className="h-36 w-full rounded-none" />
           <div className="flex flex-col gap-3 p-5">
             <Skeleton className="h-5 w-3/4" />
             <Skeleton className="h-4 w-1/2" />
@@ -95,48 +110,86 @@ async function FeaturedDestinations() {
   );
 }
 
+/** Layered ridges that drift slowly behind the hero. Decorative. */
 function MountainArt() {
   return (
-    <svg
-      viewBox="0 0 800 240"
-      preserveAspectRatio="none"
+    <div
       aria-hidden="true"
-      className="pointer-events-none absolute inset-x-0 bottom-0 h-40 w-full sm:h-56"
+      className="pointer-events-none absolute inset-x-0 bottom-0 h-48 overflow-hidden sm:h-64"
     >
-      <path
-        d="M0 240 L120 110 L210 180 L330 60 L450 170 L560 90 L680 160 L800 80 L800 240 Z"
-        className="fill-accent/10"
-      />
-      <path
-        d="M0 240 L90 170 L190 210 L300 130 L420 210 L520 150 L640 200 L740 140 L800 170 L800 240 Z"
-        className="fill-accent/15"
-      />
-      <path d="M330 60 L360 88 L345 86 L330 100 L318 84 L305 86 Z" className="fill-canvas/80" />
-      <path d="M560 90 L585 112 L572 110 L560 122 L550 108 L538 110 Z" className="fill-canvas/80" />
-    </svg>
+      <svg
+        viewBox="0 0 1600 240"
+        preserveAspectRatio="none"
+        className="absolute bottom-0 left-0 h-full w-[115%] animate-drift-slow text-accent"
+      >
+        <path
+          d="M0 240 L140 120 L240 170 L380 60 L520 160 L640 90 L780 150 L900 70 L1040 150 L1180 80 L1320 160 L1460 90 L1600 140 L1600 240 Z"
+          fill="currentColor"
+          opacity="0.07"
+        />
+      </svg>
+      <svg
+        viewBox="0 0 1600 240"
+        preserveAspectRatio="none"
+        className="absolute bottom-0 left-0 h-3/4 w-[115%] animate-drift text-accent"
+      >
+        <path
+          d="M0 240 L100 170 L220 200 L340 130 L480 205 L600 150 L740 195 L860 140 L1000 200 L1120 150 L1260 190 L1400 140 L1600 185 L1600 240 Z"
+          fill="currentColor"
+          opacity="0.1"
+        />
+      </svg>
+      <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-canvas to-transparent" />
+    </div>
   );
 }
+
+const rise = (delay: number) => ({ animationDelay: `${delay}ms` });
 
 export default function Home() {
   return (
     <main className="flex flex-1 flex-col">
-      <section className="relative overflow-hidden border-b border-line bg-gradient-to-b from-accent-soft via-canvas to-canvas">
-        <div className="pointer-events-none absolute -top-24 -right-24 size-96 rounded-full bg-accent/10 blur-3xl" />
+      <section className="relative isolate overflow-hidden">
+        <div
+          aria-hidden="true"
+          className="bg-dots pointer-events-none absolute inset-0 -z-10 [mask-image:radial-gradient(ellipse_at_top,black_20%,transparent_70%)]"
+        />
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -top-40 left-1/2 -z-10 h-[32rem] w-[56rem] -translate-x-1/2 rounded-full bg-accent/15 blur-3xl"
+        />
         <MountainArt />
-        <div className="relative mx-auto flex w-full max-w-6xl flex-col gap-7 px-4 pt-16 pb-28 sm:px-6 sm:pt-24 sm:pb-40">
-          <p className="self-start rounded-full border border-accent/25 bg-surface/70 px-3 py-1 text-xs font-semibold tracking-wide text-accent backdrop-blur">
-            Himverse.AI · Now exploring Arunachal Pradesh
+        <div className="relative mx-auto flex w-full max-w-6xl flex-col items-center gap-7 px-4 pt-16 pb-36 text-center sm:px-6 sm:pt-28 sm:pb-52">
+          <p
+            style={rise(0)}
+            className="inline-flex animate-rise items-center gap-2 rounded-full border border-line bg-surface/70 px-3.5 py-1.5 text-xs font-medium text-fg-soft backdrop-blur"
+          >
+            <span className="relative flex size-2">
+              <span className="absolute inline-flex size-full animate-ping rounded-full bg-accent opacity-60" />
+              <span className="relative inline-flex size-2 rounded-full bg-accent" />
+            </span>
+            Now exploring Arunachal Pradesh
           </p>
-          <h1 className="max-w-3xl text-4xl leading-[1.1] font-semibold tracking-tight text-fg sm:text-6xl">
-            Plan your Himalayan journey with trusted local experiences
+          <h1
+            style={rise(80)}
+            className="max-w-4xl animate-rise text-[2.75rem] leading-[1.02] font-semibold tracking-[-0.045em] text-fg sm:text-7xl"
+          >
+            Plan your Himalayan journey with{" "}
+            <span className="font-display font-normal tracking-[-0.02em] text-accent italic">
+              trusted local
+            </span>{" "}
+            experiences
           </h1>
-          <p className="max-w-2xl text-lg leading-8 text-muted">
+          <p style={rise(160)} className="max-w-xl animate-rise text-lg leading-8 text-muted">
             Discover monasteries, valleys, rivers and forests, then let AI turn them into a
             day-by-day plan. Every experience comes from a verified local provider.
           </p>
-          <div className="flex flex-wrap gap-3">
-            <Link href="/itineraries/new" className={`${buttonClass} px-6 py-3 text-base`}>
+          <div style={rise(240)} className="flex animate-rise flex-wrap justify-center gap-3">
+            <Link href="/itineraries/new" className={`${buttonClass} group px-6 py-3 text-base`}>
               Plan my trip with AI
+              <span aria-hidden="true" className="transition-transform group-hover:translate-x-0.5">
+                →
+              </span>
             </Link>
             <Link href="/experiences" className={`${secondaryButtonClass} px-6 py-3 text-base`}>
               Browse experiences
@@ -147,7 +200,8 @@ export default function Home() {
             method="get"
             role="search"
             aria-label="Search experiences"
-            className="flex w-full max-w-xl items-center gap-2 rounded-full border border-line bg-surface/80 p-1.5 pl-4 shadow-sm backdrop-blur"
+            style={rise(320)}
+            className="flex w-full max-w-xl animate-rise items-center gap-2 rounded-full border border-line bg-surface/80 p-1.5 pl-5 shadow-xl shadow-black/[0.04] backdrop-blur-xl transition focus-within:border-accent/50 focus-within:ring-4 focus-within:ring-accent/10"
           >
             <label htmlFor="home-search" className="sr-only">
               Search experiences
@@ -169,7 +223,7 @@ export default function Home() {
               name="q"
               maxLength={100}
               placeholder="Monastery, rafting, birding…"
-              className={`${inputClass} border-0 bg-transparent px-1 shadow-none focus:ring-0`}
+              className={`${inputClass} border-0 bg-transparent px-1 hover:border-0 focus:ring-0`}
             />
             <button type="submit" className={`${buttonClass} shrink-0`}>
               Search
@@ -178,8 +232,31 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-16 sm:px-6">
+      <section aria-label="Why Himverse.AI" className="border-y border-line bg-surface/60">
+        <ul className="mx-auto grid w-full max-w-6xl divide-y divide-line px-4 sm:grid-cols-3 sm:divide-x sm:divide-y-0 sm:px-6">
+          {PROMISES.map((promise) => (
+            <li
+              key={promise.title}
+              className="reveal flex items-start gap-3 py-6 sm:px-6 sm:first:pl-0"
+            >
+              <span
+                aria-hidden="true"
+                className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-accent-soft text-xs text-accent-soft-fg"
+              >
+                ✓
+              </span>
+              <div>
+                <p className="font-medium text-fg">{promise.title}</p>
+                <p className="text-sm text-muted">{promise.body}</p>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-4 py-20 sm:px-6 sm:py-28">
         <SectionHeading
+          eyebrow="Experiences"
           title="Experiences to start with"
           subtitle="The latest additions to the catalogue."
           href="/experiences"
@@ -190,24 +267,25 @@ export default function Home() {
         </Suspense>
       </section>
 
-      <section className="border-y border-line bg-surface-muted">
-        <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-16 sm:px-6">
-          <div className="flex flex-col gap-1">
-            <h2 className="text-2xl font-semibold tracking-tight text-fg sm:text-3xl">
+      <section className="bg-surface-muted/70">
+        <div className="mx-auto flex w-full max-w-6xl flex-col gap-12 px-4 py-20 sm:px-6 sm:py-28">
+          <div className="reveal flex flex-col gap-2">
+            <p className="text-xs font-medium tracking-[0.18em] text-accent uppercase">
               How it works
+            </p>
+            <h2 className="text-3xl font-semibold tracking-[-0.03em] text-fg sm:text-4xl">
+              From idea to itinerary in{" "}
+              <span className="font-display font-normal italic">three steps</span>
             </h2>
-            <p className="text-muted">From idea to itinerary in three steps.</p>
           </div>
-          <ol className="grid gap-5 sm:grid-cols-3">
+          <ol className="grid gap-8 sm:grid-cols-3 sm:gap-6">
             {STEPS.map((step, i) => (
               <li
                 key={step.title}
-                className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-6 shadow-xs"
+                className="reveal flex flex-col gap-3 border-t border-line-strong pt-6"
               >
-                <span className="flex size-9 items-center justify-center rounded-full bg-accent text-sm font-bold text-white dark:text-zinc-950">
-                  {i + 1}
-                </span>
-                <p className="text-lg font-semibold text-fg">{step.title}</p>
+                <span className="font-display text-5xl leading-none text-accent">0{i + 1}</span>
+                <p className="text-lg font-semibold tracking-tight text-fg">{step.title}</p>
                 <p className="text-sm leading-6 text-muted">{step.body}</p>
               </li>
             ))}
@@ -215,8 +293,9 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-16 sm:px-6">
+      <section className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-4 py-20 sm:px-6 sm:py-28">
         <SectionHeading
+          eyebrow="Destinations"
           title="Where to go"
           subtitle="Valleys, high passes and rainforest across the state."
           href="/destinations"
@@ -227,22 +306,41 @@ export default function Home() {
         </Suspense>
       </section>
 
-      <section className="mx-auto w-full max-w-6xl px-4 pb-20 sm:px-6">
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-700 to-teal-800 px-6 py-12 text-white shadow-lg sm:px-12">
-          <div className="pointer-events-none absolute -right-10 -bottom-16 size-72 rounded-full bg-white/10 blur-2xl" />
-          <div className="relative flex flex-col gap-4 sm:max-w-xl">
-            <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-              Not sure where to begin?
+      <section className="mx-auto w-full max-w-6xl px-4 pb-24 sm:px-6">
+        <div className="reveal relative isolate overflow-hidden rounded-[2rem] bg-ink ring-1 ring-white/5 px-6 py-14 text-white sm:px-14 sm:py-20">
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute -top-32 -right-20 -z-10 size-96 rounded-full bg-emerald-500/25 blur-3xl"
+          />
+          <svg
+            viewBox="0 0 800 200"
+            preserveAspectRatio="none"
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-x-0 bottom-0 -z-10 h-32 w-full animate-drift text-emerald-300 sm:h-44"
+          >
+            <path
+              d="M0 200 L120 100 L210 150 L330 50 L450 140 L560 80 L680 140 L800 70 L800 200 Z"
+              fill="currentColor"
+              opacity="0.08"
+            />
+          </svg>
+          <div className="flex flex-col gap-5 sm:max-w-xl">
+            <h2 className="text-3xl font-semibold tracking-[-0.03em] sm:text-5xl">
+              Not sure where to{" "}
+              <span className="font-display font-normal text-emerald-300 italic">begin?</span>
             </h2>
-            <p className="text-emerald-50/90">
+            <p className="text-lg leading-8 text-white/70">
               Tell us your dates and interests. In about a minute you&apos;ll have a day-by-day plan
               you can refine and save to your trips.
             </p>
             <Link
               href="/itineraries/new"
-              className="inline-flex items-center justify-center self-start rounded-full bg-white px-6 py-3 font-semibold text-emerald-800 shadow-sm transition hover:bg-emerald-50"
+              className="group inline-flex items-center justify-center gap-2 self-start rounded-full bg-white px-6 py-3 font-medium text-ink transition duration-200 hover:-translate-y-px hover:bg-emerald-300"
             >
               Start planning — it&apos;s free
+              <span aria-hidden="true" className="transition-transform group-hover:translate-x-0.5">
+                →
+              </span>
             </Link>
           </div>
         </div>

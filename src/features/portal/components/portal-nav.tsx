@@ -19,18 +19,17 @@ export function PortalNavItems({
     const active =
       pathname !== null &&
       (exact ? pathname === href : pathname === href || pathname.startsWith(`${href}/`));
-    const activeClass =
-      tone === "admin" ? "border-emerald-400 text-white" : "border-accent text-fg";
+    const activeClass = tone === "admin" ? "border-emerald-300 text-white" : "border-fg text-fg";
     const idleClass =
       tone === "admin"
-        ? "border-transparent text-zinc-400 hover:text-white"
+        ? "border-transparent text-white/50 hover:text-white"
         : "border-transparent text-muted hover:text-fg";
     return (
       <Link
         key={href}
         href={href}
         aria-current={active ? "page" : undefined}
-        className={`shrink-0 border-b-2 px-1 py-3 text-sm font-medium transition-colors ${
+        className={`shrink-0 border-b-2 px-1 py-3 text-sm font-medium transition-colors duration-200 ${
           active ? activeClass : idleClass
         }`}
       >

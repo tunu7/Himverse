@@ -17,7 +17,7 @@ async function SignInContent({ searchParams }: PageProps<"/sign-in">) {
       {error === "confirmation_failed" ? (
         <p
           role="alert"
-          className="rounded-xl border border-danger/30 bg-danger-soft px-4 py-3 text-sm text-danger-soft-fg"
+          className="rounded-2xl border border-danger/30 bg-danger-soft px-4 py-3 text-sm text-danger-soft-fg"
         >
           That confirmation link is invalid or has expired. Please sign in or request a new link.
         </p>
@@ -25,7 +25,7 @@ async function SignInContent({ searchParams }: PageProps<"/sign-in">) {
       {error === "oauth_failed" ? (
         <p
           role="alert"
-          className="rounded-xl border border-danger/30 bg-danger-soft px-4 py-3 text-sm text-danger-soft-fg"
+          className="rounded-2xl border border-danger/30 bg-danger-soft px-4 py-3 text-sm text-danger-soft-fg"
         >
           Google sign-in didn&apos;t complete. Please try again or use your email.
         </p>
@@ -40,7 +40,7 @@ export default function SignInPage(props: PageProps<"/sign-in">) {
   return (
     <main className="flex flex-col gap-8">
       <header className="flex flex-col gap-2">
-        <h1 className="text-3xl font-semibold tracking-tight text-fg">Sign in</h1>
+        <h1 className="text-4xl font-semibold tracking-[-0.03em] text-fg">Sign in</h1>
         <p className="text-muted">
           Welcome back. Travellers, tourism partners and admins all sign in here.
         </p>
