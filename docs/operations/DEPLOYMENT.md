@@ -26,6 +26,17 @@ cloud project exists yet. Go-live gates are in [RELEASE_CHECKLIST](RELEASE_CHECK
    [AUTHORIZATION_AND_RLS](../security/AUTHORIZATION_AND_RLS.md).
 7. Branch protection on `main`: require CI checks and one review.
 
+## Sample content (pre-launch)
+
+Until real providers are onboarded, production shows sample content from
+`supabase/sample-content/apply.sql`: 8 destinations and 22 experiences under one provider named
+"Sample listings (not bookable)", with **no availability dates**, so no booking request can be sent to a
+provider that doesn't exist. It's idempotent and outside the migrations (content, not schema).
+
+- Applied to production on 2026-10-13: `npx supabase db query --linked -f supabase/sample-content/apply.sql`.
+- Remove before launch, or once real listings exist:
+  `npx supabase db query --linked -f supabase/sample-content/remove.sql`.
+
 ## Migration runbook
 
 Migrations are forward-only and applied **before** the code that needs them. Each must be compatible

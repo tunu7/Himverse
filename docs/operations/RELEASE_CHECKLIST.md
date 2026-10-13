@@ -70,6 +70,9 @@ Launch scope: discovery, AI itineraries and booking **requests** (no online paym
 - [ ] Security headers checked on the staging domain (e.g. securityheaders.com), no CSP violations in
       the console.
 
+- [ ] Sample content removed (`supabase/sample-content/remove.sql`) or kept deliberately, clearly
+      labelled and not bookable.
+
 ## 8. Go / no-go
 
 - [ ] Rollback rehearsed: promote previous deployment on staging.
