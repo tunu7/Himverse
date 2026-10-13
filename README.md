@@ -54,9 +54,10 @@ Local email confirmation is off; sign up at `/sign-up` and you're signed in imme
 | `npm run typecheck`        | Generate route types and run `tsc --noEmit`                           |
 | `npm run format`           | Prettier write                                                        |
 | `npm run format:check`     | Prettier check (used in CI)                                           |
-| `npm test`                 | Vitest unit + integration tests                                       |
+| `npm test`                 | Vitest unit tests                                                     |
 | `npm run test:integration` | Concurrency tests over parallel DB connections (needs local Supabase) |
 | `npm run test:e2e`         | Playwright E2E against `next start` on port 3100 (build first)        |
+| `npm run test:smoke`       | Read-only checks of a deployment (`STAGING_BASE_URL` required)        |
 | `npm run db:test`          | Supabase pgTAP tests (`supabase/tests`), requires local Supabase      |
 | `npm run db:types`         | Regenerate `src/types/database.ts` from the local schema              |
 | `npm run env:local`        | Write `.env.local` for the local Supabase stack                       |

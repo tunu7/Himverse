@@ -6,11 +6,13 @@ Implemented in Phase 3 for flows T2 and T3 in [USER_FLOWS](../product/USER_FLOWS
 ## Pipeline (`src/server/itineraries/pipeline.ts`)
 
 ```
-preferences (Zod, server-side) → rate limit (10/h, 30/day) → retrieve (deterministic, public only)
-  → none? stop with "no suitable inventory" (no model call, nothing invented)
+preferences (Zod, server-side) → kill switch → retrieve (deterministic, public only)
+  → none? stop with "no suitable inventory" (no model call, nothing invented, no quota used)
+  → reserve: begin_itinerary_generation (per-user 10/h + 30/day and platform daily cap, atomic)
   → prompt (itinerary-v1: aliases only, notes fenced) → model (45 s timeout, capped tokens)
   → schema check (itinerary.v1) → grounding + constraint checks
-      ├─ pass → save_itinerary_version RPC (re-checks visibility + ownership, DB snapshots) → log
+      ├─ pass → save_itinerary_version RPC (consumes the reservation, re-checks visibility +
+      │         ownership, DB snapshots) → finish_itinerary_generation
       └─ fail → one repair attempt with the specific errors → re-check → else fail, nothing saved
 ```
 

@@ -32,3 +32,10 @@ bookings migration and `src/lib/booking-options.ts` together.
 7. **Time slots:** a date plus an optional start time; multi-session days aren't modelled.
 8. **Provider suspension with confirmed bookings:** confirmed bookings stay as they are. Should
    travellers be notified or offered alternatives?
+9. **Final price vs estimate:** the provider can confirm any total up to INR 1 crore (a database cap),
+   even far above the estimate, and the traveller only sees it after confirmation. Should a large
+   increase need the traveller's acceptance, or be capped relative to the estimate? (Security review
+   L1, Phase 5.)
+10. **Contact phone retention:** the phone number given at booking stays on the booking indefinitely and
+    is visible to the provider's members. How long should it be kept after the trip, and should it be
+    hidden once the booking is closed? Needs the DPDP review. (Security review L3, Phase 5.)

@@ -1,22 +1,14 @@
 import { randomUUID } from "node:crypto";
 
-import { Pool, type PoolClient } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+
+import { createLocalPool, runAsUser } from "./local-db";
 
 /**
  * Booking concurrency against the LOCAL Supabase database, using genuinely
  * parallel connections (pgTAP runs in a single session and can't do this).
- *
- * Connection: SUPABASE_DB_URL, defaulting to the Supabase CLI's documented local
- * default (not a secret; local Docker only). Never point this at a hosted project.
  */
-const DB_URL =
-  process.env.SUPABASE_DB_URL ?? "postgresql://postgres:postgres@127.0.0.1:54322/postgres";
-if (!/@(127\.0\.0\.1|localhost):54322\//.test(DB_URL)) {
-  throw new Error("Integration tests only run against the local Supabase database.");
-}
-
-const pool = new Pool({ connectionString: DB_URL, max: 20 });
+const pool = createLocalPool();
 const run = randomUUID().slice(0, 8);
 const ids = {
   provider: randomUUID(),
@@ -26,25 +18,8 @@ const ids = {
   travelers: Array.from({ length: 6 }, () => randomUUID()),
 };
 
-/** Runs `sql` in its own connection and transaction as an authenticated user. */
-async function asUser(userId: string, sql: string, params: unknown[] = []) {
-  const client: PoolClient = await pool.connect();
-  try {
-    await client.query("begin");
-    await client.query("set local role authenticated");
-    await client.query("select set_config('request.jwt.claims', $1, true)", [
-      JSON.stringify({ sub: userId, role: "authenticated" }),
-    ]);
-    const result = await client.query(sql, params);
-    await client.query("commit");
-    return { ok: true as const, rows: result.rows };
-  } catch (error) {
-    await client.query("rollback").catch(() => {});
-    return { ok: false as const, code: (error as { code?: string }).code };
-  } finally {
-    client.release();
-  }
-}
+const asUser = (userId: string, sql: string, params: unknown[] = []) =>
+  runAsUser(pool, userId, sql, params);
 
 async function newSlot(capacity: number): Promise<string> {
   const { rows } = await pool.query<{ id: string }>(

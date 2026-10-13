@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { AppError } from "@/lib/errors";
-import { effectiveStatus, slotStartsAt, travelerCanCancel } from "@/lib/booking-options";
+import { effectiveStatus, istDate, slotStartsAt, travelerCanCancel } from "@/lib/booking-options";
 
 vi.mock("server-only", () => ({}));
 vi.mock("next/cache", () => ({ refresh: vi.fn() }));
@@ -38,6 +38,13 @@ beforeEach(() => {
 });
 
 describe("booking display rules", () => {
+  it("istDate uses the Indian calendar date, with day offsets", () => {
+    // 20:00 UTC is already the next day in India.
+    expect(istDate(new Date("2026-03-01T20:00:00Z"))).toBe("2026-03-02");
+    expect(istDate(new Date("2026-03-01T18:00:00Z"))).toBe("2026-03-01");
+    expect(istDate(new Date("2026-03-01T20:00:00Z"), -30)).toBe("2026-01-31");
+  });
+
   const now = new Date("2026-11-01T06:30:00Z"); // 12:00 IST
 
   it("treats slot dates as India time", () => {

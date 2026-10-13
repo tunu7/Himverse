@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { cache } from "react";
 
 import { AppError } from "@/lib/errors";
+import { logger } from "@/lib/logger";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export type SessionUser = { id: string; email: string | null };
@@ -40,7 +41,7 @@ export const isCurrentUserAdmin = cache(async (): Promise<boolean> => {
     .maybeSingle();
   if (error) {
     // Fail closed: an error never grants admin.
-    console.error({ event: "auth.role_lookup_failed", userId: user.id, code: error.code });
+    logger.error("auth.role_lookup_failed", { userId: user.id, code: error.code });
     return false;
   }
   return data !== null;

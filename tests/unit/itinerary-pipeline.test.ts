@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
+import { AppError } from "@/lib/errors";
+
 import { ModelError, type ItineraryModel } from "@/server/itineraries/model/types";
 import {
   GENERATION_LIMITS,
@@ -49,14 +51,17 @@ function deps(
   const saved: SaveVersionInput[] = [];
   const logs: GenerationLogEntry[] = [];
   const retrieve = vi.fn(async () => candidates);
+  const reserve = vi.fn(async () => 42);
   return {
     saved,
     logs,
     retrieve,
+    reserve,
     deps: {
       model,
       retrieve,
-      quota: async () => ({ lastHour: 0, lastDay: 0 }),
+      reserve,
+      controls: { enabled: true, globalDailyLimit: 300 },
       save: async (input: SaveVersionInput) => {
         saved.push(input);
         return {
@@ -67,7 +72,7 @@ function deps(
           unpricedItemCount: 0,
         };
       },
-      record: async (entry: GenerationLogEntry) => {
+      finish: async (entry: GenerationLogEntry) => {
         logs.push(entry);
       },
       clock: (() => {
@@ -103,14 +108,37 @@ describe("runItineraryGeneration", () => {
     ]);
   });
 
-  it("refuses when the rate limit is reached, before retrieval or any model call", async () => {
+  it("reserves a generation with the platform cap before calling the model, and passes it to save and finish", async () => {
+    const model = scriptedModel(good);
+    const t = deps(model);
+    await runItineraryGeneration({ ...request, itineraryId: "it-9" }, t.deps);
+    expect(t.reserve).toHaveBeenCalledWith({ itineraryId: "it-9", globalDailyLimit: 300 });
+    expect(t.saved[0]?.generationId).toBe(42);
+    expect(t.logs[0]?.generationId).toBe(42);
+  });
+
+  it("refuses without calling the model when the reservation is over a limit", async () => {
     const model = scriptedModel(good);
     const t = deps(model, {
-      quota: async () => ({ lastHour: GENERATION_LIMITS.perHour, lastDay: 1 }),
+      reserve: async () => {
+        throw new AppError("RATE_LIMITED", `limit ${GENERATION_LIMITS.perHour} per hour`);
+      },
     });
     await expect(runItineraryGeneration(request, t.deps)).rejects.toMatchObject({
       code: "RATE_LIMITED",
     });
+    expect(model.prompts).toHaveLength(0);
+    expect(t.saved).toHaveLength(0);
+  });
+
+  it("the kill switch stops generation before any reservation, retrieval or model call", async () => {
+    const model = scriptedModel(good);
+    const t = deps(model, { controls: { enabled: false, globalDailyLimit: 300 } });
+    await expect(runItineraryGeneration(request, t.deps)).rejects.toMatchObject({
+      code: "UPSTREAM_UNAVAILABLE",
+      message: expect.stringMatching(/temporarily unavailable/),
+    });
+    expect(t.reserve).not.toHaveBeenCalled();
     expect(t.retrieve).not.toHaveBeenCalled();
     expect(model.prompts).toHaveLength(0);
   });
@@ -123,6 +151,7 @@ describe("runItineraryGeneration", () => {
       code: "NOT_FOUND",
     });
     expect(model.prompts).toHaveLength(0);
+    expect(t.reserve).not.toHaveBeenCalled();
     expect(t.saved).toHaveLength(0);
   });
 
@@ -199,7 +228,7 @@ describe("runItineraryGeneration", () => {
   it("never lets a logging failure hide the result", async () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
     const t = deps(scriptedModel(good), {
-      record: async () => {
+      finish: async () => {
         throw Object.assign(new Error("db down"), { code: "XX000" });
       },
     });

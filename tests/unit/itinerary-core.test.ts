@@ -1,4 +1,6 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+
+vi.mock("server-only", () => ({}));
 
 import { createMockItineraryModel } from "@/server/itineraries/model/mock";
 import {
@@ -110,6 +112,30 @@ describe("prompt builder", () => {
       })),
     };
     expect(() => buildPrompt(prefs(), many, buildAliases(many))).toThrow(String(MAX_PROMPT_CHARS));
+  });
+
+  it("drops the previous plan's prose when a refinement would exceed the size cap", () => {
+    const aliases = buildAliases(candidates);
+    const previous = {
+      title: "Long trip",
+      summary: "s".repeat(800),
+      cautions: [],
+      days: Array.from({ length: 14 }, (_, i) => ({
+        day: i + 1,
+        base: "D1",
+        note: "n".repeat(300),
+        items: Array.from({ length: 5 }, () => ({
+          experience: "E1",
+          timeOfDay: "morning" as const,
+          rationale: "r".repeat(300),
+        })),
+      })),
+    };
+    const { prompt } = buildPrompt(prefs(), candidates, aliases, { previous, request: "Slower" });
+    expect(prompt.length).toBeLessThanOrEqual(MAX_PROMPT_CHARS);
+    expect(prompt).toContain("Previous itinerary");
+    expect(prompt).not.toContain("r".repeat(300));
+    expect(prompt).toContain("Requested changes: Slower");
   });
 });
 
@@ -317,6 +343,7 @@ describe("validateDraft", () => {
     expect(itineraryDraftSchema.safeParse({ ...draft([]), title: "x".repeat(81) }).success).toBe(
       false,
     );
+    expect(itineraryDraftSchema.safeParse({ ...draft([]), title: "   " }).success).toBe(false);
   });
 });
 

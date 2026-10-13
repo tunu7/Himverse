@@ -1,3 +1,5 @@
+import { logger } from "@/lib/logger";
+
 /**
  * Application error contract. See docs/engineering/ERROR_HANDLING.md.
  *
@@ -114,8 +116,7 @@ export function toLoggedFailure(
 ): Extract<ActionResult<never>, { ok: false }> {
   const failure = toFailure(error);
   if (failure.error.code === "INTERNAL" || failure.error.code === "UPSTREAM_UNAVAILABLE") {
-    console.error({
-      event,
+    logger.error(event, {
       code: failure.error.code,
       cause: summarizeForLog(error instanceof AppError ? error.cause : error),
     });

@@ -30,6 +30,10 @@ export function toAppError(error: DatabaseErrorLike, fallbackMessage: string): A
       return new AppError("VALIDATION_FAILED", "Some of the information isn't valid.", {
         cause: error,
       });
+    case "54000": // program_limit_exceeded: our abuse-limit triggers
+      return new AppError("RATE_LIMITED", "You've reached a usage limit. Please try again later.", {
+        cause: error,
+      });
     case "23503": // foreign_key_violation
       return new AppError("VALIDATION_FAILED", "A referenced item doesn't exist.", {
         cause: error,

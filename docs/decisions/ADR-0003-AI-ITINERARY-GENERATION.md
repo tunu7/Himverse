@@ -62,7 +62,8 @@ data follows [ADR-0002](ADR-0002-AUTHORIZATION-MODEL.md): owner-only, enforced b
 
 4. **Persistence re-checks everything.** `save_itinerary_version` is a `security definer` function with
    `search_path=''`. It:
-   - verifies ownership with `auth.uid()`;
+   - verifies ownership with `auth.uid()`, and consumes the caller's pending generation reservation;
+   - checks that travellers match the preferences and that no experience appears twice;
    - rejects any experience that isn't publicly visible right now, or isn't at the stated destination
      (SQLSTATE `55000`);
    - snapshots title, price and duration **from the database**, and computes the estimated total itself.
@@ -76,8 +77,15 @@ data follows [ADR-0002](ADR-0002-AUTHORIZATION-MODEL.md): owner-only, enforced b
   and delete. They **can't insert versions or items directly**; that goes only through the RPC.
 - **Versions and items are immutable.** Deleting an itinerary cascades to them.
 - **`current_version_id`** has a composite FK, so it can only point at a version of the same itinerary.
-- **Rate limit:** 10 generations per hour and 30 per day per user, counted from the log before any
-  model call.
+- **Rate limit:** 10 generations per hour and 30 per day per user, plus a platform-wide daily cap
+  (`AI_DAILY_GENERATION_LIMIT`). _Amended in Phase 5 (security review M1/M2):_ the pipeline
+  **reserves** a generation with `begin_itinerary_generation()` after retrieval and before the model
+  call. The function serialises each user's reservations with an advisory lock, applies both limits and
+  inserts a `pending` log row that counts immediately. `finish_itinerary_generation()` records the
+  outcome; `save_itinerary_version()` requires and consumes the caller's own pending reservation from
+  the last 15 minutes, so the RPC can't be called directly to bypass the limits. The global cap isn't
+  serialised across users, so concurrent requests can overshoot it slightly; it's a cost guard, not an
+  exact quota. A kill switch (`AI_ITINERARY_ENABLED=false`) stops generation entirely.
 - **Prices are per person** (product decision). The estimate is the sum of item prices × travellers,
   shown as an indicative minimum. Unpriced items are excluded and counted.
 - **Currency is INR only**, because the catalogue has no other currency and there's no exchange-rate

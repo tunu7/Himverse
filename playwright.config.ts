@@ -37,8 +37,9 @@ export default defineConfig({
     command: `npm run start -- --port ${PORT}`,
     url: baseURL,
     reuseExistingServer: false,
-    // Deterministic AI model for E2E (refused in production by getAiEnv).
-    env: { AI_PROVIDER: "mock" },
+    // Deterministic AI model for E2E. `next start` is a production build, so the
+    // mock must be allowed explicitly (always refused on Vercel production).
+    env: { AI_PROVIDER: "mock", AI_ALLOW_MOCK: "true" },
     timeout: 120_000,
   },
 });

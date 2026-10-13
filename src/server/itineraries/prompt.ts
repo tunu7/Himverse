@@ -71,15 +71,32 @@ export function buildPrompt(
     `Experiences:\n${JSON.stringify(experiences)}`,
     `<traveller_notes>\n${escapeFence(prefs.notes) || "(none)"}\n</traveller_notes>`,
   ];
-  if (refinement) {
-    sections.push(
-      `Previous itinerary (revise it):\n${JSON.stringify(refinement.previous)}`,
-      `<traveller_notes>\nRequested changes: ${escapeFence(refinement.request) || "(none)"}\n</traveller_notes>`,
-    );
-  }
-  sections.push("Plan the itinerary now.");
+  const build = (previous?: ItineraryDraft) =>
+    [
+      ...sections,
+      ...(refinement
+        ? [
+            `Previous itinerary (revise it):\n${JSON.stringify(previous ?? refinement.previous)}`,
+            `<traveller_notes>\nRequested changes: ${escapeFence(refinement.request) || "(none)"}\n</traveller_notes>`,
+          ]
+        : []),
+      "Plan the itinerary now.",
+    ].join("\n\n");
 
-  const prompt = sections.join("\n\n");
+  let prompt = build();
+  if (refinement && prompt.length > MAX_PROMPT_CHARS) {
+    // A long previous plan shouldn't make refinement impossible: keep its
+    // structure and drop the prose, which the model rewrites anyway.
+    prompt = build({
+      ...refinement.previous,
+      summary: "",
+      days: refinement.previous.days.map((day) => ({
+        ...day,
+        note: undefined,
+        items: day.items.map((item) => ({ ...item, rationale: "" })),
+      })),
+    });
+  }
   if (prompt.length > MAX_PROMPT_CHARS) {
     throw new Error(`Prompt exceeds ${MAX_PROMPT_CHARS} characters`);
   }

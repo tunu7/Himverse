@@ -32,10 +32,31 @@ Rotate `SUPABASE_SECRET_KEY` in Supabase → update Vercel env → redeploy → 
 Identify the table/policy, hotfix the policy via migration, add a pgTAP test reproducing the leak,
 review logs for the exposure window.
 
-### AI producing harmful or false content
+### AI producing harmful or false content, or runaway cost
 
-Disable generation (feature flag or env toggle, to be added in Phase 3), keep existing itineraries
-viewable, add eval cases reproducing the output.
+Set `AI_ITINERARY_ENABLED=false` in Vercel and redeploy the current deployment (env changes apply only
+to new deployments). Generation stops with a "temporarily unavailable" message; saved itineraries stay
+viewable. For cost only, lower `AI_DAILY_GENERATION_LIMIT` instead. Add eval cases reproducing the
+output before re-enabling.
+
+### Site or database down
+
+`/api/health` returns 503 with `"database":"error"`. Check the Supabase status page and project
+dashboard; if a deploy coincided, promote the previous Vercel deployment. Data loss or corruption:
+[BACKUP_AND_RESTORE](BACKUP_AND_RESTORE.md) (PITR first).
+
+### Booking requests not expiring or completing
+
+The `pg_cron` sweep isn't running. Check `cron.job` and `cron.job_run_details`
+([OBSERVABILITY](../engineering/OBSERVABILITY.md)). The functions still refuse late confirmations, so
+this is Sev 3 unless it persists; re-create the schedule with a forward migration if it's missing.
+
+### Abuse spike (spam requests, applications or dates)
+
+Database limits cap each account ([SECURITY](../security/SECURITY.md#rate-limits-and-abuse-controls)).
+For one abusive account, ban the user in Supabase Auth and decline or cancel their requests. If the
+limits are too loose, tighten them with a migration. Many accounts → enable or tighten CAPTCHA and
+Supabase Auth rate limits.
 
 ## Contacts
 

@@ -335,14 +335,20 @@ isOneToOne: false
             [_ in never]: never
           }
           Functions: {
-            "cancel_booking":
+            "ai_generations_today":
+{ Args: Record<PropertyKey, never>; Returns: number
+                           },
+"begin_itinerary_generation":
+{ Args: { "p_global_daily_limit": number,"p_itinerary_id": string }; Returns: number
+                           },
+"cancel_booking":
 { Args: { "p_booking_id": string,"p_reason": string }; Returns: Database["public"]['Enums']["booking_status"]
                            },
 "create_provider_application":
 { Args: { "p_contact_email": string,"p_contact_phone": string,"p_description": string,"p_display_name": string,"p_district": string,"p_legal_name": string,"p_slug": string }; Returns: string
                            },
-"record_itinerary_generation":
-{ Args: { "p_error_code": string,"p_input_tokens": number,"p_itinerary_id": string,"p_latency_ms": number,"p_model": string,"p_outcome": Database["public"]['Enums']["itinerary_generation_outcome"],"p_output_tokens": number,"p_prompt_version": string }; Returns: undefined
+"finish_itinerary_generation":
+{ Args: { "p_error_code": string,"p_generation_id": number,"p_input_tokens": number,"p_latency_ms": number,"p_model": string,"p_outcome": Database["public"]['Enums']["itinerary_generation_outcome"],"p_output_tokens": number,"p_prompt_version": string }; Returns: undefined
                            },
 "request_booking":
 { Args: { "p_adults": number,"p_children": number,"p_contact_phone": string,"p_idempotency_key": string,"p_note": string,"p_slot_id": string }; Returns: {
@@ -356,7 +362,7 @@ isOneToOne: false
 { Args: { "p_decision": Database["public"]['Enums']["provider_status"],"p_note"?: string,"p_provider_id": string }; Returns: Database["public"]['Enums']["provider_status"]
                            },
 "save_itinerary_version":
-{ Args: { "p_items": Json,"p_itinerary_id": string,"p_kind": Database["public"]['Enums']["itinerary_version_kind"],"p_model": string,"p_plan": Json,"p_preferences": Json,"p_prompt_version": string,"p_schema_version": string,"p_title": string,"p_travelers": number,"p_warnings": Json }; Returns: {
+{ Args: { "p_generation_id": number,"p_items": Json,"p_itinerary_id": string,"p_kind": Database["public"]['Enums']["itinerary_version_kind"],"p_model": string,"p_plan": Json,"p_preferences": Json,"p_prompt_version": string,"p_schema_version": string,"p_title": string,"p_travelers": number,"p_warnings": Json }; Returns: {
               "estimated_total_minor": number,"itinerary_id": string,"unpriced_item_count": number,"version_id": string,"version_number": number
             }[]
                            },
@@ -365,7 +371,7 @@ isOneToOne: false
                            }
           }
           Enums: {
-            "app_role": "admin","availability_slot_status": "open"|"closed","booking_actor": "traveler"|"provider"|"system","booking_status": "requested"|"confirmed"|"declined"|"cancelled"|"expired"|"completed","experience_category": "culture"|"nature"|"adventure"|"trekking"|"wildlife"|"food_and_drink"|"festivals"|"wellness"|"other","experience_status": "draft"|"published"|"archived","itinerary_generation_outcome": "succeeded"|"failed_validation"|"failed_upstream"|"failed_timeout"|"failed_save","itinerary_time_of_day": "morning"|"afternoon"|"evening"|"full_day","itinerary_version_kind": "generate"|"refine"|"regenerate","provider_member_role": "owner","provider_status": "draft"|"pending_review"|"verified"|"rejected"|"suspended"
+            "app_role": "admin","availability_slot_status": "open"|"closed","booking_actor": "traveler"|"provider"|"system","booking_status": "requested"|"confirmed"|"declined"|"cancelled"|"expired"|"completed","experience_category": "culture"|"nature"|"adventure"|"trekking"|"wildlife"|"food_and_drink"|"festivals"|"wellness"|"other","experience_status": "draft"|"published"|"archived","itinerary_generation_outcome": "pending"|"succeeded"|"failed_validation"|"failed_upstream"|"failed_timeout"|"failed_save","itinerary_time_of_day": "morning"|"afternoon"|"evening"|"full_day","itinerary_version_kind": "generate"|"refine"|"regenerate","provider_member_role": "owner","provider_status": "draft"|"pending_review"|"verified"|"rejected"|"suspended"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -485,7 +491,7 @@ export const Constants = {
           }
         },"public": {
           Enums: {
-            "app_role": ["admin"],"availability_slot_status": ["open", "closed"],"booking_actor": ["traveler", "provider", "system"],"booking_status": ["requested", "confirmed", "declined", "cancelled", "expired", "completed"],"experience_category": ["culture", "nature", "adventure", "trekking", "wildlife", "food_and_drink", "festivals", "wellness", "other"],"experience_status": ["draft", "published", "archived"],"itinerary_generation_outcome": ["succeeded", "failed_validation", "failed_upstream", "failed_timeout", "failed_save"],"itinerary_time_of_day": ["morning", "afternoon", "evening", "full_day"],"itinerary_version_kind": ["generate", "refine", "regenerate"],"provider_member_role": ["owner"],"provider_status": ["draft", "pending_review", "verified", "rejected", "suspended"]
+            "app_role": ["admin"],"availability_slot_status": ["open", "closed"],"booking_actor": ["traveler", "provider", "system"],"booking_status": ["requested", "confirmed", "declined", "cancelled", "expired", "completed"],"experience_category": ["culture", "nature", "adventure", "trekking", "wildlife", "food_and_drink", "festivals", "wellness", "other"],"experience_status": ["draft", "published", "archived"],"itinerary_generation_outcome": ["pending", "succeeded", "failed_validation", "failed_upstream", "failed_timeout", "failed_save"],"itinerary_time_of_day": ["morning", "afternoon", "evening", "full_day"],"itinerary_version_kind": ["generate", "refine", "regenerate"],"provider_member_role": ["owner"],"provider_status": ["draft", "pending_review", "verified", "rejected", "suspended"]
           }
         }
 } as const

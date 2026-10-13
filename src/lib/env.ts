@@ -21,7 +21,8 @@ const serverEnvSchema = z.object({
 
 // AI settings (ADR-0003). Kept separate from serverEnvSchema so AI code never
 // depends on the Supabase secret key. The mock provider exists for automated
-// tests and is refused in Vercel production.
+// tests: refused in Vercel production, and in any production build (next start)
+// unless AI_ALLOW_MOCK=true is set explicitly, as the E2E web server does.
 export const DEFAULT_ITINERARY_MODEL = "anthropic/claude-sonnet-5.5";
 
 const aiEnvSchema = z
@@ -34,11 +35,23 @@ const aiEnvSchema = z
     // Optional: on Vercel the gateway authenticates with OIDC instead.
     AI_GATEWAY_API_KEY: z.string().min(1).optional(),
     VERCEL_ENV: z.string().optional(),
+    NODE_ENV: z.string().optional(),
+    AI_ALLOW_MOCK: z.enum(["true", "false"]).default("false"),
+    // Kill switch: set to "false" to stop all itinerary generation immediately.
+    AI_ITINERARY_ENABLED: z.enum(["true", "false"]).default("true"),
+    // Platform-wide cap on model-calling generations per day (IST), across all users.
+    AI_DAILY_GENERATION_LIMIT: z.coerce.number().int().min(0).max(100_000).default(300),
   })
-  .refine((env) => !(env.AI_PROVIDER === "mock" && env.VERCEL_ENV === "production"), {
-    path: ["AI_PROVIDER"],
-    message: "The mock AI provider is not allowed in production.",
-  });
+  .refine(
+    (env) =>
+      env.AI_PROVIDER !== "mock" ||
+      (env.VERCEL_ENV !== "production" &&
+        (env.NODE_ENV !== "production" || env.AI_ALLOW_MOCK === "true")),
+    {
+      path: ["AI_PROVIDER"],
+      message: "The mock AI provider is not allowed in production.",
+    },
+  );
 
 export type PublicEnv = z.infer<typeof publicEnvSchema>;
 export type AiEnv = z.infer<typeof aiEnvSchema>;

@@ -96,10 +96,10 @@ select results_eq(
 set local role authenticated;
 
 -- Unavailable or invalid requests
-select throws_ok($$ select * from public.request_booking('50000000-0000-4000-8000-000000000002', 1, 0, '+91 98765 43210', '', gen_random_uuid()) $$, '55000', null, 'past dates cannot be booked');
-select throws_ok($$ select * from public.request_booking('50000000-0000-4000-8000-000000000003', 1, 0, '+91 98765 43210', '', gen_random_uuid()) $$, '55000', null, 'closed slots cannot be booked');
-select throws_ok($$ select * from public.request_booking('50000000-0000-4000-8000-000000000004', 1, 0, '+91 98765 43210', '', gen_random_uuid()) $$, '55000', null, 'experiences at unpublished destinations cannot be booked');
-select throws_ok($$ select * from public.request_booking('50000000-0000-4000-8000-000000000005', 1, 0, '+91 98765 43210', '', gen_random_uuid()) $$, '55000', null, 'suspended providers'' experiences cannot be booked');
+select throws_ok($$ select * from public.request_booking('50000000-0000-4000-8000-000000000002', 1, 0, '+91 98765 43210', '', gen_random_uuid()) $$, 'P0002', null, 'past dates cannot be booked (reported as not available)');
+select throws_ok($$ select * from public.request_booking('50000000-0000-4000-8000-000000000003', 1, 0, '+91 98765 43210', '', gen_random_uuid()) $$, 'P0002', null, 'closed slots cannot be booked (reported as not available)');
+select throws_ok($$ select * from public.request_booking('50000000-0000-4000-8000-000000000004', 1, 0, '+91 98765 43210', '', gen_random_uuid()) $$, 'P0002', null, 'experiences at unpublished destinations cannot be booked (reported as not available)');
+select throws_ok($$ select * from public.request_booking('50000000-0000-4000-8000-000000000005', 1, 0, '+91 98765 43210', '', gen_random_uuid()) $$, 'P0002', null, 'suspended providers'' experiences cannot be booked (reported as not available)');
 select throws_ok($$ select * from public.request_booking('99999999-9999-4999-8999-999999999999', 1, 0, '+91 98765 43210', '', gen_random_uuid()) $$, 'P0002', null, 'unknown slots are not found');
 select throws_ok($$ select * from public.request_booking('50000000-0000-4000-8000-000000000006', 6, 0, '+91 98765 43210', '', gen_random_uuid()) $$, '55000', null, 'parties larger than the remaining seats are refused');
 select throws_ok($$ select * from public.request_booking('50000000-0000-4000-8000-000000000006', 1, 0, 'call me', '', gen_random_uuid()) $$, '22023', null, 'an invalid contact phone is refused');

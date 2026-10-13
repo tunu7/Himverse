@@ -23,10 +23,9 @@ src/server/         server-only domain services + data access ("server-only")
 src/lib/            cross-cutting infra: env, supabase clients, errors
 src/components/     shared, feature-agnostic UI
 supabase/           migrations/ and tests/ (pgTAP RLS tests)
-tests/              unit/, integration/, e2e/
+tests/              unit/, integration/, e2e/, smoke/ (deployed env, read-only)
 ```
 
-`tests/integration/` doesn't exist yet; directories are created on first use (no empty placeholders).
 Authorization model: [ADR-0002](docs/decisions/ADR-0002-AUTHORIZATION-MODEL.md) (roles in `user_roles`,
 provider authority via membership, all enforced by RLS). Details: [PROJECT_STRUCTURE](docs/architecture/PROJECT_STRUCTURE.md), [ARCHITECTURE](docs/architecture/ARCHITECTURE.md).
 
@@ -74,5 +73,5 @@ Skills: `/implement-feature`, `/db-migration-rls`, `/verify`, `/production-revie
 - Data/API: [DATABASE_DESIGN](docs/database/DATABASE_DESIGN.md) · [DATA_ACCESS_PATTERNS](docs/database/DATA_ACCESS_PATTERNS.md) · [API_CONTRACTS](docs/api/API_CONTRACTS.md) · [VALIDATION](docs/api/VALIDATION.md)
 - Security: [SECURITY](docs/security/SECURITY.md) · [AUTHORIZATION_AND_RLS](docs/security/AUTHORIZATION_AND_RLS.md)
 - AI: [AI_ARCHITECTURE](docs/ai/AI_ARCHITECTURE.md) · [ITINERARY_GENERATION](docs/ai/ITINERARY_GENERATION.md) · [AI_EVALUATION](docs/ai/AI_EVALUATION.md)
-- Ops: [DEPLOYMENT](docs/operations/DEPLOYMENT.md) · [ENVIRONMENTS](docs/operations/ENVIRONMENTS.md) · [INCIDENT_RESPONSE](docs/operations/INCIDENT_RESPONSE.md)
+- Ops: [DEPLOYMENT](docs/operations/DEPLOYMENT.md) · [ENVIRONMENTS](docs/operations/ENVIRONMENTS.md) · [INCIDENT_RESPONSE](docs/operations/INCIDENT_RESPONSE.md) · [BACKUP_AND_RESTORE](docs/operations/BACKUP_AND_RESTORE.md) · [RELEASE_CHECKLIST](docs/operations/RELEASE_CHECKLIST.md)
 - Decisions: [docs/decisions](docs/decisions/README.md)

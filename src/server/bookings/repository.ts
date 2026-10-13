@@ -1,7 +1,7 @@
 import "server-only";
 
 import { AppError } from "@/lib/errors";
-import type { BookingStatus } from "@/lib/booking-options";
+import { type BookingStatus, istDate } from "@/lib/booking-options";
 import { createSupabasePublicClient } from "@/lib/supabase/public";
 import { toAppError } from "@/lib/supabase/errors";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -30,6 +30,8 @@ function bookingError(error: DbError, fallback: string): AppError {
       });
     case "55000":
       return new AppError("CONFLICT", message, { cause: error });
+    case "54000":
+      return new AppError("RATE_LIMITED", message, { cause: error });
     case "22023":
       return new AppError("VALIDATION_FAILED", message, { cause: error });
     case "P0002":
@@ -196,16 +198,30 @@ export type ProviderBooking = BookingSummary & {
   children: number;
 };
 
-/** Bookings for providers the caller belongs to (RLS), excluding their own trips. */
+/** Bookings from the last 30 days onwards for providers the caller belongs to, excluding their own trips. */
 export async function listProviderBookings(): Promise<ProviderBooking[]> {
   const user = await requireUser();
   const supabase = await createSupabaseServerClient();
+  // Filter by membership explicitly: RLS also lets admins read every booking,
+  // and this page is the provider's own inbox.
+  const { data: memberships, error: membershipError } = await supabase
+    .from("provider_members")
+    .select("provider_id")
+    .eq("user_id", user.id);
+  if (membershipError) throw toAppError(membershipError, "Could not load bookings.");
+  if (memberships.length === 0) return [];
   const { data, error } = await supabase
     .from("bookings")
     .select(
       `${SUMMARY_COLUMNS}, provider_id, traveler_name, contact_phone, traveler_note, adults, children`,
     )
+    .in(
+      "provider_id",
+      memberships.map((m) => m.provider_id),
+    )
     .neq("traveler_id", user.id)
+    // Old trips would otherwise fill the page (oldest first, capped).
+    .gte("slot_starts_on", istDate(new Date(), -30))
     .order("slot_starts_on", { ascending: true })
     .order("created_at", { ascending: true })
     .limit(200);
@@ -295,6 +311,7 @@ export async function listSlotsForExperiences(experienceIds: string[]): Promise<
     .from("availability_slots")
     .select("id, experience_id, starts_on, start_time, capacity, seats_confirmed, status")
     .in("experience_id", experienceIds)
+    .gte("starts_on", istDate(new Date()))
     .order("starts_on")
     .limit(500);
   if (error) throw toAppError(error, "Could not load dates.");

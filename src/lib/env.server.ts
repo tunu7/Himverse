@@ -24,6 +24,10 @@ export function getAiEnv(): AiEnv {
     AI_ITINERARY_MODEL: process.env.AI_ITINERARY_MODEL || undefined,
     AI_GATEWAY_API_KEY: process.env.AI_GATEWAY_API_KEY || undefined,
     VERCEL_ENV: process.env.VERCEL_ENV || undefined,
+    NODE_ENV: process.env.NODE_ENV || undefined,
+    AI_ALLOW_MOCK: process.env.AI_ALLOW_MOCK || undefined,
+    AI_ITINERARY_ENABLED: process.env.AI_ITINERARY_ENABLED || undefined,
+    AI_DAILY_GENERATION_LIMIT: process.env.AI_DAILY_GENERATION_LIMIT || undefined,
   });
   return cachedAiEnv;
 }

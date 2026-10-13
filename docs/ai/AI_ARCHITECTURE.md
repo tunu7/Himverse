@@ -39,7 +39,8 @@ See [ITINERARY_GENERATION](ITINERARY_GENERATION.md) for the module map and check
 
 - **Provider:** Vercel AI Gateway through AI SDK 7, model `anthropic/claude-sonnet-5.5` (configurable).
 - **Results:** complete, validated results are returned (no partial streaming).
-- **Limits:** 10 generations per hour and 30 per day per user; output tokens capped per request.
+- **Limits:** 10 generations per hour and 30 per day per user, reserved atomically before the model
+  call; a platform-wide daily cap and a kill switch (Phase 5); output tokens capped per request.
 
 ## Open questions
 

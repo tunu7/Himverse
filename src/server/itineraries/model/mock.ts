@@ -1,3 +1,5 @@
+import "server-only";
+
 import type { ItineraryDraft } from "@/server/itineraries/schemas";
 
 import type { ItineraryModel } from "./types";

@@ -21,6 +21,13 @@ export const BOOKING_STATUS_LABELS: Record<BookingStatus, string> = {
   completed: "Completed",
 };
 
+/** "YYYY-MM-DD" in India, `offsetDays` from `now` (IST has no DST, so fixed offset is exact). */
+export function istDate(now: Date, offsetDays = 0): string {
+  return new Date(now.getTime() + 330 * 60_000 + offsetDays * 86_400_000)
+    .toISOString()
+    .slice(0, 10);
+}
+
 /** Slot start as an instant (dates are local to India). */
 export function slotStartsAt(startsOn: string, startTime: string | null): Date {
   return new Date(`${startsOn}T${startTime ?? "00:00:00"}${TRIP_TIME_ZONE_OFFSET}`);

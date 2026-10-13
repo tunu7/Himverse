@@ -16,7 +16,7 @@ export const TIMES_OF_DAY = ["morning", "afternoon", "evening", "full_day"] as c
 export type TimeOfDay = (typeof TIMES_OF_DAY)[number];
 
 export const itineraryDraftSchema = z.object({
-  title: z.string().min(1).max(80),
+  title: z.string().trim().min(1).max(80),
   summary: z.string().max(800),
   days: z
     .array(

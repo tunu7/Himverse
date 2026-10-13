@@ -1,11 +1,13 @@
 import "server-only";
 
 import { AppError } from "@/lib/errors";
+import { logger } from "@/lib/logger";
 import { createSupabasePublicClient } from "@/lib/supabase/public";
 import { toAppError } from "@/lib/supabase/errors";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { requireUser } from "@/server/auth/session";
 import {
+  GENERATION_LIMITS,
   type GenerationLogEntry,
   type SavedVersion,
   SaveConflictError,
@@ -24,26 +26,50 @@ import {
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
-export async function generationQuota(): Promise<{ lastHour: number; lastDay: number }> {
-  const user = await requireUser();
+/**
+ * Reserves an itinerary generation. The database applies the per-user and
+ * platform-wide limits under a per-user lock, so parallel requests can't overrun them.
+ */
+export async function beginGeneration(input: {
+  itineraryId: string | null;
+  globalDailyLimit: number;
+}): Promise<number> {
+  await requireUser();
   const supabase = await createSupabaseServerClient();
-  const count = async (sinceMs: number) => {
-    const { count: n, error } = await supabase
-      .from("itinerary_generations")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", user.id)
-      .gte("created_at", new Date(Date.now() - sinceMs).toISOString());
-    if (error) throw toAppError(error, "Could not check your itinerary limit.");
-    return n ?? 0;
-  };
-  const [lastHour, lastDay] = await Promise.all([count(3_600_000), count(86_400_000)]);
-  return { lastHour, lastDay };
+  const { data, error } = await supabase.rpc("begin_itinerary_generation", {
+    // Nullable in SQL; generated RPC types mark arguments non-null.
+    p_itinerary_id: input.itineraryId as string,
+    p_global_daily_limit: input.globalDailyLimit,
+  });
+  if (error) {
+    if (error.code === "54000" && error.message.includes("busy")) {
+      // Platform-wide cost guard; logged so operators notice.
+      logger.error("itineraries.global_daily_limit_reached", { limit: input.globalDailyLimit });
+      throw new AppError(
+        "RATE_LIMITED",
+        "Trip planning is very busy today. Please try again tomorrow.",
+        {
+          cause: error,
+        },
+      );
+    }
+    if (error.code === "54000") {
+      throw new AppError(
+        "RATE_LIMITED",
+        `You've reached the itinerary limit (${GENERATION_LIMITS.perHour} per hour, ${GENERATION_LIMITS.perDay} per day). Please try again later.`,
+        { cause: error },
+      );
+    }
+    throw toAppError(error, "Could not start planning your itinerary.");
+  }
+  return data;
 }
 
 export async function saveItineraryVersion(input: SaveVersionInput): Promise<SavedVersion> {
   await requireUser();
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase.rpc("save_itinerary_version", {
+    p_generation_id: input.generationId,
     // Generated RPC types mark every argument non-null; the function accepts null
     // here (null creates a new itinerary).
     p_itinerary_id: input.itineraryId as string,
@@ -68,7 +94,10 @@ export async function saveItineraryVersion(input: SaveVersionInput): Promise<Sav
     ),
   });
   if (error) {
-    if (error.code === "55000") throw new SaveConflictError(error.message);
+    // 55000 also covers a missing/expired reservation, which isn't an inventory change.
+    if (error.code === "55000" && !error.message.includes("generation")) {
+      throw new SaveConflictError(error.message);
+    }
     throw toAppError(error, "Could not save the itinerary.");
   }
   const row = data[0];
@@ -82,12 +111,11 @@ export async function saveItineraryVersion(input: SaveVersionInput): Promise<Sav
   };
 }
 
-export async function recordGeneration(entry: GenerationLogEntry): Promise<void> {
+export async function finishGeneration(entry: GenerationLogEntry): Promise<void> {
   await requireUser();
   const supabase = await createSupabaseServerClient();
-  const { error } = await supabase.rpc("record_itinerary_generation", {
-    // Nullable in SQL; generated RPC types mark arguments non-null.
-    p_itinerary_id: entry.itineraryId as string,
+  const { error } = await supabase.rpc("finish_itinerary_generation", {
+    p_generation_id: entry.generationId,
     p_outcome: entry.outcome,
     p_error_code: entry.errorCode as string,
     p_model: entry.model,

@@ -12,6 +12,7 @@ describe("toAppError", () => {
     ["22023", "VALIDATION_FAILED"],
     ["23514", "VALIDATION_FAILED"],
     ["23503", "VALIDATION_FAILED"],
+    ["54000", "RATE_LIMITED"],
     ["XX000", "INTERNAL"],
   ])("maps %s to %s", (code, expected) => {
     expect(toAppError({ code, message: "x" }, "fallback").code).toBe(expected);

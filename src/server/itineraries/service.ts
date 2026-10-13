@@ -1,5 +1,6 @@
 import "server-only";
 
+import { getAiEnv } from "@/lib/env.server";
 import { getItineraryModel } from "@/server/itineraries/model";
 import {
   type GenerationRequest,
@@ -7,8 +8,8 @@ import {
   type SavedVersion,
 } from "@/server/itineraries/pipeline";
 import {
-  generationQuota,
-  recordGeneration,
+  beginGeneration,
+  finishGeneration,
   saveItineraryVersion,
 } from "@/server/itineraries/repository";
 import { retrieveCandidates } from "@/server/itineraries/retrieval";
@@ -19,7 +20,11 @@ export function generateItineraryForCurrentUser(request: GenerationRequest): Pro
     model: getItineraryModel(),
     retrieve: retrieveCandidates,
     save: saveItineraryVersion,
-    record: recordGeneration,
-    quota: generationQuota,
+    reserve: beginGeneration,
+    finish: finishGeneration,
+    controls: {
+      enabled: getAiEnv().AI_ITINERARY_ENABLED === "true",
+      globalDailyLimit: getAiEnv().AI_DAILY_GENERATION_LIMIT,
+    },
   });
 }

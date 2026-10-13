@@ -1,0 +1,73 @@
+# Release checklist (first launch)
+
+Every item needs evidence (a link, a command output, or a screenshot) in the release report. "Builds
+locally" proves nothing about production. Status as of the Phase 5 report: see
+`reports/tasks/2026-10-13-phase5-production-readiness.md`.
+
+Launch scope: discovery, AI itineraries and booking **requests** (no online payments; ADR-0005).
+
+## 1. Code and tests (CI)
+
+- [ ] CI green on the release commit: format, lint, typecheck, unit, pgTAP, integration, types drift,
+      build, E2E.
+- [ ] `npm audit --omit=dev` reviewed; no unaccepted production advisories.
+- [ ] Secret scan of the repository and the browser bundle clean.
+
+## 2. Environments (Workstream B)
+
+- [ ] Vercel project created, region `bom1`, Git integration on, preview → staging DB.
+- [ ] Supabase staging and production projects in `ap-south-1`; `pg_cron` enabled; migrations applied;
+      `supabase migration list` matches.
+- [ ] Environment variables set per environment; `AI_PROVIDER=gateway`; `AI_ALLOW_MOCK` unset;
+      `AI_DAILY_GENERATION_LIMIT` set deliberately; no `NEXT_PUBLIC_` secrets.
+- [ ] AI Gateway spend limit/alert configured in Vercel.
+- [ ] Domain, HTTPS and `NEXT_PUBLIC_SITE_URL` set.
+
+## 3. Authentication
+
+- [ ] Supabase Auth: email confirmation on, leaked-password protection, minimum length 8.
+- [ ] **Custom SMTP** configured (Resend via Marketplace). The default Supabase mailer is rate limited
+      and not for production.
+- [ ] **CAPTCHA** (hCaptcha or Turnstile) on sign-up and sign-in; CSP extended for its script/frame
+      origins and re-tested.
+- [ ] Site URL and redirect allow-list exact; confirmation email template set; tested end to end on
+      staging (sign up → confirm → sign in) on a second device.
+- [ ] First admin bootstrapped with the runbook; no other admins.
+
+## 4. Notifications (blocker for booking requests)
+
+- [ ] Providers are told about new requests and travellers about confirmations, declines and expiries
+      (email via Resend). Without this, requests silently expire after 48 h.
+
+## 5. Observability and operations
+
+- [ ] Error tracking (Sentry) receiving server and client errors with release tags; CSP `connect-src`
+      updated.
+- [ ] Uptime monitor on `/api/health` alerting the on-call owner.
+- [ ] Monitoring SQL from [OBSERVABILITY](../engineering/OBSERVABILITY.md) run on staging; owner and
+      cadence agreed.
+- [ ] `cron.job_run_details` shows the sweep succeeding on production.
+- [ ] Incident contacts filled in [INCIDENT_RESPONSE](INCIDENT_RESPONSE.md).
+
+## 6. Data protection and legal
+
+- [ ] Production on a plan with daily backups; PITR enabled; RPO/RTO agreed.
+- [ ] Restore rehearsed on staging ([BACKUP_AND_RESTORE](BACKUP_AND_RESTORE.md)).
+- [ ] Privacy policy and terms published (DPDP Act 2023 review), including AI-generated content and
+      booking-request disclaimers.
+- [ ] Account deletion and data-access request process (at least manual, documented).
+- [ ] Contact-phone retention decided (BOOKING_POLICY question 10).
+
+## 7. Verification on staging
+
+- [ ] `STAGING_BASE_URL=<staging> npm run test:smoke` passes.
+- [ ] Manual journeys on staging: sign up/confirm; provider application → admin verification →
+      experience → dates; traveller request → provider confirm/decline → cancel; AI itinerary generate,
+      refine, rate limit message; kill switch off/on (with redeploy).
+- [ ] Security headers checked on the staging domain (e.g. securityheaders.com), no CSP violations in
+      the console.
+
+## 8. Go / no-go
+
+- [ ] Rollback rehearsed: promote previous deployment on staging.
+- [ ] Owner sign-off recorded with the open risks accepted in writing.

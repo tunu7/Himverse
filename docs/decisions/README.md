@@ -25,6 +25,7 @@ immutable once accepted — to change a decision, write a new ADR that supersede
 | [0002](ADR-0002-AUTHORIZATION-MODEL.md)     | Authorization model: database-enforced roles and provider membership | Accepted |
 | [0003](ADR-0003-AI-ITINERARY-GENERATION.md) | AI itinerary generation: provider, grounding and persistence         | Accepted |
 | [0004](ADR-0004-BOOKING-LIFECYCLE.md)       | Booking lifecycle: slots, provider confirmation and idempotency      | Accepted |
+| [0005](ADR-0005-PAYMENTS-RAZORPAY.md)       | Payments with Razorpay: server-verified states, webhooks, refunds    | Proposed |
 
 ## Template
 

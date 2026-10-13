@@ -1,4 +1,5 @@
 import { AppError } from "@/lib/errors";
+import { logger } from "@/lib/logger";
 import { ModelError, type ItineraryModel } from "@/server/itineraries/model/types";
 import type { TripPreferences } from "@/server/itineraries/preferences";
 import {
@@ -19,13 +20,16 @@ import { validateDraft } from "@/server/itineraries/validate";
 
 /**
  * Itinerary generation pipeline (ADR-0003):
- * quota → retrieve → (none? stop) → prompt → model → schema + grounding checks →
- * (one repair attempt) → persist (RPC re-checks visibility) → log.
+ * kill switch → retrieve → (none? stop) → reserve (DB applies per-user and
+ * platform limits atomically) → prompt → model → schema + grounding checks →
+ * (one repair attempt) → persist (RPC re-checks visibility, consumes the
+ * reservation) → finish.
  *
  * Every dependency is injected so each failure mode is unit-testable without a
  * network, database or real model.
  */
 
+/** Enforced by begin_itinerary_generation(); mirrored here for messages. */
 export const GENERATION_LIMITS = { perHour: 10, perDay: 30 } as const;
 export const MODEL_TIMEOUT_MS = 45_000;
 export const MAX_OUTPUT_TOKENS = 4_000;
@@ -34,6 +38,7 @@ const MAX_ATTEMPTS = 2;
 export type GenerationKind = "generate" | "refine" | "regenerate";
 
 export type SaveVersionInput = {
+  generationId: number;
   itineraryId: string | null;
   title: string;
   kind: GenerationKind;
@@ -55,6 +60,7 @@ export type SavedVersion = {
 };
 
 export type GenerationLogEntry = {
+  generationId: number;
   itineraryId: string | null;
   outcome: "succeeded" | "failed_validation" | "failed_upstream" | "failed_timeout" | "failed_save";
   errorCode: string | null;
@@ -68,8 +74,11 @@ export type PipelineDeps = {
   model: ItineraryModel;
   retrieve: (prefs: TripPreferences) => Promise<Candidates>;
   save: (input: SaveVersionInput) => Promise<SavedVersion>;
-  record: (entry: GenerationLogEntry) => Promise<void>;
-  quota: () => Promise<{ lastHour: number; lastDay: number }>;
+  /** Reserves a generation (counts against limits at once); throws RATE_LIMITED when over. */
+  reserve: (input: { itineraryId: string | null; globalDailyLimit: number }) => Promise<number>;
+  finish: (entry: GenerationLogEntry) => Promise<void>;
+  /** Operational controls (AI_ITINERARY_ENABLED, AI_DAILY_GENERATION_LIMIT). */
+  controls: { enabled: boolean; globalDailyLimit: number };
   clock?: () => number;
 };
 
@@ -93,14 +102,12 @@ export async function runItineraryGeneration(
 ): Promise<SavedVersion> {
   const clock = deps.clock ?? Date.now;
 
-  const quota = await deps.quota();
-  if (quota.lastHour >= GENERATION_LIMITS.perHour || quota.lastDay >= GENERATION_LIMITS.perDay) {
+  if (!deps.controls.enabled) {
     throw new AppError(
-      "RATE_LIMITED",
-      `You've reached the itinerary limit (${GENERATION_LIMITS.perHour} per hour, ${GENERATION_LIMITS.perDay} per day). Please try again later.`,
+      "UPSTREAM_UNAVAILABLE",
+      "Trip planning is temporarily unavailable. Please try again later.",
     );
   }
-
   const candidates = await deps.retrieve(request.prefs);
   if (candidates.experiences.length === 0) {
     // Never invent inventory, and don't spend a model call on an empty list.
@@ -109,6 +116,11 @@ export async function runItineraryGeneration(
       "We couldn't find published experiences that match these preferences. Try another region, fewer interests or a higher budget.",
     );
   }
+
+  const generationId = await deps.reserve({
+    itineraryId: request.itineraryId,
+    globalDailyLimit: deps.controls.globalDailyLimit,
+  });
 
   const aliases = buildAliases(candidates);
   const base = buildPrompt(
@@ -136,7 +148,8 @@ export async function runItineraryGeneration(
     itineraryId: string | null,
   ) => {
     try {
-      await deps.record({
+      await deps.finish({
+        generationId,
         itineraryId,
         outcome,
         errorCode,
@@ -147,7 +160,7 @@ export async function runItineraryGeneration(
       });
     } catch (error) {
       // Logging must never mask the real outcome.
-      console.error({ event: "itineraries.log_failed", code: (error as { code?: string }).code });
+      logger.error("itineraries.log_failed", { code: (error as { code?: string }).code });
     }
   };
 
@@ -217,6 +230,7 @@ export async function runItineraryGeneration(
     let saved: SavedVersion;
     try {
       saved = await deps.save({
+        generationId,
         itineraryId: request.itineraryId,
         title: validation.plan.title,
         kind: request.kind,
