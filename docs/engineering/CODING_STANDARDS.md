@@ -28,6 +28,19 @@ Path-scoped versions of these rules for Claude Code live in `.claude/rules/`.
 - Every data-driven view handles loading, empty, success and error states.
 - Server Actions: validate input → authenticate → authorize → call `src/server` → return `ActionResult`.
 
+## Styling and UI
+
+- Use the semantic colour tokens from `src/app/globals.css` (`text-fg`, `text-muted`, `text-subtle`,
+  `border-line`, `bg-surface`, `bg-accent`, `text-danger`, …), never raw palette pairs like
+  `text-zinc-600 dark:text-zinc-400`. Light and dark values live only in `globals.css`.
+- Reuse the shared styles in `src/components/form-feedback.tsx` (`buttonClass`, `inputClass`,
+  `cardClass`, …) and primitives in `src/components/ui.tsx` (`PendingLabel`, `Skeleton`,
+  `EmptyState`). Pending buttons use `PendingLabel` so they show a spinner and the busy text.
+- Pages use `PageShell` (fixed title) or `PageMain` (title from data). Suspense fallbacks use
+  `LoadingBlock` with the `variant` matching the content (`cards`, `detail`, `list`, `form`).
+- Client hooks that read the URL (`usePathname`, `useSearchParams`) must render inside `<Suspense>`
+  (Cache Components), or the build fails on dynamic routes.
+
 ## Functions and modules
 
 - Small, single-purpose functions; pure where possible so they are unit-testable.

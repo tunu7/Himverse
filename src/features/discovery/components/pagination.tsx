@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 const linkClass =
-  "rounded-md border border-zinc-300 px-3 py-1.5 text-sm hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800";
+  "rounded-lg border border-line-strong bg-surface px-3 py-1.5 text-sm font-medium transition-colors hover:bg-surface-muted";
 
 export function Pagination({
   page,
@@ -24,7 +24,7 @@ export function Pagination({
       ) : (
         <span />
       )}
-      <p className="text-sm text-zinc-600 dark:text-zinc-400">
+      <p className="text-sm text-muted">
         Page {page} of {pageCount}
       </p>
       {page < pageCount ? (

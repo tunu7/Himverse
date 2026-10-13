@@ -22,17 +22,20 @@ export function ResultsSummary({
     <div
       role="status"
       data-testid="results-summary"
-      className="flex flex-col gap-1 text-sm text-zinc-700 dark:text-zinc-300"
+      className="flex flex-col gap-1 text-sm text-fg-soft"
     >
       {ignored.length > 0 ? (
-        <p className="text-amber-800 dark:text-amber-300">
+        <p className="text-warning-soft-fg">
           Some filters in this link weren&apos;t recognised and were ignored ({ignored.join(", ")}).
         </p>
       ) : null}
       {outOfRange ? (
         <p>
           There are no results on this page.{" "}
-          <Link href={firstPageHref} className="underline">
+          <Link
+            href={firstPageHref}
+            className="font-medium text-accent underline-offset-4 hover:underline"
+          >
             Go to the first page
           </Link>
           .
@@ -43,7 +46,10 @@ export function ResultsSummary({
             ? `No ${noun.many} match your search and filters.`
             : `No ${noun.many} are published yet.`}{" "}
           {hasFilters ? (
-            <Link href={clearHref} className="underline">
+            <Link
+              href={clearHref}
+              className="font-medium text-accent underline-offset-4 hover:underline"
+            >
               Clear all filters
             </Link>
           ) : null}
@@ -55,7 +61,10 @@ export function ResultsSummary({
             <>
               {" "}
               ·{" "}
-              <Link href={clearHref} className="underline">
+              <Link
+                href={clearHref}
+                className="font-medium text-accent underline-offset-4 hover:underline"
+              >
                 Clear all filters
               </Link>
             </>

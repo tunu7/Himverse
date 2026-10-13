@@ -12,6 +12,7 @@ import {
 } from "@/components/form-feedback";
 
 import { signIn, signUp } from "../actions";
+import { PendingLabel } from "@/components/ui";
 
 export function SignInForm({ next }: { next: string }) {
   const [state, action, pending] = useActionState(signIn, null);
@@ -36,11 +37,14 @@ export function SignInForm({ next }: { next: string }) {
       </label>
       <FormAlert state={state} />
       <button type="submit" disabled={pending} className={buttonClass}>
-        {pending ? "Signing in…" : "Sign in"}
+        <PendingLabel pending={pending} busy="Signing in…" idle="Sign in" />
       </button>
-      <p className="text-sm text-zinc-600 dark:text-zinc-400">
+      <p className="text-sm text-muted">
         New here?{" "}
-        <Link href={`/sign-up?next=${encodeURIComponent(next)}`} className="underline">
+        <Link
+          href={`/sign-up?next=${encodeURIComponent(next)}`}
+          className="font-medium text-accent underline-offset-4 hover:underline"
+        >
           Create an account
         </Link>
       </p>
@@ -52,7 +56,7 @@ export function SignUpForm({ next }: { next: string }) {
   const [state, action, pending] = useActionState(signUp, null);
   if (state?.ok) {
     return (
-      <p role="status" className="text-zinc-700 dark:text-zinc-300">
+      <p role="status" className="text-fg-soft">
         Check your email to confirm your account, then sign in.
       </p>
     );
@@ -91,11 +95,14 @@ export function SignUpForm({ next }: { next: string }) {
       </label>
       <FormAlert state={state} />
       <button type="submit" disabled={pending} className={buttonClass}>
-        {pending ? "Creating account…" : "Create account"}
+        <PendingLabel pending={pending} busy="Creating account…" idle="Create account" />
       </button>
-      <p className="text-sm text-zinc-600 dark:text-zinc-400">
+      <p className="text-sm text-muted">
         Already have an account?{" "}
-        <Link href={`/sign-in?next=${encodeURIComponent(next)}`} className="underline">
+        <Link
+          href={`/sign-in?next=${encodeURIComponent(next)}`}
+          className="font-medium text-accent underline-offset-4 hover:underline"
+        >
           Sign in
         </Link>
       </p>

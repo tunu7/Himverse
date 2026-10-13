@@ -11,6 +11,7 @@ import {
 } from "@/components/form-feedback";
 
 import { updateProfile } from "../actions";
+import { PendingLabel } from "@/components/ui";
 
 export function ProfileForm({ displayName }: { displayName: string }) {
   const [state, action, pending] = useActionState(updateProfile, null);
@@ -29,7 +30,7 @@ export function ProfileForm({ displayName }: { displayName: string }) {
       </label>
       <FormAlert state={state} successMessage="Saved." />
       <button type="submit" disabled={pending} className={`${buttonClass} self-start`}>
-        {pending ? "Saving…" : "Save"}
+        <PendingLabel pending={pending} busy="Saving…" idle="Save" />
       </button>
     </form>
   );

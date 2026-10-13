@@ -11,11 +11,11 @@ export function GoogleSignIn({ next }: { next: string }) {
     <div className="flex flex-col gap-4">
       <a
         href={`/auth/google?next=${encodeURIComponent(next)}`}
-        className="inline-flex items-center justify-center rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium hover:bg-zinc-50 focus-visible:outline-2 focus-visible:outline-offset-2 dark:border-zinc-700 dark:hover:bg-zinc-900"
+        className="inline-flex items-center justify-center rounded-lg border border-line-strong bg-surface px-4 py-2 text-sm font-medium text-fg shadow-xs transition-colors hover:bg-surface-muted focus-visible:outline-2 focus-visible:outline-offset-2"
       >
         Continue with Google
       </a>
-      <p className="text-center text-xs text-zinc-500" aria-hidden="true">
+      <p className="text-center text-xs text-subtle" aria-hidden="true">
         or use your email
       </p>
     </div>

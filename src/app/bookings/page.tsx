@@ -15,9 +15,12 @@ async function BookingList() {
   const bookings = await listMyBookings();
   if (bookings.length === 0) {
     return (
-      <p className="text-zinc-600 dark:text-zinc-400">
+      <p className="text-muted">
         You haven&apos;t requested any bookings yet.{" "}
-        <Link href="/experiences" className="underline">
+        <Link
+          href="/experiences"
+          className="font-medium text-accent underline-offset-4 hover:underline"
+        >
           Find an experience
         </Link>
         .
@@ -29,13 +32,16 @@ async function BookingList() {
       {bookings.map((b) => (
         <li
           key={b.id}
-          className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-zinc-200 p-4 dark:border-zinc-800"
+          className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line bg-surface shadow-xs p-5"
         >
           <div>
-            <Link href={`/bookings/${b.id}`} className="font-semibold underline">
+            <Link
+              href={`/bookings/${b.id}`}
+              className="font-semibold text-fg underline-offset-4 hover:text-accent hover:underline"
+            >
               {b.experienceTitle}
             </Link>
-            <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            <p className="text-sm text-muted">
               {formatSlot(b.slotStartsOn, b.slotStartTime)} · {b.partySize}{" "}
               {b.partySize === 1 ? "person" : "people"} · {b.reference}
             </p>
@@ -49,8 +55,8 @@ async function BookingList() {
 
 export default function BookingsPage() {
   return (
-    <PageShell title="Your bookings">
-      <Suspense fallback={<LoadingBlock label="Loading your bookings…" />}>
+    <PageShell title="Your bookings" width="narrow">
+      <Suspense fallback={<LoadingBlock label="Loading your bookings…" variant="list" />}>
         <BookingList />
       </Suspense>
     </PageShell>

@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { Suspense } from "react";
 
-import { LoadingBlock } from "@/components/page-shell";
+import { LoadingBlock, PageMain } from "@/components/page-shell";
 import { CancelBookingForm, RespondForm } from "@/features/bookings/components/booking-forms";
 import { BookingStatusBadge } from "@/features/bookings/components/booking-status";
 import {
@@ -34,10 +34,10 @@ async function BookingDetail({ params }: PageProps<"/bookings/[id]">) {
   return (
     <div className="flex flex-col gap-6">
       <header className="flex flex-col gap-2">
-        <p className="text-sm text-zinc-600 dark:text-zinc-400">
+        <p className="text-sm text-muted">
           <Link
             href={booking.isTraveler ? "/bookings" : "/provider/bookings"}
-            className="underline"
+            className="font-medium text-accent underline-offset-4 hover:underline"
           >
             {booking.isTraveler ? "Your bookings" : "Booking requests"}
           </Link>{" "}
@@ -51,13 +51,13 @@ async function BookingDetail({ params }: PageProps<"/bookings/[id]">) {
         />
       </header>
 
-      <dl className="grid gap-4 rounded-lg border border-zinc-200 p-4 sm:grid-cols-2 dark:border-zinc-800">
+      <dl className="grid gap-4 rounded-xl border border-line bg-surface shadow-xs p-5 sm:grid-cols-2">
         <div>
-          <dt className="text-sm text-zinc-500">Date</dt>
+          <dt className="text-xs font-medium tracking-wide text-subtle uppercase">Date</dt>
           <dd className="font-medium">{formatSlot(booking.slotStartsOn, booking.slotStartTime)}</dd>
         </div>
         <div>
-          <dt className="text-sm text-zinc-500">Party</dt>
+          <dt className="text-xs font-medium tracking-wide text-subtle uppercase">Party</dt>
           <dd className="font-medium">
             {booking.adults} {booking.adults === 1 ? "adult" : "adults"}
             {booking.children > 0
@@ -66,7 +66,7 @@ async function BookingDetail({ params }: PageProps<"/bookings/[id]">) {
           </dd>
         </div>
         <div>
-          <dt className="text-sm text-zinc-500">Price</dt>
+          <dt className="text-xs font-medium tracking-wide text-subtle uppercase">Price</dt>
           <dd className="font-medium" data-testid="booking-price">
             {confirmed
               ? `${confirmed} (confirmed by the provider)`
@@ -75,18 +75,18 @@ async function BookingDetail({ params }: PageProps<"/bookings/[id]">) {
                 : "Price on request"}
           </dd>
           {confirmed && estimate && confirmed !== estimate ? (
-            <dd className="text-xs text-zinc-500">Original estimate: from {estimate}</dd>
+            <dd className="text-xs text-subtle">Original estimate: from {estimate}</dd>
           ) : null}
         </div>
         {!booking.isTraveler ? (
           <div>
-            <dt className="text-sm text-zinc-500">Contact</dt>
+            <dt className="text-xs font-medium tracking-wide text-subtle uppercase">Contact</dt>
             <dd className="font-medium">{booking.contactPhone}</dd>
           </div>
         ) : null}
         {status === "requested" ? (
           <div>
-            <dt className="text-sm text-zinc-500">Respond by</dt>
+            <dt className="text-xs font-medium tracking-wide text-subtle uppercase">Respond by</dt>
             <dd className="font-medium">
               {new Date(booking.requestExpiresAt).toLocaleString("en-IN", {
                 timeZone: "Asia/Kolkata",
@@ -107,7 +107,7 @@ async function BookingDetail({ params }: PageProps<"/bookings/[id]">) {
           Cancelled by the {booking.cancelledBy}: {booking.cancellationReason}
         </p>
       ) : null}
-      <p className="text-xs text-zinc-500">No payment is taken through Himverse.AI.</p>
+      <p className="text-xs text-subtle">No payment is taken through Himverse.AI.</p>
 
       {booking.isTraveler &&
       travelerCanCancel(booking.status, startsAt, booking.requestExpiresAt, now) ? (
@@ -116,7 +116,7 @@ async function BookingDetail({ params }: PageProps<"/bookings/[id]">) {
       {booking.isTraveler &&
       status === "confirmed" &&
       !travelerCanCancel(booking.status, startsAt, booking.requestExpiresAt, now) ? (
-        <p className="text-sm text-zinc-600">
+        <p className="text-sm text-muted">
           Less than 24 hours to go: please contact the provider directly to cancel.
         </p>
       ) : null}
@@ -156,10 +156,10 @@ async function BookingDetail({ params }: PageProps<"/bookings/[id]">) {
 
 export default function BookingPage(props: PageProps<"/bookings/[id]">) {
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-6 py-12">
-      <Suspense fallback={<LoadingBlock label="Loading booking…" />}>
+    <PageMain width="narrow">
+      <Suspense fallback={<LoadingBlock label="Loading booking…" variant="detail" />}>
         <BookingDetail {...props} />
       </Suspense>
-    </main>
+    </PageMain>
   );
 }

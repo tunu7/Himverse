@@ -12,7 +12,7 @@ async function ItineraryList() {
   if (itineraries.length === 0) {
     return (
       <div className="flex flex-col items-start gap-3">
-        <p className="text-zinc-600 dark:text-zinc-400">You haven&apos;t planned any trips yet.</p>
+        <p className="text-muted">You haven&apos;t planned any trips yet.</p>
         <Link href="/itineraries/new" className={buttonClass}>
           Plan a trip
         </Link>
@@ -26,11 +26,14 @@ async function ItineraryList() {
       </Link>
       <ul className="flex flex-col gap-3">
         {itineraries.map((it) => (
-          <li key={it.id} className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
-            <Link href={`/itineraries/${it.id}`} className="font-semibold underline">
+          <li key={it.id} className="rounded-xl border border-line bg-surface shadow-xs p-5">
+            <Link
+              href={`/itineraries/${it.id}`}
+              className="font-semibold text-fg underline-offset-4 hover:text-accent hover:underline"
+            >
               {it.title}
             </Link>
-            <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            <p className="text-sm text-muted">
               {it.versionCount} {it.versionCount === 1 ? "version" : "versions"} · updated{" "}
               {new Date(it.updatedAt).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" })}
             </p>
@@ -43,8 +46,8 @@ async function ItineraryList() {
 
 export default function ItinerariesPage() {
   return (
-    <PageShell title="Your trips">
-      <Suspense fallback={<LoadingBlock label="Loading your trips…" />}>
+    <PageShell title="Your trips" width="narrow">
+      <Suspense fallback={<LoadingBlock label="Loading your trips…" variant="list" />}>
         <ItineraryList />
       </Suspense>
     </PageShell>

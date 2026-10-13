@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
-import { LoadingBlock } from "@/components/page-shell";
+import { LoadingBlock, PageMain } from "@/components/page-shell";
 import {
   DeleteItineraryButton,
   MakeCurrentButton,
@@ -29,15 +29,16 @@ async function ItineraryDetail({ params, searchParams }: PageProps<"/itineraries
   return (
     <div className="flex flex-col gap-8">
       <header className="flex flex-col gap-2">
-        <p className="text-sm text-zinc-600 dark:text-zinc-400">
-          <Link href="/itineraries" className="underline">
+        <p className="text-sm text-muted">
+          <Link
+            href="/itineraries"
+            className="font-medium text-accent underline-offset-4 hover:underline"
+          >
             Your trips
           </Link>
         </p>
-        <h1 className="text-3xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
-          {itinerary.title}
-        </h1>
-        <p className="text-sm text-zinc-600 dark:text-zinc-400" data-testid="version-label">
+        <h1 className="text-3xl font-semibold tracking-tight text-fg">{itinerary.title}</h1>
+        <p className="text-sm text-muted" data-testid="version-label">
           Version {version.number}
           {isCurrent ? " (current)" : " (not current)"} · {version.kind}
         </p>
@@ -66,7 +67,10 @@ async function ItineraryDetail({ params, searchParams }: PageProps<"/itineraries
         <ul className="flex flex-col gap-1 text-sm">
           {itinerary.versions.map((v) => (
             <li key={v.number}>
-              <Link href={`/itineraries/${itinerary.id}?version=${v.number}`} className="underline">
+              <Link
+                href={`/itineraries/${itinerary.id}?version=${v.number}`}
+                className="font-medium text-accent underline-offset-4 hover:underline"
+              >
                 Version {v.number}
               </Link>{" "}
               · {v.kind}
@@ -81,10 +85,10 @@ async function ItineraryDetail({ params, searchParams }: PageProps<"/itineraries
 
 export default function ItineraryPage(props: PageProps<"/itineraries/[id]">) {
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-6 py-12">
-      <Suspense fallback={<LoadingBlock label="Loading itinerary…" />}>
+    <PageMain width="narrow">
+      <Suspense fallback={<LoadingBlock label="Loading itinerary…" variant="detail" />}>
         <ItineraryDetail {...props} />
       </Suspense>
-    </main>
+    </PageMain>
   );
 }

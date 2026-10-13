@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
-import { LoadingBlock } from "@/components/page-shell";
+import { LoadingBlock, PageMain } from "@/components/page-shell";
 import { ExperienceBooking } from "@/features/bookings/components/experience-booking";
 import { formatCategory, formatDuration, formatPriceFrom } from "@/lib/format";
 import { getPublicExperience } from "@/server/catalog/catalog";
@@ -27,44 +27,50 @@ async function ExperienceDetail({ params }: PageProps<"/experiences/[slug]">) {
   return (
     <article className="flex flex-col gap-6">
       <header className="flex flex-col gap-2">
-        <p className="text-sm text-zinc-600 dark:text-zinc-400">
-          <Link href="/experiences" className="underline">
+        <p className="text-sm text-muted">
+          <Link
+            href="/experiences"
+            className="font-medium text-accent underline-offset-4 hover:underline"
+          >
             Experiences
           </Link>{" "}
           / {formatCategory(experience.category)}
         </p>
-        <h1 className="text-3xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
+        <h1 className="text-3xl font-semibold tracking-tight text-fg sm:text-4xl">
           {experience.title}
         </h1>
-        {experience.summary ? (
-          <p className="text-lg text-zinc-700 dark:text-zinc-300">{experience.summary}</p>
-        ) : null}
+        {experience.summary ? <p className="text-lg text-fg-soft">{experience.summary}</p> : null}
       </header>
 
-      <dl className="grid gap-4 rounded-lg border border-zinc-200 p-4 sm:grid-cols-2 dark:border-zinc-800">
+      <dl className="grid gap-4 rounded-xl border border-line bg-surface shadow-xs p-5 sm:grid-cols-2">
         <div>
-          <dt className="text-sm text-zinc-500">Indicative price</dt>
+          <dt className="text-xs font-medium tracking-wide text-subtle uppercase">
+            Indicative price
+          </dt>
           <dd className="font-medium">{price ? `From ${price}` : "Price on request"}</dd>
         </div>
         <div>
-          <dt className="text-sm text-zinc-500">Duration</dt>
+          <dt className="text-xs font-medium tracking-wide text-subtle uppercase">Duration</dt>
           <dd className="font-medium">{formatDuration(experience.durationMinutes)}</dd>
         </div>
         <div>
-          <dt className="text-sm text-zinc-500">Location</dt>
+          <dt className="text-xs font-medium tracking-wide text-subtle uppercase">Location</dt>
           <dd className="font-medium">
-            <Link href={`/destinations/${experience.destination.slug}`} className="underline">
+            <Link
+              href={`/destinations/${experience.destination.slug}`}
+              className="font-medium text-accent underline-offset-4 hover:underline"
+            >
               {experience.destination.name}
             </Link>
             , {experience.destination.district}
           </dd>
         </div>
         <div>
-          <dt className="text-sm text-zinc-500">Provider</dt>
+          <dt className="text-xs font-medium tracking-wide text-subtle uppercase">Provider</dt>
           <dd className="font-medium">
             {experience.provider.displayName}
             {experience.provider.district ? ` (${experience.provider.district})` : null}
-            <span className="ml-2 rounded bg-emerald-50 px-1.5 py-0.5 text-xs text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+            <span className="ml-2 inline-flex items-center rounded-full bg-accent-soft px-2 py-0.5 text-xs font-semibold text-accent-soft-fg">
               Verified
             </span>
           </dd>
@@ -74,13 +80,11 @@ async function ExperienceDetail({ params }: PageProps<"/experiences/[slug]">) {
       {experience.description ? (
         <section className="flex flex-col gap-2">
           <h2 className="text-lg font-semibold">About this experience</h2>
-          <p className="whitespace-pre-line text-zinc-700 dark:text-zinc-300">
-            {experience.description}
-          </p>
+          <p className="whitespace-pre-line text-fg-soft">{experience.description}</p>
         </section>
       ) : null}
 
-      <p className="rounded-md bg-zinc-100 p-3 text-sm text-zinc-700 dark:bg-zinc-900 dark:text-zinc-300">
+      <p className="rounded-lg border border-line bg-surface-muted p-4 text-sm text-fg-soft">
         Prices are indicative and availability isn&apos;t guaranteed until the provider confirms
         your booking.
       </p>
@@ -89,7 +93,7 @@ async function ExperienceDetail({ params }: PageProps<"/experiences/[slug]">) {
         <h2 id="book-heading" className="text-lg font-semibold">
           Request to book
         </h2>
-        <Suspense fallback={<LoadingBlock label="Loading dates…" />}>
+        <Suspense fallback={<LoadingBlock label="Loading dates…" variant="form" />}>
           <ExperienceBooking
             experienceId={experience.id}
             experienceSlug={experience.slug}
@@ -103,10 +107,10 @@ async function ExperienceDetail({ params }: PageProps<"/experiences/[slug]">) {
 
 export default function ExperiencePage(props: PageProps<"/experiences/[slug]">) {
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-6 py-12">
-      <Suspense fallback={<LoadingBlock label="Loading experience…" />}>
+    <PageMain width="narrow">
+      <Suspense fallback={<LoadingBlock label="Loading experience…" variant="detail" />}>
         <ExperienceDetail {...props} />
       </Suspense>
-    </main>
+    </PageMain>
   );
 }

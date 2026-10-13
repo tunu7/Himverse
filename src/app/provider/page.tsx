@@ -27,7 +27,7 @@ async function ProviderWorkspace() {
   if (providers.length === 0) {
     return (
       <section className="flex flex-col gap-4">
-        <p className="text-zinc-600 dark:text-zinc-400">
+        <p className="text-muted">
           Offer experiences on Himverse.AI. Applications are reviewed by our team before anything
           you publish becomes visible to travelers.
         </p>
@@ -43,7 +43,10 @@ async function ProviderWorkspace() {
 
   return (
     <div className="flex flex-col gap-10">
-      <Link href="/provider/bookings" className="self-start underline">
+      <Link
+        href="/provider/bookings"
+        className="self-start font-medium text-accent underline-offset-4 hover:underline"
+      >
         View booking requests
       </Link>
       {providers.map((p) => (
@@ -83,12 +86,10 @@ function ProviderSection({
         </p>
         {provider.latestReviewNote &&
         (provider.status === "rejected" || provider.status === "suspended") ? (
-          <p className="text-sm text-amber-800 dark:text-amber-300">
-            Reviewer note: {provider.latestReviewNote}
-          </p>
+          <p className="text-sm text-warning-soft-fg">Reviewer note: {provider.latestReviewNote}</p>
         ) : null}
         {provider.status === "suspended" ? (
-          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+          <p className="text-sm text-muted">
             Your experiences are hidden from travelers while the provider is suspended.
           </p>
         ) : null}
@@ -101,7 +102,7 @@ function ProviderSection({
       <div className="flex flex-col gap-3">
         <h3 className="font-semibold">Experiences</h3>
         {provider.experiences.length === 0 ? (
-          <p className="text-sm text-zinc-600 dark:text-zinc-400">No experiences yet.</p>
+          <p className="text-sm text-muted">No experiences yet.</p>
         ) : (
           <ul className="flex flex-col gap-3">
             {provider.experiences.map((e) => {
@@ -109,17 +110,17 @@ function ProviderSection({
               return (
                 <li
                   key={e.id}
-                  className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-zinc-200 p-3 dark:border-zinc-800"
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line bg-surface shadow-xs p-4"
                 >
                   <div>
                     <p className="font-medium">{e.title}</p>
-                    <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                    <p className="text-sm text-muted">
                       {e.status} · {e.destinationName ?? "destination not published"} ·{" "}
                       {formatDuration(e.durationMinutes)}
                       {price ? ` · from ${price}` : null}
                     </p>
                     {e.moderationLocked ? (
-                      <p className="text-sm text-amber-800 dark:text-amber-300">
+                      <p className="text-sm text-warning-soft-fg">
                         Unpublished by Himverse moderation. You can revise it as a draft; contact us
                         to have it published again.
                       </p>
@@ -149,7 +150,7 @@ function ProviderSection({
           </ul>
         )}
         {!verified ? (
-          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+          <p className="text-sm text-muted">
             You can prepare drafts now; publishing is available once your provider is verified.
           </p>
         ) : null}
@@ -159,7 +160,7 @@ function ProviderSection({
         <section className="flex flex-col gap-3" aria-label="Dates for booking">
           <h3 className="font-semibold">Dates for booking</h3>
           {!verified ? (
-            <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            <p className="text-sm text-muted">
               Travellers can book dates once your provider is verified and the experience is
               published.
             </p>
@@ -170,11 +171,11 @@ function ProviderSection({
               <div
                 key={e.id}
                 data-testid="slot-manager"
-                className="flex flex-col gap-2 rounded-md border border-zinc-200 p-3 dark:border-zinc-800"
+                className="flex flex-col gap-2 rounded-xl border border-line bg-surface shadow-xs p-4"
               >
                 <p className="font-medium">{e.title}</p>
                 {experienceSlots.length === 0 ? (
-                  <p className="text-sm text-zinc-600 dark:text-zinc-400">No dates yet.</p>
+                  <p className="text-sm text-muted">No dates yet.</p>
                 ) : (
                   <ul className="flex flex-col gap-1 text-sm">
                     {experienceSlots.map((s) => (
@@ -195,7 +196,7 @@ function ProviderSection({
         </section>
       ) : null}
 
-      <details className="rounded-md border border-zinc-200 p-4 dark:border-zinc-800">
+      <details className="rounded-xl border border-line bg-surface shadow-xs p-5">
         <summary className="cursor-pointer font-medium">Add an experience</summary>
         <div className="pt-4">
           <NewExperienceForm providerId={provider.id} destinations={destinations} />
@@ -208,7 +209,7 @@ function ProviderSection({
 export default function ProviderPage() {
   return (
     <PageShell title="Provider workspace">
-      <Suspense fallback={<LoadingBlock label="Loading your provider workspace…" />}>
+      <Suspense fallback={<LoadingBlock label="Loading your provider workspace…" variant="list" />}>
         <ProviderWorkspace />
       </Suspense>
     </PageShell>

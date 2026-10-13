@@ -14,6 +14,7 @@ import { EXPERIENCE_CATEGORIES } from "@/lib/catalog-options";
 import { MAX_NOTES_LENGTH, MAX_TRIP_DAYS, PACES } from "@/lib/itinerary-options";
 
 import { createItinerary } from "../actions";
+import { PendingLabel } from "@/components/ui";
 
 export function PreferencesForm({
   districts,
@@ -141,7 +142,7 @@ export function PreferencesForm({
         <label className="flex flex-col gap-1">
           <span className="text-sm font-medium">Anything else? (optional)</span>
           <textarea name="notes" rows={3} maxLength={MAX_NOTES_LENGTH} className={inputClass} />
-          <span className="text-xs text-zinc-500">
+          <span className="text-xs text-subtle">
             Shared with our AI planner. Please don&apos;t include names, phone numbers or other
             personal details.
           </span>
@@ -151,7 +152,11 @@ export function PreferencesForm({
 
       <FormAlert state={state} />
       <button type="submit" disabled={pending} className={`${buttonClass} self-start`}>
-        {pending ? "Planning your trip… this can take up to a minute" : "Plan my trip"}
+        <PendingLabel
+          pending={pending}
+          busy="Planning your trip… this can take up to a minute"
+          idle="Plan my trip"
+        />
       </button>
     </form>
   );

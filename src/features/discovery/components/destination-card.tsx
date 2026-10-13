@@ -8,18 +8,24 @@ export function DestinationCard({ destination }: { destination: DestinationSumma
     <li>
       <article
         data-testid="destination-card"
-        className="flex h-full flex-col gap-2 rounded-lg border border-zinc-200 p-4 transition-colors hover:border-emerald-600 dark:border-zinc-800"
+        className="group relative flex h-full flex-col gap-2 rounded-xl border border-line bg-surface p-5 shadow-xs transition hover:-translate-y-0.5 hover:border-accent/50 hover:shadow-md"
       >
-        <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-          <Link href={`/destinations/${destination.slug}`} className="hover:underline">
+        <p className="text-xs font-medium tracking-wide text-subtle uppercase">
+          {destination.district} district
+        </p>
+        <h2 className="text-lg leading-snug font-semibold text-fg">
+          {/* Stretched link: the whole card is clickable, with one accessible link. */}
+          <Link
+            href={`/destinations/${destination.slug}`}
+            className="after:absolute after:inset-0 after:rounded-xl group-hover:text-accent"
+          >
             {destination.name}
           </Link>
         </h2>
-        <p className="text-sm text-zinc-600 dark:text-zinc-400">{destination.district} district</p>
         {destination.summary ? (
-          <p className="text-zinc-700 dark:text-zinc-300">{destination.summary}</p>
+          <p className="line-clamp-3 text-sm leading-6 text-fg-soft">{destination.summary}</p>
         ) : null}
-        <p className="mt-auto text-sm text-zinc-600 dark:text-zinc-400">
+        <p className="mt-auto border-t border-line pt-3 text-sm font-medium text-muted">
           {count === 0
             ? "No experiences yet"
             : `${count} ${count === 1 ? "experience" : "experiences"}`}

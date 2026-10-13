@@ -17,8 +17,8 @@ async function SignUpContent({ searchParams }: PageProps<"/sign-up">) {
 
 export default function SignUpPage(props: PageProps<"/sign-up">) {
   return (
-    <PageShell title="Create your account">
-      <Suspense fallback={<LoadingBlock label="Loading…" />}>
+    <PageShell title="Create your account" width="form">
+      <Suspense fallback={<LoadingBlock label="Loading…" variant="form" />}>
         <SignUpContent {...props} />
       </Suspense>
     </PageShell>

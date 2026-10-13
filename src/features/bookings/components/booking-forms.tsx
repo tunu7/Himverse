@@ -20,6 +20,7 @@ import {
   respondToBookingAction,
   setSlotStatusAction,
 } from "../actions";
+import { PendingLabel } from "@/components/ui";
 
 export type SlotOption = { id: string; label: string; seatsLeft: number };
 
@@ -96,14 +97,14 @@ export function BookingRequestForm({
         <span className="text-sm font-medium">Message to the provider (optional)</span>
         <textarea name="note" rows={2} maxLength={500} className={inputClass} />
       </label>
-      <p className="text-sm text-zinc-600 dark:text-zinc-400">
+      <p className="text-sm text-muted">
         {price ? `Indicative price from ${price} per person. ` : "Price on request. "}
         The provider confirms the final price. Nothing is charged, and your booking isn&apos;t
         confirmed until the provider confirms it.
       </p>
       <FormAlert state={state} />
       <button type="submit" disabled={pending} className={`${buttonClass} self-start`}>
-        {pending ? "Sending request…" : "Request booking"}
+        <PendingLabel pending={pending} busy="Sending request…" idle="Request booking" />
       </button>
     </form>
   );

@@ -54,7 +54,7 @@ export function ExperienceFiltersForm({
       method="get"
       role="search"
       aria-label="Search and filter experiences"
-      className="grid gap-4 rounded-lg border border-zinc-200 p-4 sm:grid-cols-2 lg:grid-cols-3 dark:border-zinc-800"
+      className="grid gap-4 rounded-xl border border-line bg-surface shadow-xs p-5 sm:grid-cols-2 lg:grid-cols-3"
     >
       <label className="flex flex-col gap-1 sm:col-span-2 lg:col-span-3">
         <span className="text-sm font-medium">Search experiences</span>
@@ -105,7 +105,10 @@ export function ExperienceFiltersForm({
         <button type="submit" className={buttonClass}>
           Apply
         </button>
-        <Link href="/experiences" className="py-2 text-sm underline">
+        <Link
+          href="/experiences"
+          className="py-2 text-sm font-medium text-accent underline-offset-4 hover:underline"
+        >
           Reset
         </Link>
       </div>
@@ -126,7 +129,7 @@ export function DestinationFiltersForm({
       method="get"
       role="search"
       aria-label="Search destinations"
-      className="grid gap-4 rounded-lg border border-zinc-200 p-4 sm:grid-cols-[2fr_1fr_auto] dark:border-zinc-800"
+      className="grid gap-4 rounded-xl border border-line bg-surface shadow-xs p-5 sm:grid-cols-[2fr_1fr_auto]"
     >
       <label className="flex flex-col gap-1">
         <span className="text-sm font-medium">Search destinations</span>
@@ -150,7 +153,10 @@ export function DestinationFiltersForm({
         <button type="submit" className={buttonClass}>
           Search
         </button>
-        <Link href="/destinations" className="py-2 text-sm underline">
+        <Link
+          href="/destinations"
+          className="py-2 text-sm font-medium text-accent underline-offset-4 hover:underline"
+        >
           Reset
         </Link>
       </div>

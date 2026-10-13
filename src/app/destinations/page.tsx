@@ -52,7 +52,7 @@ async function DestinationResults({ searchParams }: PageProps<"/destinations">) 
 export default function DestinationsPage(props: PageProps<"/destinations">) {
   return (
     <PageShell title="Destinations in Arunachal Pradesh">
-      <Suspense fallback={<LoadingBlock label="Loading destinations…" />}>
+      <Suspense fallback={<LoadingBlock label="Loading destinations…" variant="cards" />}>
         <DestinationResults {...props} />
       </Suspense>
     </PageShell>

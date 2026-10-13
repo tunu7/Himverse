@@ -4,7 +4,7 @@ export function FieldError({ errors }: { errors: readonly string[] | undefined }
   if (!errors?.length) {
     return null;
   }
-  return <p className="text-sm text-red-700 dark:text-red-400">{errors.join(" ")}</p>;
+  return <p className="text-sm text-danger">{errors.join(" ")}</p>;
 }
 
 export function fieldErrorsOf(state: ActionResult<unknown> | null, field: string) {
@@ -23,23 +23,41 @@ export function FormAlert({
   }
   if (state.ok) {
     return successMessage ? (
-      <p role="status" className="text-sm text-emerald-700 dark:text-emerald-400">
+      <p
+        role="status"
+        className="rounded-md border border-accent/30 bg-accent-soft px-3 py-2 text-sm text-accent-soft-fg"
+      >
         {successMessage}
       </p>
     ) : null;
   }
   return (
-    <p role="alert" className="text-sm text-red-700 dark:text-red-400">
+    <p
+      role="alert"
+      className="rounded-md border border-danger/30 bg-danger-soft px-3 py-2 text-sm text-danger-soft-fg"
+    >
       {state.error.message}
     </p>
   );
 }
 
+// Shared control styles. Colours come from the design tokens in globals.css.
 export const inputClass =
-  "w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-zinc-900 focus:outline-2 focus:outline-emerald-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100";
+  "w-full rounded-lg border border-line-strong bg-surface px-3 py-2 text-fg shadow-xs transition-colors placeholder:text-subtle hover:border-subtle focus:border-accent focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-accent";
 
-export const buttonClass =
-  "rounded-md bg-emerald-700 px-4 py-2 font-medium text-white hover:bg-emerald-800 disabled:opacity-60";
+const buttonBase =
+  "inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60";
 
-export const secondaryButtonClass =
-  "rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-800 hover:bg-zinc-100 disabled:opacity-60 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800";
+export const buttonClass = `${buttonBase} bg-accent px-4 py-2 text-white shadow-xs hover:bg-accent-hover dark:text-zinc-950`;
+
+export const secondaryButtonClass = `${buttonBase} border border-line-strong bg-surface px-3 py-1.5 text-sm text-fg hover:bg-surface-muted`;
+
+/** Bordered surface used for cards, panels and grouped form sections. */
+export const cardClass = "rounded-xl border border-line bg-surface shadow-xs";
+
+/** Label text above a form control. */
+export const labelClass = "text-sm font-medium text-fg";
+
+/** Inline text link. */
+export const linkClass =
+  "font-medium text-accent underline-offset-4 hover:text-accent-hover hover:underline";

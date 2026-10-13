@@ -24,20 +24,23 @@ function Group({
         {title} ({bookings.length})
       </h2>
       {bookings.length === 0 ? (
-        <p className="text-sm text-zinc-600 dark:text-zinc-400">None.</p>
+        <p className="text-sm text-muted">None.</p>
       ) : (
         <ul className="flex flex-col gap-2">
           {bookings.map((b) => (
             <li
               key={b.id}
               data-testid="provider-booking"
-              className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-zinc-200 p-3 dark:border-zinc-800"
+              className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line bg-surface shadow-xs p-4"
             >
               <div>
-                <Link href={`/bookings/${b.id}`} className="font-medium underline">
+                <Link
+                  href={`/bookings/${b.id}`}
+                  className="font-medium text-fg underline-offset-4 hover:text-accent hover:underline"
+                >
                   {b.experienceTitle}
                 </Link>
-                <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                <p className="text-sm text-muted">
                   {formatSlot(b.slotStartsOn, b.slotStartTime)} · {b.travelerName} · {b.partySize}{" "}
                   {b.partySize === 1 ? "person" : "people"} · {b.reference}
                 </p>
@@ -78,7 +81,7 @@ async function ProviderBookings() {
 export default function ProviderBookingsPage() {
   return (
     <PageShell title="Booking requests">
-      <Suspense fallback={<LoadingBlock label="Loading bookings…" />}>
+      <Suspense fallback={<LoadingBlock label="Loading bookings…" variant="list" />}>
         <ProviderBookings />
       </Suspense>
     </PageShell>

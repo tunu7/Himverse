@@ -10,12 +10,12 @@ async function SignInContent({ searchParams }: PageProps<"/sign-in">) {
   return (
     <div className="flex max-w-md flex-col gap-4">
       {error === "confirmation_failed" ? (
-        <p role="alert" className="text-sm text-red-700 dark:text-red-400">
+        <p role="alert" className="text-sm text-danger">
           That confirmation link is invalid or has expired. Please sign in or request a new link.
         </p>
       ) : null}
       {error === "oauth_failed" ? (
-        <p role="alert" className="text-sm text-red-700 dark:text-red-400">
+        <p role="alert" className="text-sm text-danger">
           Google sign-in didn&apos;t complete. Please try again or use your email.
         </p>
       ) : null}
@@ -27,8 +27,8 @@ async function SignInContent({ searchParams }: PageProps<"/sign-in">) {
 
 export default function SignInPage(props: PageProps<"/sign-in">) {
   return (
-    <PageShell title="Sign in">
-      <Suspense fallback={<LoadingBlock label="Loading…" />}>
+    <PageShell title="Sign in" width="form">
+      <Suspense fallback={<LoadingBlock label="Loading…" variant="form" />}>
         <SignInContent {...props} />
       </Suspense>
     </PageShell>

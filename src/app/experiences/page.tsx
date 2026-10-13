@@ -54,12 +54,11 @@ async function ExperienceResults({ searchParams }: PageProps<"/experiences">) {
 
 export default function ExperiencesPage(props: PageProps<"/experiences">) {
   return (
-    <PageShell title="Experiences in Arunachal Pradesh">
-      <p className="text-zinc-600 dark:text-zinc-400">
-        From verified local providers. Prices are indicative; nothing here is a booking or an
-        availability guarantee.
-      </p>
-      <Suspense fallback={<LoadingBlock label="Loading experiences…" />}>
+    <PageShell
+      title="Experiences in Arunachal Pradesh"
+      description="From verified local providers. Prices are indicative; nothing here is a booking or an availability guarantee."
+    >
+      <Suspense fallback={<LoadingBlock label="Loading experiences…" variant="cards" />}>
         <ExperienceResults {...props} />
       </Suspense>
     </PageShell>

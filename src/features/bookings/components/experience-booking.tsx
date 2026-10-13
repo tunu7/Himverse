@@ -21,16 +21,14 @@ export async function ExperienceBooking({
   const [slots, user] = await Promise.all([listOpenSlots(experienceId), getCurrentUser()]);
 
   if (slots.length === 0) {
-    return (
-      <p className="text-sm text-zinc-600 dark:text-zinc-400">No dates are open for booking yet.</p>
-    );
+    return <p className="text-sm text-muted">No dates are open for booking yet.</p>;
   }
   if (!user) {
     return (
       <p className="text-sm">
         <Link
           href={`/sign-in?next=${encodeURIComponent(`/experiences/${experienceSlug}`)}`}
-          className="underline"
+          className="font-medium text-accent underline-offset-4 hover:underline"
         >
           Sign in
         </Link>{" "}

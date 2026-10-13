@@ -27,7 +27,7 @@ export function ItineraryPlan({ itinerary }: { itinerary: ItineraryView }) {
     <article className="flex flex-col gap-6">
       <section
         aria-label="Important"
-        className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200"
+        className="rounded-lg border border-warning-line bg-warning-soft p-3 text-sm text-warning-soft-fg"
       >
         <p>
           <strong>This is an AI-suggested plan, not a booking.</strong> Availability, opening times,
@@ -36,26 +36,28 @@ export function ItineraryPlan({ itinerary }: { itinerary: ItineraryView }) {
         </p>
       </section>
 
-      <dl className="grid gap-4 rounded-lg border border-zinc-200 p-4 sm:grid-cols-3 dark:border-zinc-800">
+      <dl className="grid gap-4 rounded-xl border border-line bg-surface shadow-xs p-5 sm:grid-cols-3">
         <div>
-          <dt className="text-sm text-zinc-500">Dates</dt>
+          <dt className="text-xs font-medium tracking-wide text-subtle uppercase">Dates</dt>
           <dd className="font-medium">
             {version.days[0] ? formatDate(version.days[0].date) : "—"}
             {version.days.length > 1 ? ` – ${formatDate(version.days.at(-1)!.date)}` : null}
           </dd>
         </div>
         <div>
-          <dt className="text-sm text-zinc-500">Travellers</dt>
+          <dt className="text-xs font-medium tracking-wide text-subtle uppercase">Travellers</dt>
           <dd className="font-medium">{version.travelers}</dd>
         </div>
         <div>
-          <dt className="text-sm text-zinc-500">Indicative cost of experiences</dt>
+          <dt className="text-xs font-medium tracking-wide text-subtle uppercase">
+            Indicative cost of experiences
+          </dt>
           <dd className="font-medium" data-testid="itinerary-total">
             From {total} for {version.travelers}{" "}
             {version.travelers === 1 ? "traveller" : "travellers"}
           </dd>
           {version.unpricedItemCount > 0 ? (
-            <dd className="text-xs text-zinc-500">
+            <dd className="text-xs text-subtle">
               Excludes {version.unpricedItemCount} experience
               {version.unpricedItemCount === 1 ? "" : "s"} with price on request
             </dd>
@@ -63,22 +65,20 @@ export function ItineraryPlan({ itinerary }: { itinerary: ItineraryView }) {
         </div>
       </dl>
 
-      {version.plan.summary ? (
-        <p className="text-zinc-700 dark:text-zinc-300">{version.plan.summary}</p>
-      ) : null}
+      {version.plan.summary ? <p className="text-fg-soft">{version.plan.summary}</p> : null}
 
       <ol className="flex flex-col gap-4">
         {version.days.map((day) => (
           <li
             key={day.dayNumber}
             data-testid="itinerary-day"
-            className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800"
+            className="rounded-xl border border-line bg-surface shadow-xs p-5"
           >
             <h2 className="text-lg font-semibold">
               Day {day.dayNumber} · {formatDate(day.date)}
             </h2>
             {day.items.length === 0 ? (
-              <p className="text-sm text-zinc-600 dark:text-zinc-400">
+              <p className="text-sm text-muted">
                 Free day: rest, travel or explore at your own pace.
               </p>
             ) : (
@@ -90,33 +90,32 @@ export function ItineraryPlan({ itinerary }: { itinerary: ItineraryView }) {
                       <p className="font-medium">
                         {TIME_LABELS[item.timeOfDay]}:{" "}
                         {item.stillAvailable && item.experienceSlug ? (
-                          <Link href={`/experiences/${item.experienceSlug}`} className="underline">
+                          <Link
+                            href={`/experiences/${item.experienceSlug}`}
+                            className="font-medium text-accent underline-offset-4 hover:underline"
+                          >
                             {item.title}
                           </Link>
                         ) : (
                           <>
                             {item.title}{" "}
-                            <span className="text-sm text-red-700 dark:text-red-400">
-                              (no longer available)
-                            </span>
+                            <span className="text-sm text-danger">(no longer available)</span>
                           </>
                         )}
                       </p>
-                      <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                      <p className="text-sm text-muted">
                         {item.destinationName} · {formatDuration(item.durationMinutes)} ·{" "}
                         {price ? `from ${price} per person` : "price on request"}
                       </p>
                       {item.rationale ? (
-                        <p className="text-sm text-zinc-700 dark:text-zinc-300">{item.rationale}</p>
+                        <p className="text-sm text-fg-soft">{item.rationale}</p>
                       ) : null}
                     </li>
                   );
                 })}
               </ul>
             )}
-            {day.note ? (
-              <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">{day.note}</p>
-            ) : null}
+            {day.note ? <p className="mt-2 text-sm text-muted">{day.note}</p> : null}
           </li>
         ))}
       </ol>
@@ -124,7 +123,7 @@ export function ItineraryPlan({ itinerary }: { itinerary: ItineraryView }) {
       {version.plan.cautions.length > 0 || version.warnings.length > 0 ? (
         <section className="flex flex-col gap-2">
           <h2 className="text-lg font-semibold">Things to check</h2>
-          <ul className="list-disc pl-5 text-sm text-zinc-700 dark:text-zinc-300">
+          <ul className="list-disc pl-5 text-sm text-fg-soft">
             {[...version.warnings, ...version.plan.cautions].map((text, i) => (
               <li key={i}>{text}</li>
             ))}

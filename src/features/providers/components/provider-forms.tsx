@@ -19,6 +19,7 @@ import {
   submitForReview,
 } from "../actions";
 import { EXPERIENCE_CATEGORIES } from "../schemas";
+import { PendingLabel } from "@/components/ui";
 
 function Field({
   label,
@@ -64,7 +65,7 @@ export function ProviderApplicationForm() {
         <textarea name="description" rows={4} maxLength={4000} className={inputClass} />
         <FieldError errors={errors("description")} />
       </label>
-      <fieldset className="flex flex-col gap-4 rounded-md border border-zinc-200 p-4 dark:border-zinc-800">
+      <fieldset className="flex flex-col gap-4 rounded-xl border border-line bg-surface shadow-xs p-5">
         <legend className="px-1 text-sm font-medium">
           Private — seen only by you and Himverse admins
         </legend>
@@ -92,7 +93,7 @@ export function ProviderApplicationForm() {
       </fieldset>
       <FormAlert state={state} />
       <button type="submit" disabled={pending} className={`${buttonClass} self-start`}>
-        {pending ? "Saving…" : "Save application as draft"}
+        <PendingLabel pending={pending} busy="Saving…" idle="Save application as draft" />
       </button>
     </form>
   );
@@ -105,7 +106,7 @@ export function SubmitForReviewForm({ providerId }: { providerId: string }) {
       <input type="hidden" name="providerId" value={providerId} />
       <FormAlert state={state} />
       <button type="submit" disabled={pending} className={`${buttonClass} self-start`}>
-        {pending ? "Submitting…" : "Submit for review"}
+        <PendingLabel pending={pending} busy="Submitting…" idle="Submit for review" />
       </button>
     </form>
   );
@@ -121,9 +122,7 @@ export function NewExperienceForm({
   const [state, action, pending] = useActionState(addExperience, null);
   const errors = (field: string) => fieldErrorsOf(state, field);
   if (destinations.length === 0) {
-    return (
-      <p className="text-sm text-zinc-600 dark:text-zinc-400">No destinations are published yet.</p>
-    );
+    return <p className="text-sm text-muted">No destinations are published yet.</p>;
   }
   return (
     <form action={action} className="flex max-w-xl flex-col gap-4" noValidate>
@@ -183,7 +182,7 @@ export function NewExperienceForm({
       </label>
       <FormAlert state={state} successMessage="Draft saved." />
       <button type="submit" disabled={pending} className={`${buttonClass} self-start`}>
-        {pending ? "Saving…" : "Save as draft"}
+        <PendingLabel pending={pending} busy="Saving…" idle="Save as draft" />
       </button>
     </form>
   );

@@ -1,45 +1,65 @@
 import Link from "next/link";
 import { Suspense } from "react";
 
+import { NavLinkItems, NavLinks } from "@/components/nav-links";
 import { getCurrentUser } from "@/server/auth/session";
 
 async function AuthLinks() {
   const user = await getCurrentUser();
   return user ? (
-    <Link href="/account" className="hover:underline">
+    <Link
+      href="/account"
+      className="rounded-md px-2.5 py-1.5 text-muted transition-colors hover:bg-surface-muted hover:text-fg"
+    >
       Account
     </Link>
   ) : (
-    <Link href="/sign-in" className="hover:underline">
+    <Link
+      href="/sign-in"
+      className="rounded-lg bg-accent px-3 py-1.5 font-medium text-white transition-colors hover:bg-accent-hover dark:text-zinc-950"
+    >
       Sign in
     </Link>
   );
 }
 
+function BrandMark() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="size-6 text-accent">
+      <path d="M2 20 9 7l4 7 2.5-4L22 20Z" fill="currentColor" opacity="0.25" />
+      <path
+        d="M2 20 9 7l4 7 2.5-4L22 20Z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 export function SiteHeader() {
   return (
-    <header className="border-b border-zinc-200 dark:border-zinc-800">
+    <header className="sticky top-0 z-40 border-b border-line bg-canvas/85 backdrop-blur supports-[backdrop-filter]:bg-canvas/70">
       <nav
         aria-label="Main"
-        className="mx-auto flex w-full max-w-4xl flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-4 text-sm sm:px-6"
+        className="mx-auto flex w-full max-w-6xl flex-wrap items-center gap-x-2 gap-y-2 px-4 py-3 text-sm sm:px-6"
       >
-        <Link href="/" className="font-semibold text-zinc-900 dark:text-zinc-50">
+        <Link
+          href="/"
+          className="order-1 flex items-center gap-2 font-semibold tracking-tight text-fg"
+        >
+          <BrandMark />
           Himverse.AI
         </Link>
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-zinc-700 sm:gap-x-5 dark:text-zinc-300">
-          <Link href="/destinations" className="hover:underline">
-            Destinations
-          </Link>
-          <Link href="/experiences" className="hover:underline">
-            Experiences
-          </Link>
-          <Link href="/itineraries" className="hover:underline">
-            Trips
-          </Link>
-          <Link href="/bookings" className="hover:underline">
-            Bookings
-          </Link>
-          <Suspense fallback={<span className="w-14" aria-hidden />}>
+        {/* Mobile: brand and account on the first row, links scroll on the second. */}
+        <div className="order-3 -mx-2 flex w-[calc(100%+1rem)] items-center gap-1 overflow-x-auto sm:order-2 sm:mx-0 sm:ml-auto sm:w-auto">
+          <Suspense fallback={<NavLinkItems pathname={null} />}>
+            <NavLinks />
+          </Suspense>
+        </div>
+        <div className="order-2 ml-auto sm:order-3 sm:ml-0">
+          <Suspense fallback={<span className="inline-block w-16" aria-hidden />}>
             <AuthLinks />
           </Suspense>
         </div>

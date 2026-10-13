@@ -14,21 +14,27 @@ async function AccountContent() {
   return (
     <div className="flex flex-col gap-8">
       <section className="flex flex-col gap-2">
-        <p className="text-zinc-600 dark:text-zinc-400">
+        <p className="text-muted">
           Signed in as <span className="font-medium">{profile.email}</span>
         </p>
-        <p className="text-sm text-zinc-500">
+        <p className="text-sm text-subtle">
           Account ID: <code data-testid="account-id">{profile.id}</code>
         </p>
         <ProfileForm displayName={profile.displayName} />
       </section>
       <section className="flex flex-col gap-2">
         <h2 className="text-lg font-semibold">Providers</h2>
-        <Link href="/provider" className="underline">
+        <Link
+          href="/provider"
+          className="font-medium text-accent underline-offset-4 hover:underline"
+        >
           Manage your provider application and experiences
         </Link>
         {isAdmin ? (
-          <Link href="/admin/providers" className="underline">
+          <Link
+            href="/admin/providers"
+            className="font-medium text-accent underline-offset-4 hover:underline"
+          >
             Admin: review providers
           </Link>
         ) : null}
@@ -44,8 +50,8 @@ async function AccountContent() {
 
 export default function AccountPage() {
   return (
-    <PageShell title="Your account">
-      <Suspense fallback={<LoadingBlock label="Loading your account…" />}>
+    <PageShell title="Your account" width="narrow">
+      <Suspense fallback={<LoadingBlock label="Loading your account…" variant="form" />}>
         <AccountContent />
       </Suspense>
     </PageShell>

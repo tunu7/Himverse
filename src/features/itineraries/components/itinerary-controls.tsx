@@ -18,6 +18,7 @@ import {
   regenerateItinerary,
   removeItinerary,
 } from "../actions";
+import { PendingLabel } from "@/components/ui";
 
 export function RefineForm({ itineraryId }: { itineraryId: string }) {
   const [state, action, pending] = useActionState(refineItinerary, null);
@@ -55,7 +56,7 @@ export function RefineForm({ itineraryId }: { itineraryId: string }) {
       </div>
       <FormAlert state={state} successMessage="Saved as a new version." />
       <button type="submit" disabled={pending} className={`${buttonClass} self-start`}>
-        {pending ? "Refining…" : "Refine itinerary"}
+        <PendingLabel pending={pending} busy="Refining…" idle="Refine itinerary" />
       </button>
     </form>
   );
@@ -67,7 +68,7 @@ export function RegenerateButton({ itineraryId }: { itineraryId: string }) {
     <form action={action} className="flex flex-col gap-1">
       <input type="hidden" name="itineraryId" value={itineraryId} />
       <button type="submit" disabled={pending} className={secondaryButtonClass}>
-        {pending ? "Regenerating…" : "Regenerate"}
+        <PendingLabel pending={pending} busy="Regenerating…" idle="Regenerate" />
       </button>
       <FormAlert state={state} />
     </form>
