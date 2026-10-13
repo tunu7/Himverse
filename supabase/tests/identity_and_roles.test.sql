@@ -4,14 +4,16 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(18);
+select plan(20);
 
 -- Fixtures (as postgres) ------------------------------------------------------
 insert into auth.users (id, email, raw_user_meta_data, aud, role)
 values
   ('11111111-1111-4111-8111-111111111111', 'traveler.a@example.test', '{"display_name":"Asha"}', 'authenticated', 'authenticated'),
   ('22222222-2222-4222-8222-222222222222', 'traveler.b@example.test', '{"role":"admin","display_name":""}', 'authenticated', 'authenticated'),
-  ('33333333-3333-4333-8333-333333333333', 'admin@example.test', '{}', 'authenticated', 'authenticated');
+  ('33333333-3333-4333-8333-333333333333', 'admin@example.test', '{}', 'authenticated', 'authenticated'),
+  -- Shape of a Google sign-in: name in full_name, plus a spoofed role claim
+  ('44444444-4444-4444-8444-444444444444', 'g.user@gmail.example', '{"full_name":"Tenzin Dorjee","name":"Tenzin","role":"admin","iss":"https://accounts.google.com"}', 'authenticated', 'authenticated');
 
 insert into public.user_roles (user_id, role)
 values ('33333333-3333-4333-8333-333333333333', 'admin');
@@ -26,6 +28,16 @@ select is(
   (select display_name from public.profiles where id = '22222222-2222-4222-8222-222222222222'),
   'traveler.b',
   'blank display_name falls back to email local part'
+);
+select is(
+  (select display_name from public.profiles where id = '44444444-4444-4444-8444-444444444444'),
+  'Tenzin Dorjee',
+  'Google sign-ups get their profile name from full_name'
+);
+select is(
+  (select count(*) from public.user_roles where user_id = '44444444-4444-4444-8444-444444444444'),
+  0::bigint,
+  'provider metadata never grants a role'
 );
 select is(
   (select count(*) from public.user_roles where user_id = '22222222-2222-4222-8222-222222222222'),
@@ -117,7 +129,7 @@ select set_config('request.jwt.claims', '{"sub":"33333333-3333-4333-8333-3333333
 
 select is(
   (select count(*) from public.profiles),
-  3::bigint,
+  4::bigint,
   'admin can read all profiles'
 );
 

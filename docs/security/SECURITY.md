@@ -7,16 +7,17 @@ public issues for vulnerabilities.
 
 ## Threat model summary (MVP)
 
-| Asset                      | Threat                                        | Control                                                                                                  |
-| -------------------------- | --------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| Traveler personal data     | Cross-user access                             | RLS per user; explicit column selection; pgTAP tests                                                     |
-| Provider data and bookings | Provider reading/changing others' bookings    | RLS via `provider_members`; server-side authorization                                                    |
-| Catalogue integrity        | Unverified/malicious listings; AI fabrication | Admin verification; AI never writes curated tables                                                       |
-| Booking correctness        | Double booking, false confirmation            | Idempotency keys; DB-enforced transitions; authoritative confirmation only                               |
-| Secrets                    | Leak to browser or logs                       | `server-only` modules; no `NEXT_PUBLIC_` secrets; log hygiene                                            |
-| AI pipeline                | Prompt injection via user text or content     | Output validation + grounding; no tool access to writes; see [AI_ARCHITECTURE](../ai/AI_ARCHITECTURE.md) |
-| Accounts                   | Credential stuffing, enumeration              | Supabase Auth rate limits; generic auth error messages; CAPTCHA before launch (release checklist)        |
-| Platform resources         | Abuse/spam of write paths; AI cost runaway    | Database-enforced rate limits (below); per-user + platform AI caps; AI kill switch                       |
+| Asset                      | Threat                                        | Control                                                                                                                                  |
+| -------------------------- | --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| Traveler personal data     | Cross-user access                             | RLS per user; explicit column selection; pgTAP tests                                                                                     |
+| Provider data and bookings | Provider reading/changing others' bookings    | RLS via `provider_members`; server-side authorization                                                                                    |
+| Catalogue integrity        | Unverified/malicious listings; AI fabrication | Admin verification; AI never writes curated tables                                                                                       |
+| Booking correctness        | Double booking, false confirmation            | Idempotency keys; DB-enforced transitions; authoritative confirmation only                                                               |
+| Secrets                    | Leak to browser or logs                       | `server-only` modules; no `NEXT_PUBLIC_` secrets; log hygiene                                                                            |
+| AI pipeline                | Prompt injection via user text or content     | Output validation + grounding; no tool access to writes; see [AI_ARCHITECTURE](../ai/AI_ARCHITECTURE.md)                                 |
+| OAuth sign-in (Google)     | Login CSRF, open redirect, role spoofing      | PKCE verifier cookie bound to the browser; `next` restricted to internal paths; provider metadata only prefills the display name (pgTAP) |
+| Accounts                   | Credential stuffing, enumeration              | Supabase Auth rate limits; generic auth error messages; CAPTCHA before launch (release checklist)                                        |
+| Platform resources         | Abuse/spam of write paths; AI cost runaway    | Database-enforced rate limits (below); per-user + platform AI caps; AI kill switch                                                       |
 
 ## Requirements
 

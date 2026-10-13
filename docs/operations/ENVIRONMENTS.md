@@ -23,6 +23,7 @@ Defined and documented in [.env.example](../../.env.example); validated in `src/
 | `NEXT_PUBLIC_SITE_URL`                 | Public   | Per environment; used for auth redirects                                                                          |
 | `NEXT_PUBLIC_SUPABASE_URL`             | Public   | Supabase API URL                                                                                                  |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Public   | Publishable (formerly anon) key; RLS applies                                                                      |
+| `NEXT_PUBLIC_AUTH_GOOGLE_ENABLED`      | Public   | `false` (default). `true` shows "Continue with Google" (set up the provider first)                                |
 | `SUPABASE_SECRET_KEY`                  | Server   | Secret (formerly service_role) key; bypasses RLS                                                                  |
 | `AI_PROVIDER`                          | Server   | `gateway` (default) or `mock` (tests only; see `AI_ALLOW_MOCK`)                                                   |
 | `AI_ALLOW_MOCK`                        | Server   | `false` (default). Mock refused on Vercel production always, and in any production build unless `true` (E2E only) |
@@ -45,6 +46,18 @@ Defined and documented in [.env.example](../../.env.example); validated in `src/
   email template to link to
   `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=signup&next=/account`. Only `signup` and
   `email_change` token types are accepted; magic-link, recovery and invite links are refused.
+- **Google sign-in** (Supabase OAuth with PKCE; `/auth/google` → Google → Supabase →
+  `/auth/callback`):
+  1. Google Cloud Console → APIs & Services → OAuth consent screen (External; app name, support
+     email, `openid`/`email`/`profile` scopes only), then Credentials → OAuth client ID → Web
+     application. Authorised redirect URI: `https://<project-ref>.supabase.co/auth/v1/callback`.
+  2. Supabase → Authentication → Sign In / Providers → Google: enable, paste the client ID and
+     secret (stored by Supabase, never in this repo or Vercel).
+  3. Supabase → Authentication → URL Configuration → Redirect URLs: add
+     `<site>/auth/callback` (as well as `<site>/auth/confirm`).
+  4. Vercel: `NEXT_PUBLIC_AUTH_GOOGLE_ENABLED=true`, then redeploy (public values are built in).
+     Google accounts sign in as travellers; roles still come only from `user_roles`. A Google sign-in
+     with the same verified email as an existing password account is linked to it by Supabase.
 - Adding a variable: update `.env.example`, the Zod schema, this table, and Vercel settings in the same PR.
 - `NEXT_PUBLIC_*` values are inlined at build time and visible to anyone — never put secrets there.
 - Rotate keys immediately if exposed ([INCIDENT_RESPONSE](INCIDENT_RESPONSE.md)).

@@ -2,6 +2,7 @@ import { Suspense } from "react";
 
 import { LoadingBlock, PageShell } from "@/components/page-shell";
 import { SignInForm } from "@/features/auth/components/auth-forms";
+import { GoogleSignIn } from "@/features/auth/components/google-sign-in";
 import { safeRedirectPath } from "@/lib/redirect";
 
 async function SignInContent({ searchParams }: PageProps<"/sign-in">) {
@@ -13,6 +14,12 @@ async function SignInContent({ searchParams }: PageProps<"/sign-in">) {
           That confirmation link is invalid or has expired. Please sign in or request a new link.
         </p>
       ) : null}
+      {error === "oauth_failed" ? (
+        <p role="alert" className="text-sm text-red-700 dark:text-red-400">
+          Google sign-in didn&apos;t complete. Please try again or use your email.
+        </p>
+      ) : null}
+      <GoogleSignIn next={safeRedirectPath(next)} />
       <SignInForm next={safeRedirectPath(next)} />
     </div>
   );

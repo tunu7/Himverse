@@ -32,6 +32,9 @@ Launch scope: discovery, AI itineraries and booking **requests** (no online paym
       origins and re-tested.
 - [ ] Site URL and redirect allow-list exact; confirmation email template set; tested end to end on
       staging (sign up → confirm → sign in) on a second device.
+- [ ] Google sign-in (if enabled): OAuth client in Google Cloud, provider enabled in Supabase,
+      `<site>/auth/callback` in the redirect allow-list, `NEXT_PUBLIC_AUTH_GOOGLE_ENABLED=true`;
+      tested end to end (new Google user, cancelled consent, existing email account).
 - [ ] First admin bootstrapped with the runbook; no other admins.
 
 ## 4. Notifications (blocker for booking requests)

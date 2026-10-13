@@ -10,7 +10,20 @@ const validPublic = {
 
 describe("parsePublicEnv", () => {
   it("accepts a complete, valid environment", () => {
-    expect(parsePublicEnv(validPublic)).toEqual(validPublic);
+    expect(parsePublicEnv(validPublic)).toEqual({
+      ...validPublic,
+      NEXT_PUBLIC_AUTH_GOOGLE_ENABLED: "false",
+    });
+  });
+
+  it('enables Google sign-in only with an explicit "true"', () => {
+    expect(
+      parsePublicEnv({ ...validPublic, NEXT_PUBLIC_AUTH_GOOGLE_ENABLED: "true" })
+        .NEXT_PUBLIC_AUTH_GOOGLE_ENABLED,
+    ).toBe("true");
+    expect(() =>
+      parsePublicEnv({ ...validPublic, NEXT_PUBLIC_AUTH_GOOGLE_ENABLED: "yes" }),
+    ).toThrow(EnvValidationError);
   });
 
   it("reports every missing or invalid key", () => {
