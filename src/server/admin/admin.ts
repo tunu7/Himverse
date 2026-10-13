@@ -150,18 +150,30 @@ export type DestinationInput = {
   isPublished: boolean;
 };
 
+// An embedded `experiences(count)` reads whole rows, which needs the table-level
+// SELECT that API roles deliberately don't have (column grants only). Fetch only
+// destination ids and tally them, as the public catalogue does. Bounded; the FK
+// `on delete restrict` still blocks deleting a destination that is in use.
+const MAX_COUNTED_EXPERIENCES = 10_000;
+
 export async function listAllDestinations(): Promise<AdminDestination[]> {
   await requireAdmin();
   const supabase = await createSupabaseServerClient();
-  const { data, error } = await supabase
-    .from("destinations")
-    .select(
-      "id, slug, name, district, summary, description, is_published, experiences:experiences!experiences_destination_id_fkey(count)",
-    )
-    .order("name")
-    .limit(500);
-  if (error) throw toAppError(error, "Could not load destinations.");
-  return data.map((d) => ({
+  const [destinations, experiences] = await Promise.all([
+    supabase
+      .from("destinations")
+      .select("id, slug, name, district, summary, description, is_published")
+      .order("name")
+      .limit(500),
+    supabase.from("experiences").select("destination_id").limit(MAX_COUNTED_EXPERIENCES),
+  ]);
+  if (destinations.error) throw toAppError(destinations.error, "Could not load destinations.");
+  if (experiences.error) throw toAppError(experiences.error, "Could not load destinations.");
+  const counts = new Map<string, number>();
+  for (const e of experiences.data) {
+    counts.set(e.destination_id, (counts.get(e.destination_id) ?? 0) + 1);
+  }
+  return destinations.data.map((d) => ({
     id: d.id,
     slug: d.slug,
     name: d.name,
@@ -169,7 +181,7 @@ export async function listAllDestinations(): Promise<AdminDestination[]> {
     summary: d.summary,
     description: d.description,
     isPublished: d.is_published,
-    experienceCount: d.experiences[0]?.count ?? 0,
+    experienceCount: counts.get(d.id) ?? 0,
   }));
 }
 
