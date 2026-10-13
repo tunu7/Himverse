@@ -139,7 +139,7 @@ function MountainArt() {
           opacity="0.1"
         />
       </svg>
-      <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-canvas to-transparent" />
+      <div className="absolute inset-x-0 bottom-0 h-16 bg-linear-to-t from-canvas to-transparent" />
     </div>
   );
 }
@@ -152,11 +152,11 @@ export default function Home() {
       <section className="relative isolate overflow-hidden">
         <div
           aria-hidden="true"
-          className="bg-dots pointer-events-none absolute inset-0 -z-10 [mask-image:radial-gradient(ellipse_at_top,black_20%,transparent_70%)]"
+          className="bg-dots pointer-events-none absolute inset-0 -z-10 mask-[radial-gradient(ellipse_at_top,black_20%,transparent_70%)]"
         />
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute -top-40 left-1/2 -z-10 h-[32rem] w-[56rem] -translate-x-1/2 rounded-full bg-accent/15 blur-3xl"
+          className="pointer-events-none absolute -top-40 left-1/2 -z-10 h-128 w-4xl -translate-x-1/2 rounded-full bg-accent/15 blur-3xl"
         />
         <MountainArt />
         <div className="relative mx-auto flex w-full max-w-6xl flex-col items-center gap-7 px-4 pt-16 pb-36 text-center sm:px-6 sm:pt-28 sm:pb-52">
@@ -201,7 +201,7 @@ export default function Home() {
             role="search"
             aria-label="Search experiences"
             style={rise(320)}
-            className="flex w-full max-w-xl animate-rise items-center gap-2 rounded-full border border-line bg-surface/80 p-1.5 pl-5 shadow-xl shadow-black/[0.04] backdrop-blur-xl transition focus-within:border-accent/50 focus-within:ring-4 focus-within:ring-accent/10"
+            className="flex w-full max-w-xl animate-rise items-center gap-2 rounded-full border border-line bg-surface/80 p-1.5 pl-5 shadow-xl shadow-black/4 backdrop-blur-xl transition focus-within:border-accent/50 focus-within:ring-4 focus-within:ring-accent/10"
           >
             <label htmlFor="home-search" className="sr-only">
               Search experiences
@@ -307,7 +307,7 @@ export default function Home() {
       </section>
 
       <section className="mx-auto w-full max-w-6xl px-4 pb-24 sm:px-6">
-        <div className="reveal relative isolate overflow-hidden rounded-[2rem] bg-ink ring-1 ring-white/5 px-6 py-14 text-white sm:px-14 sm:py-20">
+        <div className="reveal relative isolate overflow-hidden rounded-4xl bg-ink ring-1 ring-white/5 px-6 py-14 text-white sm:px-14 sm:py-20">
           <div
             aria-hidden="true"
             className="pointer-events-none absolute -top-32 -right-20 -z-10 size-96 rounded-full bg-emerald-500/25 blur-3xl"
