@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { connection } from "next/server";
 import { Suspense } from "react";
 
 import { buttonClass, inputClass, secondaryButtonClass } from "@/components/form-feedback";
@@ -64,7 +65,10 @@ function CardRowSkeleton({ count }: { count: number }) {
   );
 }
 
+// connection(): render per request (inside Suspense) so listings are always
+// current and the build never queries the database.
 async function FeaturedExperiences() {
+  await connection();
   const { items } = await searchExperiences({ sort: "newest", page: 1 });
   if (items.length === 0) {
     return <p className="text-muted">New experiences are being added. Check back soon.</p>;
@@ -79,6 +83,7 @@ async function FeaturedExperiences() {
 }
 
 async function FeaturedDestinations() {
+  await connection();
   const { items } = await searchDestinations({ page: 1 });
   if (items.length === 0) return null;
   return (
