@@ -43,17 +43,17 @@ export function FormAlert({
 
 // Shared control styles. Colours come from the design tokens in globals.css.
 export const inputClass =
-  "w-full rounded-lg border border-line-strong bg-surface px-3 py-2 text-fg shadow-xs transition-colors placeholder:text-subtle hover:border-subtle focus:border-accent focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-accent";
+  "w-full rounded-xl border border-line-strong bg-surface px-3.5 py-2.5 text-fg shadow-xs transition placeholder:text-subtle hover:border-subtle focus:border-accent focus:ring-4 focus:ring-accent/15 focus:outline-none";
 
 const buttonBase =
-  "inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60";
+  "inline-flex items-center justify-center gap-2 rounded-full font-semibold transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 disabled:active:scale-100";
 
-export const buttonClass = `${buttonBase} bg-accent px-4 py-2 text-white shadow-xs hover:bg-accent-hover dark:text-zinc-950`;
+export const buttonClass = `${buttonBase} bg-accent px-5 py-2.5 text-white shadow-sm shadow-accent/20 hover:bg-accent-hover hover:shadow-md hover:shadow-accent/25 dark:text-zinc-950`;
 
-export const secondaryButtonClass = `${buttonBase} border border-line-strong bg-surface px-3 py-1.5 text-sm text-fg hover:bg-surface-muted`;
+export const secondaryButtonClass = `${buttonBase} border border-line-strong bg-surface px-4 py-2 text-sm text-fg hover:border-subtle hover:bg-surface-muted`;
 
 /** Bordered surface used for cards, panels and grouped form sections. */
-export const cardClass = "rounded-xl border border-line bg-surface shadow-xs";
+export const cardClass = "rounded-2xl border border-line bg-surface shadow-xs";
 
 /** Label text above a form control. */
 export const labelClass = "text-sm font-medium text-fg";

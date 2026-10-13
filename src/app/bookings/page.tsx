@@ -2,7 +2,9 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { Suspense } from "react";
 
+import { buttonClass } from "@/components/form-feedback";
 import { LoadingBlock, PageShell } from "@/components/page-shell";
+import { EmptyState } from "@/components/ui";
 import { BookingStatusBadge } from "@/features/bookings/components/booking-status";
 import { formatSlot } from "@/lib/format";
 import { requireUserForPage } from "@/server/auth/session";
@@ -15,16 +17,12 @@ async function BookingList() {
   const bookings = await listMyBookings();
   if (bookings.length === 0) {
     return (
-      <p className="text-muted">
-        You haven&apos;t requested any bookings yet.{" "}
-        <Link
-          href="/experiences"
-          className="font-medium text-accent underline-offset-4 hover:underline"
-        >
+      <EmptyState title="You haven't requested any bookings yet.">
+        <p>Find an experience you like, pick a date and send the provider a request.</p>
+        <Link href="/experiences" className={`${buttonClass} mt-3`}>
           Find an experience
         </Link>
-        .
-      </p>
+      </EmptyState>
     );
   }
   return (

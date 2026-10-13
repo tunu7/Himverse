@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Suspense } from "react";
 
+import { buttonClass } from "@/components/form-feedback";
 import { LoadingBlock, PageShell } from "@/components/page-shell";
 import { ExperienceCard } from "@/features/discovery/components/experience-card";
 import { ExperienceFiltersForm } from "@/features/discovery/components/filter-forms";
@@ -48,6 +50,18 @@ async function ExperienceResults({ searchParams }: PageProps<"/experiences">) {
         pageCount={results.pageCount}
         hrefFor={(page) => experiencesHref(filters, { page })}
       />
+      <aside className="flex flex-col items-start gap-3 rounded-2xl border border-line bg-surface-muted p-6 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-1">
+          <p className="font-semibold text-fg">Rather not plan it all yourself?</p>
+          <p className="text-sm text-muted">
+            Tell our AI planner your dates and interests and get a day-by-day plan in about a
+            minute.
+          </p>
+        </div>
+        <Link href="/itineraries/new" className={`${buttonClass} shrink-0`}>
+          Plan my trip with AI
+        </Link>
+      </aside>
     </div>
   );
 }

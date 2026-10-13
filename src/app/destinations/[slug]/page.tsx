@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
+import { buttonClass } from "@/components/form-feedback";
 import { LoadingBlock, PageMain } from "@/components/page-shell";
 import { ExperienceCard } from "@/features/discovery/components/experience-card";
 import { experiencesHref } from "@/features/discovery/search-params";
@@ -44,6 +45,16 @@ async function DestinationDetail({ params }: PageProps<"/destinations/[slug]">) 
       {destination.description ? (
         <p className="whitespace-pre-line text-fg-soft">{destination.description}</p>
       ) : null}
+
+      <aside className="flex flex-col items-start gap-3 rounded-2xl border border-accent/25 bg-accent-soft p-5 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-sm font-medium text-accent-soft-fg">
+          Want a day-by-day plan for {destination.name}? Our AI planner builds one from these
+          experiences.
+        </p>
+        <Link href="/itineraries/new" className={`${buttonClass} shrink-0`}>
+          Plan a trip
+        </Link>
+      </aside>
 
       <section className="flex flex-col gap-4" aria-labelledby="destination-experiences">
         <div className="flex flex-wrap items-baseline justify-between gap-2">

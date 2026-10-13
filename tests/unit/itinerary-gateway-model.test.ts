@@ -91,6 +91,33 @@ describe("gateway itinerary model adapter", () => {
     expect(error).toMatchObject({ kind: "unavailable" });
   });
 
+  it("logs why the provider refused (e.g. billing), without prompt content", async () => {
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const refusal = Object.assign(new Error("AI Gateway requires a valid credit card on file"), {
+      name: "GatewayInternalServerError",
+      statusCode: 403,
+      type: "internal_server_error",
+    });
+    const model = createGatewayItineraryModel({
+      modelId: "m/x",
+      languageModel: new MockLanguageModelV4({
+        doGenerate: async () => {
+          throw refusal;
+        },
+      }),
+    });
+    await model.generate(request).catch(() => {});
+    const line = JSON.parse(String(spy.mock.calls.at(-1)?.[0]));
+    expect(line).toMatchObject({
+      event: "itineraries.model_call_failed",
+      status: 403,
+      detail: expect.stringContaining("credit card"),
+    });
+    expect(Object.keys(line).sort()).toEqual(
+      ["detail", "env", "errorName", "errorType", "event", "level", "status", "time"].sort(),
+    );
+  });
+
   it("maps the SDK timeout to timeout", async () => {
     const model = createGatewayItineraryModel({
       modelId: "m/x",

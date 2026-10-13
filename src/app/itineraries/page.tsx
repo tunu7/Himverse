@@ -3,6 +3,7 @@ import { Suspense } from "react";
 
 import { buttonClass } from "@/components/form-feedback";
 import { LoadingBlock, PageShell } from "@/components/page-shell";
+import { EmptyState } from "@/components/ui";
 import { requireUserForPage } from "@/server/auth/session";
 import { listMyItineraries } from "@/server/itineraries/repository";
 
@@ -11,12 +12,12 @@ async function ItineraryList() {
   const itineraries = await listMyItineraries();
   if (itineraries.length === 0) {
     return (
-      <div className="flex flex-col items-start gap-3">
-        <p className="text-muted">You haven&apos;t planned any trips yet.</p>
-        <Link href="/itineraries/new" className={buttonClass}>
+      <EmptyState title="You haven't planned any trips yet.">
+        <p>Tell our AI planner where and when, and get a day-by-day plan in about a minute.</p>
+        <Link href="/itineraries/new" className={`${buttonClass} mt-3`}>
           Plan a trip
         </Link>
-      </div>
+      </EmptyState>
     );
   }
   return (

@@ -21,7 +21,20 @@ export async function ExperienceBooking({
   const [slots, user] = await Promise.all([listOpenSlots(experienceId), getCurrentUser()]);
 
   if (slots.length === 0) {
-    return <p className="text-sm text-muted">No dates are open for booking yet.</p>;
+    return (
+      <div className="flex flex-col gap-3 rounded-2xl border border-dashed border-line-strong p-5">
+        <p className="text-sm text-muted">No dates are open for booking yet.</p>
+        <p className="text-sm text-fg-soft">
+          You can still include it in a trip plan and request it once dates open.
+        </p>
+        <Link
+          href="/itineraries/new"
+          className="self-start text-sm font-semibold text-accent hover:underline"
+        >
+          Plan a trip with AI →
+        </Link>
+      </div>
+    );
   }
   if (!user) {
     return (

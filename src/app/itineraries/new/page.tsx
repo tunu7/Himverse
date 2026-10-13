@@ -11,7 +11,10 @@ async function NewItinerary() {
   await requireUserForPage("/itineraries/new");
   if (getAiEnv().AI_ITINERARY_ENABLED !== "true") {
     return (
-      <p role="status" className="rounded-md bg-warning-soft p-3 text-warning-soft-fg">
+      <p
+        role="status"
+        className="rounded-2xl border border-warning-line bg-warning-soft p-4 text-warning-soft-fg"
+      >
         Trip planning is temporarily unavailable. Your saved trips are still available under Trips.
       </p>
     );
@@ -31,11 +34,11 @@ async function NewItinerary() {
 
 export default function NewItineraryPage() {
   return (
-    <PageShell title="Plan a trip" width="narrow">
-      <p className="text-muted">
-        Our AI planner builds a day-by-day suggestion using only published experiences from verified
-        providers.
-      </p>
+    <PageShell
+      title="Plan a trip"
+      width="narrow"
+      description="Answer a few questions and our AI planner drafts a day-by-day trip using only real experiences from verified local providers. You can refine it afterwards. Nothing is booked until you request it."
+    >
       <Suspense fallback={<LoadingBlock label="Loading…" variant="form" />}>
         <NewItinerary />
       </Suspense>

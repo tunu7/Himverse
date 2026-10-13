@@ -27,7 +27,11 @@ async function SignInContent({ searchParams }: PageProps<"/sign-in">) {
 
 export default function SignInPage(props: PageProps<"/sign-in">) {
   return (
-    <PageShell title="Sign in" width="form">
+    <PageShell
+      title="Sign in"
+      width="form"
+      description="Welcome back. Pick up your trip plans and booking requests."
+    >
       <Suspense fallback={<LoadingBlock label="Loading…" variant="form" />}>
         <SignInContent {...props} />
       </Suspense>

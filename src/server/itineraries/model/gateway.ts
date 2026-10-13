@@ -10,6 +10,7 @@ import {
   Output,
 } from "ai";
 
+import { logger } from "@/lib/logger";
 import { itineraryDraftSchema } from "@/server/itineraries/schemas";
 
 import { type ItineraryModel, ModelError } from "./types";
@@ -64,5 +65,14 @@ function toModelError(error: unknown): ModelError {
   if (name === "AbortError" || name === "TimeoutError") {
     return new ModelError("timeout", { cause: error });
   }
+  // Record why the provider refused (auth, billing, rate limit, outage) so it's
+  // visible in logs; users only see the generic "unavailable" message.
+  const details = (error ?? {}) as { statusCode?: unknown; type?: unknown; message?: unknown };
+  logger.error("itineraries.model_call_failed", {
+    errorName: name || typeof error,
+    status: typeof details.statusCode === "number" ? details.statusCode : undefined,
+    errorType: typeof details.type === "string" ? details.type : undefined,
+    detail: typeof details.message === "string" ? details.message.slice(0, 300) : undefined,
+  });
   return new ModelError("unavailable", { cause: error });
 }

@@ -20,6 +20,8 @@ import {
 } from "../actions";
 import { PendingLabel } from "@/components/ui";
 
+import { PlanningProgress } from "./planning-progress";
+
 export function RefineForm({ itineraryId }: { itineraryId: string }) {
   const [state, action, pending] = useActionState(refineItinerary, null);
   return (
@@ -55,6 +57,7 @@ export function RefineForm({ itineraryId }: { itineraryId: string }) {
         </label>
       </div>
       <FormAlert state={state} successMessage="Saved as a new version." />
+      {pending ? <PlanningProgress /> : null}
       <button type="submit" disabled={pending} className={`${buttonClass} self-start`}>
         <PendingLabel pending={pending} busy="Refining…" idle="Refine itinerary" />
       </button>
@@ -70,6 +73,7 @@ export function RegenerateButton({ itineraryId }: { itineraryId: string }) {
       <button type="submit" disabled={pending} className={secondaryButtonClass}>
         <PendingLabel pending={pending} busy="Regenerating…" idle="Regenerate" />
       </button>
+      {pending ? <PlanningProgress /> : null}
       <FormAlert state={state} />
     </form>
   );

@@ -16,6 +16,8 @@ import { MAX_NOTES_LENGTH, MAX_TRIP_DAYS, PACES } from "@/lib/itinerary-options"
 import { createItinerary } from "../actions";
 import { PendingLabel } from "@/components/ui";
 
+import { PlanningProgress } from "./planning-progress";
+
 export function PreferencesForm({
   districts,
   destinations,
@@ -29,11 +31,19 @@ export function PreferencesForm({
   const errors = (field: string) => fieldErrorsOf(state, field);
 
   return (
-    <form action={action} className="flex max-w-2xl flex-col gap-6" noValidate>
+    <form action={action} className="flex flex-col gap-6" noValidate aria-busy={pending}>
       <input type="hidden" name="currency" value="INR" />
 
-      <fieldset className="grid gap-4 sm:grid-cols-2">
-        <legend className="mb-2 font-semibold">Where and when</legend>
+      <fieldset
+        disabled={pending}
+        className="grid gap-4 rounded-2xl border border-line bg-surface p-5 shadow-xs disabled:opacity-60 sm:p-6 sm:grid-cols-2"
+      >
+        <legend className="mb-4 flex items-center gap-2 text-base font-semibold text-fg">
+          <span className="flex size-6 items-center justify-center rounded-full bg-accent text-xs font-bold text-white dark:text-zinc-950">
+            1
+          </span>
+          Where and when
+        </legend>
         <label className="flex flex-col gap-1 sm:col-span-2">
           <span className="text-sm font-medium">Where would you like to go?</span>
           <select name="place" defaultValue="" className={inputClass}>
@@ -80,8 +90,16 @@ export function PreferencesForm({
         </label>
       </fieldset>
 
-      <fieldset className="grid gap-4 sm:grid-cols-3">
-        <legend className="mb-2 font-semibold">Who and budget</legend>
+      <fieldset
+        disabled={pending}
+        className="grid gap-4 rounded-2xl border border-line bg-surface p-5 shadow-xs disabled:opacity-60 sm:p-6 sm:grid-cols-3"
+      >
+        <legend className="mb-4 flex items-center gap-2 text-base font-semibold text-fg">
+          <span className="flex size-6 items-center justify-center rounded-full bg-accent text-xs font-bold text-white dark:text-zinc-950">
+            2
+          </span>
+          Who and budget
+        </legend>
         <label className="flex flex-col gap-1">
           <span className="text-sm font-medium">Adults</span>
           <input
@@ -114,12 +132,29 @@ export function PreferencesForm({
         </label>
       </fieldset>
 
-      <fieldset className="flex flex-col gap-3">
-        <legend className="mb-2 font-semibold">Interests and pace</legend>
-        <div className="flex flex-wrap gap-3">
+      <fieldset
+        disabled={pending}
+        className="flex flex-col gap-4 rounded-2xl border border-line bg-surface p-5 shadow-xs disabled:opacity-60 sm:p-6"
+      >
+        <legend className="mb-4 flex items-center gap-2 text-base font-semibold text-fg">
+          <span className="flex size-6 items-center justify-center rounded-full bg-accent text-xs font-bold text-white dark:text-zinc-950">
+            3
+          </span>
+          Interests and pace
+        </legend>
+        <p className="text-sm text-muted">What do you enjoy? Pick any (or none for a mix).</p>
+        <div className="flex flex-wrap gap-2">
           {EXPERIENCE_CATEGORIES.map((c) => (
-            <label key={c} className="flex items-center gap-2 text-sm">
-              <input type="checkbox" name="interests" value={c} />
+            <label
+              key={c}
+              className="flex cursor-pointer items-center gap-2 rounded-full border border-line-strong bg-surface px-3.5 py-1.5 text-sm font-medium text-fg-soft transition hover:border-accent/50 has-[:checked]:border-accent has-[:checked]:bg-accent-soft has-[:checked]:text-accent-soft-fg"
+            >
+              <input
+                type="checkbox"
+                name="interests"
+                value={c}
+                className="size-4 accent-[var(--accent)]"
+              />
               {formatCategory(c)}
             </label>
           ))}
@@ -135,8 +170,8 @@ export function PreferencesForm({
             ))}
           </select>
         </label>
-        <label className="flex items-center gap-2 text-sm">
-          <input type="checkbox" name="limitedMobility" />
+        <label className="flex items-center gap-2 text-sm text-fg-soft">
+          <input type="checkbox" name="limitedMobility" className="size-4 accent-[var(--accent)]" />
           Someone in the group has limited mobility
         </label>
         <label className="flex flex-col gap-1">
@@ -151,13 +186,19 @@ export function PreferencesForm({
       </fieldset>
 
       <FormAlert state={state} />
-      <button type="submit" disabled={pending} className={`${buttonClass} self-start`}>
-        <PendingLabel
-          pending={pending}
-          busy="Planning your trip… this can take up to a minute"
-          idle="Plan my trip"
-        />
-      </button>
+      {pending ? <PlanningProgress /> : null}
+      <div className="flex flex-wrap items-center gap-3">
+        <button type="submit" disabled={pending} className={`${buttonClass} px-6 py-3 text-base`}>
+          <PendingLabel
+            pending={pending}
+            busy="Planning your trip… this can take up to a minute"
+            idle="Plan my trip"
+          />
+        </button>
+        {pending ? null : (
+          <p className="text-sm text-subtle">Free · takes about a minute · nothing is booked</p>
+        )}
+      </div>
     </form>
   );
 }
