@@ -12,12 +12,14 @@ export async function GET() {
   await connection();
   let database: "ok" | "error" = "ok";
   try {
-    const { error } = await createSupabasePublicClient()
+    // A GET, not a HEAD: PostgREST sends no error body for HEAD requests, so
+    // supabase-js reports no error even when the table is missing.
+    const { error, status } = await createSupabasePublicClient()
       .from("destinations")
-      .select("id", { head: true })
+      .select("id")
       .limit(1)
       .abortSignal(AbortSignal.timeout(3_000));
-    if (error) throw error;
+    if (error || status >= 400) throw error ?? new Error(`database returned ${status}`);
   } catch (error) {
     database = "error";
     logger.error("health.database_unreachable", { cause: error });
