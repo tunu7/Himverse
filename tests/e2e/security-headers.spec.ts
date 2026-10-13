@@ -47,7 +47,7 @@ test("the CSP doesn't break pages or forms", async ({ page }) => {
   await page.waitForLoadState("networkidle");
   await page
     .getByRole("navigation", { name: "Main" })
-    .getByRole("link", { name: "Experiences" })
+    .getByRole("link", { name: "Experiences", exact: true })
     .click();
   await expect(page).toHaveURL(/\/experiences$/);
   expect(violations).toEqual([]);
