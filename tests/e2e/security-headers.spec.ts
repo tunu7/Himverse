@@ -41,8 +41,14 @@ test("the CSP doesn't break pages or forms", async ({ page }) => {
     await page.goto(path);
     await page.waitForLoadState("networkidle");
   }
-  // Client navigation and a client-side form interaction still work.
-  await page.getByRole("link", { name: "Experiences" }).first().click();
+  // Client navigation still works (from a page with the site header; the auth
+  // pages deliberately have no site navigation).
+  await page.goto("/");
+  await page.waitForLoadState("networkidle");
+  await page
+    .getByRole("navigation", { name: "Main" })
+    .getByRole("link", { name: "Experiences" })
+    .click();
   await expect(page).toHaveURL(/\/experiences$/);
   expect(violations).toEqual([]);
   expect(failedRequests).toEqual([]);

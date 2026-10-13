@@ -20,9 +20,10 @@ test("traveller sign-up lands on the account page inside the traveller site", as
   await expect(page.getByRole("link", { name: /Admin/ })).toHaveCount(0);
 
   // Account menu offers travel links and partnering, never the admin console.
-  await page.getByText("Account", { exact: true }).click();
-  await expect(page.getByRole("link", { name: "My trips" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Become a tourism partner" })).toBeVisible();
+  const header = page.getByRole("navigation", { name: "Main" });
+  await header.getByText("Account", { exact: true }).click();
+  await expect(header.getByRole("link", { name: "My trips" })).toBeVisible();
+  await expect(header.getByRole("link", { name: "Become a tourism partner" })).toBeVisible();
 });
 
 test("partner sign-up lands in the separate partner portal", async ({ page }) => {
