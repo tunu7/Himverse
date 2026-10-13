@@ -1,6 +1,6 @@
 import "server-only";
 
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { cache } from "react";
 
 import { AppError } from "@/lib/errors";
@@ -70,6 +70,18 @@ export async function requireUserForPage(returnTo: string): Promise<SessionUser>
   const user = await getCurrentUser();
   if (!user) {
     redirect(`/sign-in?next=${encodeURIComponent(returnTo)}`);
+  }
+  return user;
+}
+
+/**
+ * For admin pages: signed-out visitors go to sign in; signed-in non-admins get a
+ * plain 404 so the admin area isn't revealed.
+ */
+export async function requireAdminForPage(returnTo: string): Promise<SessionUser> {
+  const user = await requireUserForPage(returnTo);
+  if (!(await isCurrentUserAdmin())) {
+    notFound();
   }
   return user;
 }

@@ -2,24 +2,38 @@ import Link from "next/link";
 import { Suspense } from "react";
 
 import { NavLinkItems, NavLinks } from "@/components/nav-links";
-import { getCurrentUser } from "@/server/auth/session";
+import { getCurrentUser, isCurrentUserAdmin } from "@/server/auth/session";
 
 async function AuthLinks() {
   const user = await getCurrentUser();
-  return user ? (
-    <Link
-      href="/account"
-      className="rounded-md px-2.5 py-1.5 text-muted transition-colors hover:bg-surface-muted hover:text-fg"
-    >
-      Account
-    </Link>
-  ) : (
-    <Link
-      href="/sign-in"
-      className="rounded-lg bg-accent px-3 py-1.5 font-medium text-white transition-colors hover:bg-accent-hover dark:text-zinc-950"
-    >
-      Sign in
-    </Link>
+  if (!user) {
+    return (
+      <Link
+        href="/sign-in"
+        className="rounded-full bg-accent px-3.5 py-1.5 font-semibold text-white transition-colors hover:bg-accent-hover dark:text-zinc-950"
+      >
+        Sign in
+      </Link>
+    );
+  }
+  const isAdmin = await isCurrentUserAdmin();
+  return (
+    <span className="flex items-center gap-1">
+      {isAdmin ? (
+        <Link
+          href="/admin"
+          className="rounded-md px-2.5 py-1.5 font-medium text-accent transition-colors hover:bg-accent-soft"
+        >
+          Admin
+        </Link>
+      ) : null}
+      <Link
+        href="/account"
+        className="rounded-md px-2.5 py-1.5 text-muted transition-colors hover:bg-surface-muted hover:text-fg"
+      >
+        Account
+      </Link>
+    </span>
   );
 }
 

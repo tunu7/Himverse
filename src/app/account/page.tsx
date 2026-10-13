@@ -32,10 +32,10 @@ async function AccountContent() {
         </Link>
         {isAdmin ? (
           <Link
-            href="/admin/providers"
+            href="/admin"
             className="font-medium text-accent underline-offset-4 hover:underline"
           >
-            Admin: review providers
+            Admin dashboard
           </Link>
         ) : null}
       </section>

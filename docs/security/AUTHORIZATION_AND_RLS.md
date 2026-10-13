@@ -17,6 +17,23 @@ migrations under `supabase/migrations/`; behaviour is pinned by `supabase/tests/
 Roles are **never** read from `user_metadata`, `profiles`, or anything else the client supplies. Policies
 look them up live, so a change applies on the caller's next query.
 
+## Admin console (`/admin`)
+
+Server-rendered pages for admins only (`requireAdminForPage`: signed-out → sign-in, non-admin → plain
+404, and the admin tabs and header link render only for admins). Every read and write goes through
+`src/server/admin/admin.ts` (`requireAdmin()` + the signed-in user's client), so the RLS policies
+above stay the authority:
+
+| Page                  | What admins can do                                                                                                      |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `/admin`              | Overview: providers awaiting review, requests awaiting a reply, AI plans today vs the cap, catalogue and booking counts |
+| `/admin/providers`    | Filter by status, verify / request changes / suspend (`review_provider`), status history with reviewer notes            |
+| `/admin/destinations` | Create, edit, publish/hide; delete only when no experiences use it (FK `restrict`)                                      |
+| `/admin/experiences`  | Filter and search; unpublish or archive (sets the moderation lock) or publish (clears it)                               |
+| `/admin/bookings`     | Read-only list across providers; **no traveller contact details** (only the booking's provider sees those)              |
+
+Granting or revoking admin is still **not** in the app (runbook below).
+
 ## Admin bootstrap runbook
 
 There is **no application path that grants admin**: no RPC, Server Action, route or UI, and `anon` and
@@ -59,7 +76,7 @@ Otherwise anyone who registers an address first owns it, and identifying the adm
 
 5. Check that exactly one row was returned. If none came back, either an admin already exists or the
    account isn't confirmed: investigate, don't force it.
-6. Ask the new admin to sign out and back in, then open `/admin/providers`. Record who ran the grant,
+6. Ask the new admin to sign out and back in, then open `/admin` (the admin console). Record who ran the grant,
    when, and for which Account ID in the team's operations log (not in the repo).
 
 **Later admins and revocation** use the same direct-SQL path, run by a project owner, without the
