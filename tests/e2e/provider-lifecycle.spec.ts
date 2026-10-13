@@ -50,13 +50,14 @@ async function signUp(page: Page, email: string, name: string) {
   await expect(page).toHaveURL(/\/account$/);
 }
 
-async function signIn(page: Page, email: string) {
+/** Sign-in without `next` lands by role: admins /admin, partners /provider, else /account. */
+async function signIn(page: Page, email: string, landing: RegExp) {
   await page.context().clearCookies();
   await page.goto("/sign-in");
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Password").fill(password);
   await page.getByRole("button", { name: "Sign in" }).click();
-  await expect(page).toHaveURL(/\/account$/);
+  await expect(page).toHaveURL(landing);
 }
 
 async function visitExploreAnonymously(page: Page) {
@@ -115,7 +116,7 @@ test("provider lifecycle: verify, publish, suspend", async ({ page }) => {
   await expect(card).toContainText("Verified");
 
   // Provider publishes an experience; it appears publicly.
-  await signIn(page, providerEmail);
+  await signIn(page, providerEmail, /\/provider$/);
   await page.goto("/provider");
   await expect(page.getByTestId("provider-status").filter({ visible: true })).toContainText(
     "Verified",
@@ -133,7 +134,7 @@ test("provider lifecycle: verify, publish, suspend", async ({ page }) => {
   await expect(page.getByText(experienceTitle)).toBeVisible();
 
   // Admin suspends; a note is required; the experience disappears publicly.
-  await signIn(page, adminEmail);
+  await signIn(page, adminEmail, /\/admin$/);
   await page.goto("/admin/providers");
   const card2 = page.getByRole("listitem").filter({ hasText: providerName });
   await card2.getByRole("button", { name: "Suspend" }).click();
@@ -145,7 +146,7 @@ test("provider lifecycle: verify, publish, suspend", async ({ page }) => {
   await expect(page.getByText(experienceTitle)).toHaveCount(0);
 
   // Provider sees the suspension and cannot republish.
-  await signIn(page, providerEmail);
+  await signIn(page, providerEmail, /\/provider$/);
   await page.goto("/provider");
   await expect(page.getByTestId("provider-status").filter({ visible: true })).toContainText(
     "Suspended",

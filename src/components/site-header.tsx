@@ -1,40 +1,42 @@
 import Link from "next/link";
 import { Suspense } from "react";
 
+import { AccountMenu } from "@/components/account-menu";
 import { NavLinkItems, NavLinks } from "@/components/nav-links";
-import { getCurrentUser, isCurrentUserAdmin } from "@/server/auth/session";
+import { signOut } from "@/features/auth/actions";
+import { getCurrentUser, isCurrentUserAdmin, isCurrentUserPartner } from "@/server/auth/session";
 
 async function AuthLinks() {
   const user = await getCurrentUser();
   if (!user) {
     return (
-      <Link
-        href="/sign-in"
-        className="rounded-full bg-accent px-3.5 py-1.5 font-semibold text-white transition-colors hover:bg-accent-hover dark:text-zinc-950"
-      >
-        Sign in
-      </Link>
+      <span className="flex items-center gap-1">
+        <Link
+          href="/sign-up?as=partner"
+          className="hidden rounded-md px-2.5 py-1.5 text-muted transition-colors hover:bg-surface-muted hover:text-fg md:inline-block"
+        >
+          List your experiences
+        </Link>
+        <Link
+          href="/sign-in"
+          className="rounded-full bg-accent px-3.5 py-1.5 font-semibold text-white transition-colors hover:bg-accent-hover dark:text-zinc-950"
+        >
+          Sign in
+        </Link>
+      </span>
     );
   }
-  const isAdmin = await isCurrentUserAdmin();
-  return (
-    <span className="flex items-center gap-1">
-      {isAdmin ? (
-        <Link
-          href="/admin"
-          className="rounded-md px-2.5 py-1.5 font-medium text-accent transition-colors hover:bg-accent-soft"
-        >
-          Admin
-        </Link>
-      ) : null}
-      <Link
-        href="/account"
-        className="rounded-md px-2.5 py-1.5 text-muted transition-colors hover:bg-surface-muted hover:text-fg"
-      >
-        Account
-      </Link>
-    </span>
-  );
+  const [isAdmin, isPartner] = await Promise.all([isCurrentUserAdmin(), isCurrentUserPartner()]);
+  const links = [
+    { href: "/account", label: "My account" },
+    { href: "/itineraries", label: "My trips" },
+    { href: "/bookings", label: "My bookings" },
+    isPartner
+      ? { href: "/provider", label: "Partner portal", tone: "accent" as const }
+      : { href: "/provider", label: "Become a tourism partner" },
+    ...(isAdmin ? [{ href: "/admin", label: "Admin console", tone: "accent" as const }] : []),
+  ];
+  return <AccountMenu initial={(user.email ?? "?").slice(0, 1)} links={links} signOut={signOut} />;
 }
 
 function BrandMark() {

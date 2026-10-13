@@ -47,6 +47,24 @@ export const isCurrentUserAdmin = cache(async (): Promise<boolean> => {
   return data !== null;
 });
 
+/**
+ * Whether the current user belongs to any provider (a tourism partner). Used
+ * only for navigation; partner permissions are enforced by RLS per provider.
+ */
+export const isCurrentUserPartner = cache(async (): Promise<boolean> => {
+  const user = await getCurrentUser();
+  if (!user) {
+    return false;
+  }
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("provider_members")
+    .select("provider_id")
+    .eq("user_id", user.id)
+    .limit(1);
+  return !error && data.length > 0;
+});
+
 /** For Server Actions: throws UNAUTHENTICATED when signed out. */
 export async function requireUser(): Promise<SessionUser> {
   const user = await getCurrentUser();

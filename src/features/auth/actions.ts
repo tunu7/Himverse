@@ -8,6 +8,7 @@ import { safeRedirectPath } from "@/lib/redirect";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { parseInput } from "@/lib/validation";
 import { signInError, signUpError } from "@/server/auth/auth-errors";
+import { landingPathFor } from "@/server/auth/landing";
 
 import { signInSchema, signUpSchema } from "./schemas";
 
@@ -47,14 +48,17 @@ export async function signIn(_prev: SignInResult, formData: FormData): Promise<S
   try {
     const input = parseInput(signInSchema, formData);
     const supabase = await createSupabaseServerClient();
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email: input.email,
       password: input.password,
     });
     if (error) {
       throw signInError(error);
     }
-    destination = safeRedirectPath(input.next);
+    // An explicit destination wins; otherwise land by role (admin, partner, traveller).
+    destination = input.next
+      ? safeRedirectPath(input.next)
+      : await landingPathFor(supabase, data.user.id);
   } catch (error) {
     return toLoggedFailure("auth.sign_in_failed", error);
   }

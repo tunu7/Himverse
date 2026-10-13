@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { Suspense } from "react";
 
 import { LoadingBlock, PageShell } from "@/components/page-shell";
@@ -26,13 +25,35 @@ async function ProviderWorkspace() {
 
   if (providers.length === 0) {
     return (
-      <section className="flex flex-col gap-4">
-        <p className="text-muted">
-          Offer experiences on Himverse.AI. Applications are reviewed by our team before anything
-          you publish becomes visible to travelers.
-        </p>
-        <ProviderApplicationForm />
-      </section>
+      <div className="grid gap-8 lg:grid-cols-[1fr_20rem]">
+        <section className="flex flex-col gap-4 rounded-2xl border border-line bg-surface p-6 shadow-xs">
+          <h2 className="text-lg font-semibold text-fg">Apply to become a partner</h2>
+          <p className="text-sm text-muted">
+            Tell us about your business. Our team reviews every application before anything you
+            publish becomes visible to travellers.
+          </p>
+          <ProviderApplicationForm />
+        </section>
+        <aside className="flex flex-col gap-4 rounded-2xl border border-accent/20 bg-accent-soft p-6">
+          <h2 className="font-semibold text-accent-soft-fg">How partnering works</h2>
+          <ol className="flex flex-col gap-3 text-sm text-fg-soft">
+            {[
+              ["Apply", "Save your business details as a draft, then submit for review."],
+              ["Get verified", "Our team checks your details and verifies your business."],
+              ["Publish", "Add experiences and open dates. Travellers request; you confirm."],
+            ].map(([title, body], i) => (
+              <li key={title} className="flex gap-3">
+                <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-accent text-xs font-bold text-white dark:text-zinc-950">
+                  {i + 1}
+                </span>
+                <span>
+                  <span className="font-semibold text-fg">{title}.</span> {body}
+                </span>
+              </li>
+            ))}
+          </ol>
+        </aside>
+      </div>
     );
   }
 
@@ -43,12 +64,6 @@ async function ProviderWorkspace() {
 
   return (
     <div className="flex flex-col gap-10">
-      <Link
-        href="/provider/bookings"
-        className="self-start font-medium text-accent underline-offset-4 hover:underline"
-      >
-        View booking requests
-      </Link>
       {providers.map((p) => (
         <ProviderSection
           key={p.id}
@@ -208,7 +223,10 @@ function ProviderSection({
 
 export default function ProviderPage() {
   return (
-    <PageShell title="Provider workspace">
+    <PageShell
+      title="Partner dashboard"
+      description="Your tourism business on Himverse: application status, experiences and the dates travellers can request."
+    >
       <Suspense fallback={<LoadingBlock label="Loading your provider workspace…" variant="list" />}>
         <ProviderWorkspace />
       </Suspense>

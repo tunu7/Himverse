@@ -6,8 +6,7 @@ import { usePathname } from "next/navigation";
 const LINKS = [
   { href: "/destinations", label: "Destinations" },
   { href: "/experiences", label: "Experiences" },
-  { href: "/itineraries", label: "Trips" },
-  { href: "/bookings", label: "Bookings" },
+  { href: "/itineraries/new", label: "Plan a trip" },
 ] as const;
 
 /** The main links; `pathname` (when known) highlights the current section. */

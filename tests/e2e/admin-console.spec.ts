@@ -54,11 +54,11 @@ test("admin console: hidden from non-admins; overview, destinations and moderati
 
   // A signed-in non-admin sees no admin link and a plain 404.
   await signUp(page, uniqueEmail("console-admin"), "Console Admin");
-  await expect(page.getByRole("link", { name: "Admin", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: /Admin/ })).toHaveCount(0);
   for (const path of ["/admin", "/admin/destinations", "/admin/experiences", "/admin/bookings"]) {
     await page.goto(path);
     await expect(page.getByText("This page could not be found.")).toBeVisible();
-    await expect(page.getByRole("navigation", { name: "Admin" })).toHaveCount(0);
+    await expect(page.getByRole("navigation", { name: "Admin console" })).toHaveCount(0);
   }
 
   // Grant admin the runbook way (by Account ID, as the database owner).
@@ -73,7 +73,9 @@ test("admin console: hidden from non-admins; overview, destinations and moderati
   await page.goto("/admin");
   await expect(page.getByRole("heading", { level: 1, name: "Admin overview" })).toBeVisible();
   await expect(page.getByText("Providers awaiting review")).toBeVisible();
-  await expect(page.getByRole("link", { name: "Admin", exact: true })).toBeVisible();
+  // The console has its own frame, separate from the traveller site.
+  await expect(page.getByRole("navigation", { name: "Admin console" })).toBeVisible();
+  await expect(page.getByRole("navigation", { name: "Main" })).toHaveCount(0);
 
   // Destinations: create hidden, then publish it and see the public page.
   await page.goto("/admin/destinations");

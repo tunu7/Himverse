@@ -1,32 +1,50 @@
 import { Suspense } from "react";
 
-import { AdminNavItems, AdminNavLinks } from "@/features/admin/components/admin-nav-links";
+import { LoadingBlock } from "@/components/page-shell";
+import { SiteFooter } from "@/components/site-footer";
+import { SiteHeader } from "@/components/site-header";
+import { PortalShell } from "@/features/portal/components/portal-shell";
 import { isCurrentUserAdmin } from "@/server/auth/session";
 
-/** Section tabs, shown only to admins (non-admins get the pages' 404). */
-async function AdminNav() {
-  if (!(await isCurrentUserAdmin())) return null;
+const ADMIN_LINKS = [
+  { href: "/admin", label: "Overview", exact: true },
+  { href: "/admin/providers", label: "Providers" },
+  { href: "/admin/destinations", label: "Destinations" },
+  { href: "/admin/experiences", label: "Experiences" },
+  { href: "/admin/bookings", label: "Bookings" },
+] as const;
+
+/**
+ * Admins get the console frame. Everyone else gets the normal site frame around
+ * the pages' plain 404 (requireAdminForPage), so the console isn't revealed.
+ */
+async function AdminFrame({ children }: { children: React.ReactNode }) {
+  if (await isCurrentUserAdmin()) {
+    return (
+      <PortalShell area="admin" links={ADMIN_LINKS}>
+        {children}
+      </PortalShell>
+    );
+  }
   return (
-    <nav aria-label="Admin" className="border-b border-line bg-surface-muted/60">
-      <div className="mx-auto flex w-full max-w-6xl items-end gap-6 overflow-x-auto px-4 pt-4 sm:px-6">
-        <span className="shrink-0 pb-3 text-xs font-bold tracking-widest text-accent uppercase">
-          Admin
-        </span>
-        <Suspense fallback={<AdminNavItems pathname={null} />}>
-          <AdminNavLinks />
-        </Suspense>
-      </div>
-    </nav>
+    <>
+      <SiteHeader />
+      {children}
+      <SiteFooter />
+    </>
   );
 }
 
 export default function AdminLayout({ children }: LayoutProps<"/admin">) {
   return (
-    <>
-      <Suspense fallback={null}>
-        <AdminNav />
-      </Suspense>
-      {children}
-    </>
+    <Suspense
+      fallback={
+        <main className="mx-auto w-full max-w-6xl px-4 py-14 sm:px-6">
+          <LoadingBlock label="Loading…" variant="cards" />
+        </main>
+      }
+    >
+      <AdminFrame>{children}</AdminFrame>
+    </Suspense>
   );
 }

@@ -19,12 +19,13 @@ export async function GET(request: NextRequest) {
   if (env.NEXT_PUBLIC_AUTH_GOOGLE_ENABLED !== "true") {
     return NextResponse.redirect(new URL("/sign-in", origin));
   }
-  const next = safeRedirectPath(request.nextUrl.searchParams.get("next"));
+  // Forward `next` only when given, so the callback can land by role otherwise.
+  const next = safeRedirectPath(request.nextUrl.searchParams.get("next"), "");
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
-      redirectTo: `${env.NEXT_PUBLIC_SITE_URL}/auth/callback?next=${encodeURIComponent(next)}`,
+      redirectTo: `${env.NEXT_PUBLIC_SITE_URL}/auth/callback${next ? `?next=${encodeURIComponent(next)}` : ""}`,
       skipBrowserRedirect: true,
     },
   });

@@ -4,6 +4,7 @@ import { z } from "zod";
 import { logger } from "@/lib/logger";
 import { safeRedirectPath } from "@/lib/redirect";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { landingPathFor } from "@/server/auth/landing";
 
 const callbackParamsSchema = z.object({
   code: z.string().min(1).max(512),
@@ -20,10 +21,13 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(failure);
   }
   const supabase = await createSupabaseServerClient();
-  const { error } = await supabase.auth.exchangeCodeForSession(params.data.code);
+  const { data, error } = await supabase.auth.exchangeCodeForSession(params.data.code);
   if (error) {
     logger.warn("auth.oauth_exchange_failed", { code: error.code });
     return NextResponse.redirect(failure);
   }
-  return NextResponse.redirect(new URL(safeRedirectPath(params.data.next), origin));
+  const destination = params.data.next
+    ? safeRedirectPath(params.data.next)
+    : await landingPathFor(supabase, data.user.id);
+  return NextResponse.redirect(new URL(destination, origin));
 }

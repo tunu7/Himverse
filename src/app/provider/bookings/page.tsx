@@ -80,7 +80,10 @@ async function ProviderBookings() {
 
 export default function ProviderBookingsPage() {
   return (
-    <PageShell title="Booking requests">
+    <PageShell
+      title="Booking requests"
+      description="Confirm or decline requests within 48 hours. Travellers see your reply and the final price."
+    >
       <Suspense fallback={<LoadingBlock label="Loading bookings…" variant="list" />}>
         <ProviderBookings />
       </Suspense>
