@@ -23,6 +23,8 @@ export function getAiEnv(): AiEnv {
     AI_PROVIDER: process.env.AI_PROVIDER || undefined,
     AI_ITINERARY_MODEL: process.env.AI_ITINERARY_MODEL || undefined,
     AI_GATEWAY_API_KEY: process.env.AI_GATEWAY_API_KEY || undefined,
+    OLLAMA_BASE_URL: process.env.OLLAMA_BASE_URL || undefined,
+    AI_MODEL_TIMEOUT_MS: process.env.AI_MODEL_TIMEOUT_MS || undefined,
     VERCEL_ENV: process.env.VERCEL_ENV || undefined,
     NODE_ENV: process.env.NODE_ENV || undefined,
     AI_ALLOW_MOCK: process.env.AI_ALLOW_MOCK || undefined,

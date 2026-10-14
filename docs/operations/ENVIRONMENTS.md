@@ -25,12 +25,27 @@ Defined and documented in [.env.example](../../.env.example); validated in `src/
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Public   | Publishable (formerly anon) key; RLS applies                                                                      |
 | `NEXT_PUBLIC_AUTH_GOOGLE_ENABLED`      | Public   | `false` (default). `true` shows "Continue with Google" (set up the provider first)                                |
 | `SUPABASE_SECRET_KEY`                  | Server   | Secret (formerly service_role) key; bypasses RLS                                                                  |
-| `AI_PROVIDER`                          | Server   | `gateway` (default) or `mock` (tests only; see `AI_ALLOW_MOCK`)                                                   |
+| `AI_PROVIDER`                          | Server   | `gateway` (default), `ollama` (free local models, ADR-0006) or `mock` (tests only; see `AI_ALLOW_MOCK`)           |
 | `AI_ALLOW_MOCK`                        | Server   | `false` (default). Mock refused on Vercel production always, and in any production build unless `true` (E2E only) |
-| `AI_ITINERARY_MODEL`                   | Server   | Gateway model string; default `anthropic/claude-sonnet-5.5`                                                       |
+| `AI_ITINERARY_MODEL`                   | Server   | Default `anthropic/claude-sonnet-5.5` (gateway) or `himverse-planner` (ollama)                                    |
+| `OLLAMA_BASE_URL`                      | Server   | Default `http://127.0.0.1:11434/v1`. A localhost URL is refused on Vercel preview/production                      |
+| `AI_MODEL_TIMEOUT_MS`                  | Server   | Per-call model timeout; default 45000 (gateway) or 180000 (ollama)                                                |
 | `AI_GATEWAY_API_KEY`                   | Server   | Local only; on Vercel the gateway uses OIDC. Never `NEXT_PUBLIC_`                                                 |
 | `AI_ITINERARY_ENABLED`                 | Server   | Kill switch, `true` (default) / `false`. Takes effect on the next deployment                                      |
 | `AI_DAILY_GENERATION_LIMIT`            | Server   | Platform-wide model calls per IST day (default 300; 0 blocks all generation)                                      |
+
+## Local AI with Ollama (free)
+
+1. Install and start Ollama: `brew install ollama && brew services start ollama`.
+2. `npm run ai:ollama` pulls `gemma3:4b` and builds `himverse-planner` from it with a 16k-token context.
+   Ollama's OpenAI-compatible API otherwise truncates our prompts silently.
+3. In `.env.local`, set `AI_PROVIDER=ollama` and restart `npm run dev`.
+
+To switch local models, run `npm run ai:ollama -- <model>` (for example `qwen2.5:7b`); no env change is
+needed. To use a model tag directly, set `AI_ITINERARY_MODEL=<tag>`, but make sure it has a context
+window of at least 16k tokens. For Claude or another hosted model, set `AI_PROVIDER=gateway` and
+`AI_ITINERARY_MODEL=<provider/model>`. On an 8 GB Mac, 7B models with a 16k context don't fit in GPU memory
+and time out; 3–4B models run in about 45 s per plan. ADR-0006 lists the models tested.
 
 ## Rules
 

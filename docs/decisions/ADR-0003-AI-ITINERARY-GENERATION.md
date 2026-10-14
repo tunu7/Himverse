@@ -1,6 +1,6 @@
 # ADR-0003: AI itinerary generation — provider, grounding and persistence
 
-- Status: Accepted
+- Status: Accepted (extended by [ADR-0006](ADR-0006-SWITCHABLE-AI-PROVIDER-OLLAMA.md): switchable provider, Ollama)
 - Date: 2026-10-12
 - Deciders: Product owner (provider, credentials, price unit), Engineering
 - Implementation: Phase 3 — migration `20261012145550_itineraries`, `src/server/itineraries/`,

@@ -1,6 +1,6 @@
 # AI Architecture
 
-Status: design only. No AI provider, SDK or key is configured.
+Status: implemented (ADR-0003, ADR-0006). Providers: Vercel AI Gateway, Ollama (local), test mock.
 
 ## Principle: our database is the source of truth
 
@@ -18,8 +18,10 @@ See [ITINERARY_GENERATION](ITINERARY_GENERATION.md) for the module map and check
    budget). Semantic search only via a future ADR.
 3. **Prompt builder:** versioned (`itinerary-v1`), stored with each version. Records appear as aliases;
    traveller text is fenced as data.
-4. **Model client:** the `ItineraryModel` interface, with the Vercel AI Gateway adapter (AI SDK 7) and a
-   deterministic test mock. Timeout, bounded retries, capped output.
+4. **Model client:** the `ItineraryModel` interface. One AI SDK 7 adapter serves the Vercel AI Gateway and
+   Ollama (free local models), and there is a deterministic test mock. `AI_PROVIDER` and
+   `AI_ITINERARY_MODEL` choose the backend and model (ADR-0006). The output schema sent to the model
+   is narrowed to each request. Timeout, bounded retries, capped output.
 5. **Output validator:** Zod schema `itinerary.v1`.
 6. **Grounding check:** aliases, dates, capacity, multi-day items and budget from database prices, plus
    the save RPC's visibility re-check.
@@ -38,6 +40,7 @@ See [ITINERARY_GENERATION](ITINERARY_GENERATION.md) for the module map and check
 ## Decided (ADR-0003)
 
 - **Provider:** Vercel AI Gateway through AI SDK 7, model `anthropic/claude-sonnet-5.5` (configurable).
+  Ollama for free local models (ADR-0006).
 - **Results:** complete, validated results are returned (no partial streaming).
 - **Limits:** 10 generations per hour and 30 per day per user, reserved atomically before the model
   call; a platform-wide daily cap and a kill switch (Phase 5); output tokens capped per request.

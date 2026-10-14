@@ -15,18 +15,27 @@ export const SCHEMA_VERSION = "itinerary.v1";
 export const TIMES_OF_DAY = ["morning", "afternoon", "evening", "full_day"] as const;
 export type TimeOfDay = (typeof TIMES_OF_DAY)[number];
 
-export const itineraryDraftSchema = z.object({
-  title: z.string().trim().min(1).max(80),
-  summary: z.string().max(800),
-  days: z
+export type DraftConstraints = {
+  days: number;
+  destinations: readonly string[];
+  experiences: readonly string[];
+};
+
+function draftSchema(constraints?: DraftConstraints) {
+  const alias = (pattern: RegExp, allowed: readonly string[] | undefined) =>
+    allowed && allowed.length > 0
+      ? z.enum(allowed as [string, ...string[]])
+      : z.string().regex(pattern);
+  const maxDay = constraints?.days ?? 14;
+  const days = z
     .array(
       z.object({
-        day: z.number().int().min(1).max(14),
-        base: z.string().regex(/^D\d{1,2}$/),
+        day: z.number().int().min(1).max(maxDay),
+        base: alias(/^D\d{1,2}$/, constraints?.destinations),
         items: z
           .array(
             z.object({
-              experience: z.string().regex(/^E\d{1,3}$/),
+              experience: alias(/^E\d{1,3}$/, constraints?.experiences),
               timeOfDay: z.enum(TIMES_OF_DAY),
               rationale: z.string().max(300),
             }),
@@ -35,10 +44,29 @@ export const itineraryDraftSchema = z.object({
         note: z.string().max(300).optional(),
       }),
     )
-    .min(1)
-    .max(14),
-  cautions: z.array(z.string().max(200)).max(8),
-});
+    .min(constraints?.days ?? 1)
+    .max(maxDay);
+  return z.object({
+    title: z.string().trim().min(1).max(80),
+    summary: z.string().max(800),
+    days,
+    cautions: z.array(z.string().max(200)).max(8),
+  });
+}
+
+export const itineraryDraftSchema = draftSchema();
+
+/**
+ * The same schema narrowed to one request: exactly N days and only the
+ * retrieved aliases. Sent to the model as its output schema, so providers with
+ * constrained decoding (Ollama, most hosted models) can't produce the wrong
+ * number of days or an unknown alias. A narrowing of itineraryDraftSchema, so
+ * anything it accepts the general schema accepts too; validate.ts still
+ * checks every rule.
+ */
+export function itineraryDraftSchemaFor(constraints: DraftConstraints) {
+  return draftSchema(constraints);
+}
 
 export type ItineraryDraft = z.infer<typeof itineraryDraftSchema>;
 

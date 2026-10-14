@@ -1,7 +1,11 @@
+import type { DraftConstraints } from "@/server/itineraries/schemas";
+
 /** Replaceable model boundary (ADR-0003). The pipeline depends only on this. */
 export type ModelRequest = {
   system: string;
   prompt: string;
+  /** Narrows the output schema sent to the model to this request. */
+  constraints?: DraftConstraints;
   maxOutputTokens: number;
   timeoutMs: number;
 };
@@ -27,5 +31,7 @@ export class ModelError extends Error {
 
 export interface ItineraryModel {
   readonly id: string;
+  /** Per-call timeout this model needs; the pipeline default applies when unset. */
+  readonly timeoutMs?: number | undefined;
   generate(request: ModelRequest): Promise<ModelResult>;
 }

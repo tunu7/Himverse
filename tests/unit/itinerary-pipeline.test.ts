@@ -5,6 +5,7 @@ import { AppError } from "@/lib/errors";
 import { ModelError, type ItineraryModel } from "@/server/itineraries/model/types";
 import {
   GENERATION_LIMITS,
+  MODEL_TIMEOUT_MS,
   type GenerationLogEntry,
   runItineraryGeneration,
   SaveConflictError,
@@ -106,6 +107,39 @@ describe("runItineraryGeneration", () => {
         outputTokens: 50,
       }),
     ]);
+  });
+
+  it("narrows the model's output schema to the trip length and retrieved aliases", async () => {
+    let constraints: unknown;
+    const model: ItineraryModel = {
+      id: "test/model",
+      async generate(req) {
+        constraints = req.constraints;
+        return { draft: good, model: "test/model", usage: {} };
+      },
+    };
+    await runItineraryGeneration(request, deps(model).deps);
+    const aliases = buildAliases(candidates);
+    expect(constraints).toEqual({
+      days: 2,
+      destinations: [...aliases.destinations.keys()],
+      experiences: [...aliases.experiences.keys()],
+    });
+  });
+
+  it("uses the model's own timeout when it sets one (slow local models), else the default", async () => {
+    const timeouts: number[] = [];
+    const recording = (timeoutMs?: number): ItineraryModel => ({
+      id: "test/model",
+      timeoutMs,
+      async generate(req) {
+        timeouts.push(req.timeoutMs);
+        return { draft: good, model: "test/model", usage: {} };
+      },
+    });
+    await runItineraryGeneration(request, deps(recording(180_000)).deps);
+    await runItineraryGeneration(request, deps(recording()).deps);
+    expect(timeouts).toEqual([180_000, MODEL_TIMEOUT_MS]);
   });
 
   it("reserves a generation with the platform cap before calling the model, and passes it to save and finish", async () => {

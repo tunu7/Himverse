@@ -89,4 +89,57 @@ describe("parseAiEnv", () => {
         .AI_PROVIDER,
     ).toBe("mock");
   });
+
+  it("defaults the model and timeout per provider", () => {
+    expect(parseAiEnv({})).toMatchObject({
+      AI_ITINERARY_MODEL: "anthropic/claude-sonnet-5.5",
+      AI_MODEL_TIMEOUT_MS: 45_000,
+    });
+    expect(parseAiEnv({ AI_PROVIDER: "ollama" })).toMatchObject({
+      AI_ITINERARY_MODEL: "himverse-planner",
+      OLLAMA_BASE_URL: "http://127.0.0.1:11434/v1",
+      AI_MODEL_TIMEOUT_MS: 180_000,
+    });
+  });
+
+  it("switches models through env alone", () => {
+    expect(
+      parseAiEnv({
+        AI_PROVIDER: "ollama",
+        AI_ITINERARY_MODEL: "llama3.1:8b",
+        AI_MODEL_TIMEOUT_MS: "300000",
+      }),
+    ).toMatchObject({ AI_ITINERARY_MODEL: "llama3.1:8b", AI_MODEL_TIMEOUT_MS: 300_000 });
+    expect(parseAiEnv({ AI_ITINERARY_MODEL: "openai/gpt-5.1" }).AI_ITINERARY_MODEL).toBe(
+      "openai/gpt-5.1",
+    );
+  });
+
+  it.each([
+    { AI_PROVIDER: "gateway", AI_ITINERARY_MODEL: "llama3.1:8b" },
+    { AI_PROVIDER: "ollama", AI_ITINERARY_MODEL: "bad model; rm" },
+    { AI_PROVIDER: "ollama", OLLAMA_BASE_URL: "file:///etc/passwd" },
+    { AI_PROVIDER: "ollama", AI_MODEL_TIMEOUT_MS: "100" },
+  ])("rejects invalid AI settings %o", (env) => {
+    expect(() => parseAiEnv(env)).toThrow(EnvValidationError);
+  });
+
+  it("refuses a localhost Ollama on deployed Vercel environments only", () => {
+    expect(() => parseAiEnv({ AI_PROVIDER: "ollama", VERCEL_ENV: "production" })).toThrow(
+      EnvValidationError,
+    );
+    expect(() => parseAiEnv({ AI_PROVIDER: "ollama", VERCEL_ENV: "preview" })).toThrow(
+      EnvValidationError,
+    );
+    expect(parseAiEnv({ AI_PROVIDER: "ollama", VERCEL_ENV: "development" }).AI_PROVIDER).toBe(
+      "ollama",
+    );
+    expect(
+      parseAiEnv({
+        AI_PROVIDER: "ollama",
+        VERCEL_ENV: "production",
+        OLLAMA_BASE_URL: "https://ollama.example.com/v1",
+      }).AI_PROVIDER,
+    ).toBe("ollama");
+  });
 });

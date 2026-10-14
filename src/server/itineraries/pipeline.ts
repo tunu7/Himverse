@@ -123,6 +123,11 @@ export async function runItineraryGeneration(
   });
 
   const aliases = buildAliases(candidates);
+  const constraints = {
+    days: request.prefs.durationDays,
+    destinations: [...aliases.destinations.keys()],
+    experiences: [...aliases.experiences.keys()],
+  };
   const base = buildPrompt(
     request.prefs,
     candidates,
@@ -170,8 +175,9 @@ export async function runItineraryGeneration(
       const result = await deps.model.generate({
         system: prompt.system,
         prompt: prompt.prompt,
+        constraints,
         maxOutputTokens: MAX_OUTPUT_TOKENS,
-        timeoutMs: MODEL_TIMEOUT_MS,
+        timeoutMs: deps.model.timeoutMs ?? MODEL_TIMEOUT_MS,
       });
       modelId = result.model;
       usage.inputTokens += result.usage.inputTokens ?? 0;
@@ -205,7 +211,7 @@ export async function runItineraryGeneration(
       );
     }
 
-    // The gateway adapter already schema-checks; re-check so no adapter can bypass it.
+    // The AI SDK adapter already schema-checks; re-check so no adapter can bypass it.
     const parsed = itineraryDraftSchema.safeParse(draft);
     if (!parsed.success) {
       lastErrors = ["Your answer did not match the required JSON format."];
@@ -218,6 +224,13 @@ export async function runItineraryGeneration(
 
     const validation = validateDraft(parsed.data, request.prefs, aliases);
     if (!validation.ok) {
+      // Server-written messages (aliases and numbers only, no traveller text):
+      // shows why a model's plans are rejected when comparing models.
+      logger.warn("itineraries.plan_rejected", {
+        attempt,
+        model: modelId,
+        errors: validation.errors.slice(0, 10),
+      });
       lastErrors = validation.errors;
       lastBudgetTotal = validation.estimate?.totalMinor;
       if (attempt < MAX_ATTEMPTS) {
