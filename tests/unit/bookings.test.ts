@@ -8,14 +8,16 @@ vi.mock("next/cache", () => ({ refresh: vi.fn() }));
 const redirect = vi.fn();
 vi.mock("next/navigation", () => ({ redirect: (url: string) => redirect(url) }));
 const repo = {
-  requestBooking: vi.fn(),
+  requestBookingOnDate: vi.fn(),
+  requestItineraryBookings: vi.fn(),
   respondToBooking: vi.fn(),
   cancelBooking: vi.fn(),
   createSlot: vi.fn(),
   updateSlot: vi.fn(),
 };
 vi.mock("@/server/bookings/repository", () => ({
-  requestBooking: (...a: unknown[]) => repo.requestBooking(...a),
+  requestBookingOnDate: (...a: unknown[]) => repo.requestBookingOnDate(...a),
+  requestItineraryBookings: (...a: unknown[]) => repo.requestItineraryBookings(...a),
   respondToBooking: (...a: unknown[]) => repo.respondToBooking(...a),
   cancelBooking: (...a: unknown[]) => repo.cancelBooking(...a),
   createSlot: (...a: unknown[]) => repo.createSlot(...a),
@@ -79,8 +81,10 @@ describe("booking display rules", () => {
 });
 
 describe("requestBookingAction", () => {
+  const future = istDate(new Date(), 10);
   const valid = {
-    slotId: ID,
+    experienceId: ID,
+    date: future,
     adults: "2",
     children: "1",
     contactPhone: "+91 98765 43210",
@@ -89,14 +93,15 @@ describe("requestBookingAction", () => {
   };
 
   it("passes validated input (with the form's idempotency key) and redirects to the booking", async () => {
-    repo.requestBooking.mockResolvedValue({
+    repo.requestBookingOnDate.mockResolvedValue({
       bookingId: ID,
       reference: "HV-ABCDEF",
       replayed: false,
     });
     await actions.requestBookingAction(null, form(valid));
-    expect(repo.requestBooking).toHaveBeenCalledWith({
-      slotId: ID,
+    expect(repo.requestBookingOnDate).toHaveBeenCalledWith({
+      experienceId: ID,
+      date: future,
       adults: 2,
       children: 1,
       contactPhone: "+91 98765 43210",
@@ -111,12 +116,17 @@ describe("requestBookingAction", () => {
     [{ adults: "15", children: "6" }, "children"],
     [{ contactPhone: "call me" }, "contactPhone"],
     [{ idempotencyKey: "not-a-uuid" }, "idempotencyKey"],
-    [{ slotId: "" }, "slotId"],
+    [{ experienceId: "" }, "experienceId"],
+    [{ date: "" }, "date"],
+    [{ date: "2026-13-45" }, "date"],
+    [{ date: istDate(new Date()) }, "date"],
+    [{ date: istDate(new Date(), -3) }, "date"],
+    [{ date: istDate(new Date(), 731) }, "date"],
   ])("rejects %j before calling the database", async (patch, field) => {
     const result = await actions.requestBookingAction(null, form({ ...valid, ...patch }));
     expect(result).toMatchObject({ ok: false, error: { code: "VALIDATION_FAILED" } });
     if (result && !result.ok) expect(Object.keys(result.error.fieldErrors ?? {})).toContain(field);
-    expect(repo.requestBooking).not.toHaveBeenCalled();
+    expect(repo.requestBookingOnDate).not.toHaveBeenCalled();
   });
 
   it("refuses client-supplied price, provider or status fields", async () => {
@@ -130,16 +140,74 @@ describe("requestBookingAction", () => {
       const result = await actions.requestBookingAction(null, form({ ...valid, ...extra }));
       expect(result).toMatchObject({ ok: false, error: { code: "VALIDATION_FAILED" } });
     }
-    expect(repo.requestBooking).not.toHaveBeenCalled();
+    expect(repo.requestBookingOnDate).not.toHaveBeenCalled();
   });
 
   it("surfaces database refusals safely", async () => {
-    repo.requestBooking.mockRejectedValue(
+    repo.requestBookingOnDate.mockRejectedValue(
       new AppError("CONFLICT", "You already have an active booking for this date."),
     );
     expect(await actions.requestBookingAction(null, form(valid))).toEqual({
       ok: false,
       error: { code: "CONFLICT", message: "You already have an active booking for this date." },
+    });
+  });
+});
+
+describe("bookTripAction", () => {
+  const valid = { versionId: ID, contactPhone: "+91 98765 43210", note: "", idempotencyKey: KEY };
+
+  it("requests the whole trip with only the version, contact and key from the client", async () => {
+    const items = [
+      {
+        itemId: ID,
+        booking: { id: ID, reference: "HV-ABCDEF", status: "requested" },
+        error: null,
+        alreadyRequested: false,
+      },
+      {
+        itemId: KEY,
+        booking: null,
+        error: "This date is not available for booking.",
+        alreadyRequested: false,
+      },
+    ];
+    repo.requestItineraryBookings.mockResolvedValue(items);
+    expect(await actions.bookTripAction(null, form(valid))).toEqual({ ok: true, data: { items } });
+    expect(repo.requestItineraryBookings).toHaveBeenCalledWith(valid);
+  });
+
+  it.each([
+    [{ contactPhone: "call me" }, "contactPhone"],
+    [{ versionId: "x" }, "versionId"],
+    [{ idempotencyKey: "" }, "idempotencyKey"],
+  ])("rejects %j before calling the database", async (patch, field) => {
+    const result = await actions.bookTripAction(null, form({ ...valid, ...patch }));
+    expect(result).toMatchObject({ ok: false, error: { code: "VALIDATION_FAILED" } });
+    if (result && !result.ok) expect(Object.keys(result.error.fieldErrors ?? {})).toContain(field);
+    expect(repo.requestItineraryBookings).not.toHaveBeenCalled();
+  });
+
+  it("refuses client-supplied dates, party or prices (they come from the stored itinerary)", async () => {
+    const extras: Record<string, string>[] = [
+      { adults: "9" },
+      { date: "2030-01-01" },
+      { price: "1" },
+    ];
+    for (const extra of extras) {
+      const result = await actions.bookTripAction(null, form({ ...valid, ...extra }));
+      expect(result).toMatchObject({ ok: false, error: { code: "VALIDATION_FAILED" } });
+    }
+    expect(repo.requestItineraryBookings).not.toHaveBeenCalled();
+  });
+
+  it("passes a not-found itinerary through safely", async () => {
+    repo.requestItineraryBookings.mockRejectedValue(
+      new AppError("NOT_FOUND", "We couldn't find that booking or date."),
+    );
+    expect(await actions.bookTripAction(null, form(valid))).toMatchObject({
+      ok: false,
+      error: { code: "NOT_FOUND" },
     });
   });
 });

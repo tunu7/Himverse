@@ -2,6 +2,7 @@ import { Suspense } from "react";
 
 import { LoadingBlock, PageShell } from "@/components/page-shell";
 import {
+  AcceptsBookingsForm,
   ExperienceStatusForm,
   NewExperienceForm,
   ProviderApplicationForm,
@@ -134,6 +135,11 @@ function ProviderSection({
                       {formatDuration(e.durationMinutes)}
                       {price ? ` · from ${price}` : null}
                     </p>
+                    <p className="text-sm text-muted" data-testid="booking-requests-state">
+                      {e.acceptsBookings
+                        ? "Accepting booking requests for any date"
+                        : "Not accepting booking requests (hidden from AI trip plans)"}
+                    </p>
                     {e.moderationLocked ? (
                       <p className="text-sm text-warning-soft-fg">
                         Unpublished by Himverse moderation. You can revise it as a draft; contact us
@@ -141,7 +147,13 @@ function ProviderSection({
                       </p>
                     ) : null}
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2">
+                    {e.status !== "archived" ? (
+                      <AcceptsBookingsForm
+                        experienceId={e.id}
+                        acceptsBookings={e.acceptsBookings}
+                      />
+                    ) : null}
                     {e.status !== "published" &&
                     verified &&
                     e.destinationName &&

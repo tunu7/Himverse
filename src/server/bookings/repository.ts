@@ -69,7 +69,6 @@ export async function listOpenSlots(experienceId: string): Promise<OpenSlot[]> {
 }
 
 export type BookingRequestInput = {
-  slotId: string;
   adults: number;
   children: number;
   contactPhone: string;
@@ -77,13 +76,24 @@ export type BookingRequestInput = {
   idempotencyKey: string;
 };
 
-export async function requestBooking(
-  input: BookingRequestInput,
+export type DateBookingRequestInput = BookingRequestInput & {
+  experienceId: string;
+  date: string;
+};
+
+/**
+ * Requests a bookable experience for any future date. The database uses an
+ * open published slot on that date when there is one (seat limits apply);
+ * otherwise the provider's confirmation is the availability check (ADR-0004).
+ */
+export async function requestBookingOnDate(
+  input: DateBookingRequestInput,
 ): Promise<{ bookingId: string; reference: string; replayed: boolean }> {
   await requireUser();
   const supabase = await createSupabaseServerClient();
-  const { data, error } = await supabase.rpc("request_booking", {
-    p_slot_id: input.slotId,
+  const { data, error } = await supabase.rpc("request_booking_on_date", {
+    p_experience_id: input.experienceId,
+    p_date: input.date,
     p_adults: input.adults,
     p_children: input.children,
     p_contact_phone: input.contactPhone,
@@ -94,6 +104,49 @@ export async function requestBooking(
   const row = data[0];
   if (!row) throw new AppError("INTERNAL", "Could not request this booking.");
   return { bookingId: row.booking_id, reference: row.booking_reference, replayed: row.replayed };
+}
+
+export type TripBookingItemResult = {
+  itemId: string;
+  /** Present when a request exists (new or replayed). */
+  booking: { id: string; reference: string; status: BookingStatus } | null;
+  /** Database-written reason when the item couldn't be requested. */
+  error: string | null;
+  alreadyRequested: boolean;
+};
+
+/**
+ * Requests every item of an itinerary version on its planned day. Party and
+ * dates come from the stored version; each item succeeds or fails on its own.
+ */
+export async function requestItineraryBookings(input: {
+  versionId: string;
+  contactPhone: string;
+  note: string;
+  idempotencyKey: string;
+}): Promise<TripBookingItemResult[]> {
+  await requireUser();
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase.rpc("request_itinerary_bookings", {
+    p_version_id: input.versionId,
+    p_contact_phone: input.contactPhone,
+    p_note: input.note,
+    p_idempotency_key: input.idempotencyKey,
+  });
+  if (error) throw bookingError(error, "Could not request bookings for this trip.");
+  return data.map((row) => ({
+    itemId: row.item_id,
+    booking:
+      row.booking_id && row.booking_reference && row.booking_status
+        ? { id: row.booking_id, reference: row.booking_reference, status: row.booking_status }
+        : null,
+    error: row.error_message ? sentence(row.error_message) : null,
+    alreadyRequested: row.error_code === "23505",
+  }));
+}
+
+function sentence(message: string): string {
+  return message.charAt(0).toUpperCase() + message.slice(1) + ".";
 }
 
 export async function respondToBooking(

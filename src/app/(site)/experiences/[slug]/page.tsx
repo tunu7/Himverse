@@ -105,6 +105,7 @@ async function ExperienceDetail({ params }: PageProps<"/experiences/[slug]">) {
             experienceId={experience.id}
             experienceSlug={experience.slug}
             priceFromMinor={experience.priceFromMinor}
+            acceptsBookings={experience.acceptsBookings}
           />
         </Suspense>
       </section>

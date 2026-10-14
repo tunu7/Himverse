@@ -4,12 +4,15 @@ import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { type ActionResult, AppError, ok, toLoggedFailure } from "@/lib/errors";
+import { istDate, MAX_BOOKING_DAYS_AHEAD } from "@/lib/booking-options";
 import { parseInput } from "@/lib/validation";
 import {
   cancelBooking,
   createSlot,
-  requestBooking,
+  requestBookingOnDate,
+  requestItineraryBookings,
   respondToBooking,
+  type TripBookingItemResult,
   updateSlot,
 } from "@/server/bookings/repository";
 import { todayInTripZone } from "@/server/itineraries/preferences";
@@ -20,6 +23,7 @@ import {
   requestBookingSchema,
   respondSchema,
   slotStatusSchema,
+  tripBookingSchema,
 } from "./schemas";
 
 // Inputs are validated here; the database functions re-check identity,
@@ -35,11 +39,39 @@ export async function requestBookingAction(
   let bookingId: string;
   try {
     const input = parseInput(requestBookingSchema, formData);
-    ({ bookingId } = await requestBooking(input));
+    // Clear message here; the database also refuses dates that have started.
+    if (input.date <= todayInTripZone(new Date())) {
+      throw new AppError("VALIDATION_FAILED", "Please check the highlighted fields.", {
+        fieldErrors: { date: ["Choose a date from tomorrow onwards."] },
+      });
+    }
+    if (input.date > istDate(new Date(), MAX_BOOKING_DAYS_AHEAD)) {
+      throw new AppError("VALIDATION_FAILED", "Please check the highlighted fields.", {
+        fieldErrors: { date: ["Choose a date within the next two years."] },
+      });
+    }
+    ({ bookingId } = await requestBookingOnDate(input));
   } catch (error) {
     return toLoggedFailure("bookings.request_failed", error);
   }
   redirect(`/bookings/${bookingId}`);
+}
+
+export type TripBookingActionResult = ActionResult<{ items: TripBookingItemResult[] }> | null;
+
+/** Requests every item of an itinerary version; each item succeeds or fails on its own. */
+export async function bookTripAction(
+  _prev: TripBookingActionResult,
+  formData: FormData,
+): Promise<TripBookingActionResult> {
+  try {
+    const input = parseInput(tripBookingSchema, formData);
+    const items = await requestItineraryBookings(input);
+    if (items.some((i) => i.booking && !i.alreadyRequested)) refresh();
+    return ok({ items });
+  } catch (error) {
+    return toLoggedFailure("bookings.trip_request_failed", error);
+  }
 }
 
 export async function respondToBookingAction(

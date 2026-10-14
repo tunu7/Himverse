@@ -50,3 +50,8 @@ export const experienceStatusSchema = z.strictObject({
   experienceId: z.uuid(),
   status: z.enum(["draft", "published", "archived"]),
 });
+
+export const acceptsBookingsSchema = z.strictObject({
+  experienceId: z.uuid(),
+  acceptsBookings: z.enum(["true", "false"]).transform((v) => v === "true"),
+});

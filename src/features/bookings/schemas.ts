@@ -7,9 +7,15 @@ const phone = z
   .trim()
   .regex(/^\+?[0-9][0-9 ()-]{6,19}$/, "Enter a phone number the provider can reach you on.");
 
+const isoDate = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, "Choose a date.")
+  .refine((d) => !Number.isNaN(Date.parse(`${d}T00:00:00Z`)), "Choose a valid date.");
+
 export const requestBookingSchema = z
   .strictObject({
-    slotId: z.uuid("Choose a date."),
+    experienceId: z.uuid(),
+    date: isoDate,
     adults: z.coerce.number().int().min(1, "At least one adult.").max(MAX_PARTY_SIZE),
     children: z.coerce
       .number()
@@ -26,6 +32,14 @@ export const requestBookingSchema = z
     path: ["children"],
     message: `At most ${MAX_PARTY_SIZE} people per booking.`,
   });
+
+/** "Book whole trip": party and dates come from the stored itinerary version. */
+export const tripBookingSchema = z.strictObject({
+  versionId: z.uuid(),
+  contactPhone: phone,
+  note: z.string().trim().max(500).default(""),
+  idempotencyKey: z.uuid(),
+});
 
 export const respondSchema = z
   .strictObject({

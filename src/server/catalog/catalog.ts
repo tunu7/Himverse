@@ -34,6 +34,8 @@ export type ExperienceSummary = {
 
 export type ExperienceDetail = ExperienceSummary & {
   description: string;
+  /** Provider-controlled: whether travellers can request this experience. */
+  acceptsBookings: boolean;
   provider: { displayName: string; district: string | null };
 };
 
@@ -190,7 +192,7 @@ export async function getPublicExperience(slug: string): Promise<ExperienceDetai
   const { data, error } = await supabase
     .from("experiences")
     .select(
-      "id, slug, title, summary, description, category, duration_minutes, price_from_minor, currency, destination:destinations!inner(slug, name, district), provider:providers!inner(display_name, district)",
+      "id, slug, title, summary, description, category, duration_minutes, price_from_minor, currency, accepts_bookings, destination:destinations!inner(slug, name, district), provider:providers!inner(display_name, district)",
     )
     .eq("slug", slug)
     .maybeSingle();
@@ -203,6 +205,7 @@ export async function getPublicExperience(slug: string): Promise<ExperienceDetai
   return {
     ...toExperienceSummary(data),
     description: data.description,
+    acceptsBookings: data.accepts_bookings,
     provider: { displayName: data.provider.display_name, district: data.provider.district },
   };
 }

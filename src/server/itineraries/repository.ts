@@ -155,6 +155,7 @@ export async function listMyItineraries(): Promise<ItineraryListItem[]> {
 }
 
 export type ItineraryItemView = {
+  id: string;
   experienceId: string | null;
   experienceSlug: string | null;
   title: string;
@@ -173,6 +174,7 @@ export type ItineraryView = {
   currentVersionNumber: number | null;
   versions: Array<{ number: number; kind: string; createdAt: string; estimatedTotalMinor: number }>;
   version: {
+    id: string;
     number: number;
     kind: string;
     model: string;
@@ -224,7 +226,7 @@ export async function getMyItinerary(
   const { data: items, error: itemsError } = await supabase
     .from("itinerary_items")
     .select(
-      "day_number, position, experience_id, experience_title_snapshot, destination_name_snapshot, time_of_day, rationale, price_snapshot_minor, duration_snapshot_minutes",
+      "id, day_number, position, experience_id, experience_title_snapshot, destination_name_snapshot, time_of_day, rationale, price_snapshot_minor, duration_snapshot_minutes",
     )
     .eq("version_id", selected.id)
     .order("day_number")
@@ -257,6 +259,7 @@ export async function getMyItinerary(
       estimatedTotalMinor: v.estimated_total_minor,
     })),
     version: {
+      id: selected.id,
       number: selected.version_number,
       kind: selected.kind,
       model: selected.model,
@@ -276,6 +279,7 @@ export async function getMyItinerary(
         items: items
           .filter((i) => i.day_number === day.dayNumber)
           .map((i) => ({
+            id: i.id,
             experienceId: i.experience_id,
             experienceSlug: i.experience_id ? (available.get(i.experience_id) ?? null) : null,
             title: i.experience_title_snapshot,

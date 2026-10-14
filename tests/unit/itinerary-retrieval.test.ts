@@ -70,7 +70,11 @@ describe("retrieveCandidates", () => {
       }),
     );
     const calls = state.calls[0]!;
-    expect(by(calls, "eq")).toEqual([["destination.district", "Tawang"]]);
+    // Only experiences whose provider accepts bookings, so every plan is bookable.
+    expect(by(calls, "eq")).toEqual([
+      ["accepts_bookings", true],
+      ["destination.district", "Tawang"],
+    ]);
     expect(by(calls, "in")).toEqual([["category", ["culture"]]]);
     expect(by(calls, "lte")).toEqual([["duration_minutes", 2880]]);
     // floor(30000 / 3 travellers): a server-computed integer, never user text.
@@ -81,7 +85,10 @@ describe("retrieveCandidates", () => {
 
   it("prefers an exact destination over a district", async () => {
     await retrieveCandidates(prefs({ destinationSlug: "ziro", district: "Tawang" }));
-    expect(by(state.calls[0]!, "eq")).toEqual([["destination.slug", "ziro"]]);
+    expect(by(state.calls[0]!, "eq")).toEqual([
+      ["accepts_bookings", true],
+      ["destination.slug", "ziro"],
+    ]);
   });
 
   it("widens to all categories when interests can't fill the trip, and says so", async () => {

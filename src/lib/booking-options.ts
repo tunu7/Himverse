@@ -22,6 +22,9 @@ export const BOOKING_STATUS_LABELS: Record<BookingStatus, string> = {
 };
 
 /** "YYYY-MM-DD" in India, `offsetDays` from `now` (IST has no DST, so fixed offset is exact). */
+/** Same horizon as provider slots; enforced by the booking functions too. */
+export const MAX_BOOKING_DAYS_AHEAD = 730;
+
 export function istDate(now: Date, offsetDays = 0): string {
   return new Date(now.getTime() + 330 * 60_000 + offsetDays * 86_400_000)
     .toISOString()

@@ -65,14 +65,14 @@ isOneToOne: false
                   ]
                 },"bookings": {
                   Row: {
-                    "adults": number,"cancellation_reason": string | null,"cancelled_by": Database["public"]['Enums']["booking_actor"] | null,"children": number,"confirmed_total_minor": number | null,"contact_phone": string,"created_at": string,"currency": string,"estimated_total_minor": number | null,"experience_id": string,"experience_title": string,"id": string,"idempotency_key": string,"party_size": number | null,"provider_id": string,"provider_note": string | null,"reference": string,"request_expires_at": string,"slot_id": string,"slot_start_time": string | null,"slot_starts_on": string,"status": Database["public"]['Enums']["booking_status"],"traveler_id": string,"traveler_name": string,"traveler_note": string,"updated_at": string
+                    "adults": number,"cancellation_reason": string | null,"cancelled_by": Database["public"]['Enums']["booking_actor"] | null,"children": number,"confirmed_total_minor": number | null,"contact_phone": string,"created_at": string,"currency": string,"estimated_total_minor": number | null,"experience_id": string,"experience_title": string,"id": string,"idempotency_key": string,"party_size": number | null,"provider_id": string,"provider_note": string | null,"reference": string,"request_expires_at": string,"slot_id": string | null,"slot_start_time": string | null,"slot_starts_on": string,"status": Database["public"]['Enums']["booking_status"],"traveler_id": string,"traveler_name": string,"traveler_note": string,"updated_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "adults": number,"cancellation_reason"?: string | null,"cancelled_by"?: Database["public"]['Enums']["booking_actor"] | null,"children"?: number,"confirmed_total_minor"?: number | null,"contact_phone": string,"created_at"?: string,"currency"?: string,"estimated_total_minor"?: number | null,"experience_id": string,"experience_title": string,"id"?: string,"idempotency_key": string,"party_size"?: never,"provider_id": string,"provider_note"?: string | null,"reference": string,"request_expires_at": string,"slot_id": string,"slot_start_time"?: string | null,"slot_starts_on": string,"status"?: Database["public"]['Enums']["booking_status"],"traveler_id": string,"traveler_name": string,"traveler_note"?: string,"updated_at"?: string
+                    "adults": number,"cancellation_reason"?: string | null,"cancelled_by"?: Database["public"]['Enums']["booking_actor"] | null,"children"?: number,"confirmed_total_minor"?: number | null,"contact_phone": string,"created_at"?: string,"currency"?: string,"estimated_total_minor"?: number | null,"experience_id": string,"experience_title": string,"id"?: string,"idempotency_key": string,"party_size"?: never,"provider_id": string,"provider_note"?: string | null,"reference": string,"request_expires_at": string,"slot_id"?: string | null,"slot_start_time"?: string | null,"slot_starts_on": string,"status"?: Database["public"]['Enums']["booking_status"],"traveler_id": string,"traveler_name": string,"traveler_note"?: string,"updated_at"?: string
                   }
                   Update: {
-                    "adults"?: number,"cancellation_reason"?: string | null,"cancelled_by"?: Database["public"]['Enums']["booking_actor"] | null,"children"?: number,"confirmed_total_minor"?: number | null,"contact_phone"?: string,"created_at"?: string,"currency"?: string,"estimated_total_minor"?: number | null,"experience_id"?: string,"experience_title"?: string,"id"?: string,"idempotency_key"?: string,"party_size"?: never,"provider_id"?: string,"provider_note"?: string | null,"reference"?: string,"request_expires_at"?: string,"slot_id"?: string,"slot_start_time"?: string | null,"slot_starts_on"?: string,"status"?: Database["public"]['Enums']["booking_status"],"traveler_id"?: string,"traveler_name"?: string,"traveler_note"?: string,"updated_at"?: string
+                    "adults"?: number,"cancellation_reason"?: string | null,"cancelled_by"?: Database["public"]['Enums']["booking_actor"] | null,"children"?: number,"confirmed_total_minor"?: number | null,"contact_phone"?: string,"created_at"?: string,"currency"?: string,"estimated_total_minor"?: number | null,"experience_id"?: string,"experience_title"?: string,"id"?: string,"idempotency_key"?: string,"party_size"?: never,"provider_id"?: string,"provider_note"?: string | null,"reference"?: string,"request_expires_at"?: string,"slot_id"?: string | null,"slot_start_time"?: string | null,"slot_starts_on"?: string,"status"?: Database["public"]['Enums']["booking_status"],"traveler_id"?: string,"traveler_name"?: string,"traveler_note"?: string,"updated_at"?: string
                   }
                   Relationships: [
                     {
@@ -111,14 +111,14 @@ isOneToOne: false
                   ]
                 },"experiences": {
                   Row: {
-                    "category": Database["public"]['Enums']["experience_category"],"created_at": string,"created_by": string | null,"currency": string,"description": string,"destination_id": string,"duration_minutes": number,"id": string,"moderation_locked": boolean,"price_from_minor": number | null,"provider_id": string,"published_at": string | null,"search_vector": unknown,"slug": string,"status": Database["public"]['Enums']["experience_status"],"summary": string,"title": string,"updated_at": string
+                    "accepts_bookings": boolean,"category": Database["public"]['Enums']["experience_category"],"created_at": string,"created_by": string | null,"currency": string,"description": string,"destination_id": string,"duration_minutes": number,"id": string,"moderation_locked": boolean,"price_from_minor": number | null,"provider_id": string,"published_at": string | null,"search_vector": unknown,"slug": string,"status": Database["public"]['Enums']["experience_status"],"summary": string,"title": string,"updated_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "category": Database["public"]['Enums']["experience_category"],"created_at"?: string,"created_by"?: string | null,"currency"?: string,"description"?: string,"destination_id": string,"duration_minutes": number,"id"?: string,"moderation_locked"?: boolean,"price_from_minor"?: number | null,"provider_id": string,"published_at"?: string | null,"search_vector"?: never,"slug": string,"status"?: Database["public"]['Enums']["experience_status"],"summary"?: string,"title": string,"updated_at"?: string
+                    "accepts_bookings"?: boolean,"category": Database["public"]['Enums']["experience_category"],"created_at"?: string,"created_by"?: string | null,"currency"?: string,"description"?: string,"destination_id": string,"duration_minutes": number,"id"?: string,"moderation_locked"?: boolean,"price_from_minor"?: number | null,"provider_id": string,"published_at"?: string | null,"search_vector"?: never,"slug": string,"status"?: Database["public"]['Enums']["experience_status"],"summary"?: string,"title": string,"updated_at"?: string
                   }
                   Update: {
-                    "category"?: Database["public"]['Enums']["experience_category"],"created_at"?: string,"created_by"?: string | null,"currency"?: string,"description"?: string,"destination_id"?: string,"duration_minutes"?: number,"id"?: string,"moderation_locked"?: boolean,"price_from_minor"?: number | null,"provider_id"?: string,"published_at"?: string | null,"search_vector"?: never,"slug"?: string,"status"?: Database["public"]['Enums']["experience_status"],"summary"?: string,"title"?: string,"updated_at"?: string
+                    "accepts_bookings"?: boolean,"category"?: Database["public"]['Enums']["experience_category"],"created_at"?: string,"created_by"?: string | null,"currency"?: string,"description"?: string,"destination_id"?: string,"duration_minutes"?: number,"id"?: string,"moderation_locked"?: boolean,"price_from_minor"?: number | null,"provider_id"?: string,"published_at"?: string | null,"search_vector"?: never,"slug"?: string,"status"?: Database["public"]['Enums']["experience_status"],"summary"?: string,"title"?: string,"updated_at"?: string
                   }
                   Relationships: [
                     {
@@ -353,6 +353,16 @@ isOneToOne: false
 "request_booking":
 { Args: { "p_adults": number,"p_children": number,"p_contact_phone": string,"p_idempotency_key": string,"p_note": string,"p_slot_id": string }; Returns: {
               "booking_id": string,"booking_reference": string,"booking_status": Database["public"]['Enums']["booking_status"],"replayed": boolean
+            }[]
+                           },
+"request_booking_on_date":
+{ Args: { "p_adults": number,"p_children": number,"p_contact_phone": string,"p_date": string,"p_experience_id": string,"p_idempotency_key": string,"p_note": string }; Returns: {
+              "booking_id": string,"booking_reference": string,"booking_status": Database["public"]['Enums']["booking_status"],"replayed": boolean
+            }[]
+                           },
+"request_itinerary_bookings":
+{ Args: { "p_contact_phone": string,"p_idempotency_key": string,"p_note": string,"p_version_id": string }; Returns: {
+              "booking_id": string,"booking_reference": string,"booking_status": Database["public"]['Enums']["booking_status"],"error_code": string,"error_message": string,"item_id": string,"replayed": boolean
             }[]
                            },
 "respond_to_booking":

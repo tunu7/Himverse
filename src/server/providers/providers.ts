@@ -25,6 +25,7 @@ export type ProviderExperience = {
   priceFromMinor: number | null;
   destinationName: string | null; // null when the destination is unpublished
   moderationLocked: boolean;
+  acceptsBookings: boolean;
 };
 
 export type MyProvider = {
@@ -45,7 +46,7 @@ export async function listMyProviders(): Promise<MyProvider[]> {
   const { data, error } = await supabase
     .from("provider_members")
     .select(
-      "provider:providers(id, slug, display_name, district, status, experiences(id, title, status, category, duration_minutes, price_from_minor, moderation_locked, destination:destinations(name)))",
+      "provider:providers(id, slug, display_name, district, status, experiences(id, title, status, category, duration_minutes, price_from_minor, moderation_locked, accepts_bookings, destination:destinations(name)))",
     )
     .eq("user_id", user.id);
   if (error) {
@@ -86,6 +87,7 @@ export async function listMyProviders(): Promise<MyProvider[]> {
       priceFromMinor: e.price_from_minor,
       destinationName: e.destination?.name ?? null,
       moderationLocked: e.moderation_locked,
+      acceptsBookings: e.accepts_bookings,
     })),
   }));
 }
@@ -284,6 +286,27 @@ export async function setExperienceStatus(
   const { data, error } = await supabase
     .from("experiences")
     .update({ status })
+    .eq("id", experienceId)
+    .select("id");
+  if (error) {
+    throw toAppError(error, "Could not update the experience.");
+  }
+  if (data.length !== 1) {
+    throw new AppError("NOT_FOUND", "We couldn't find that experience.");
+  }
+}
+
+/** Provider-controlled: whether travellers can request this experience (and the AI can plan with it). */
+export async function setExperienceAcceptsBookings(
+  experienceId: string,
+  acceptsBookings: boolean,
+): Promise<void> {
+  await requireUser();
+  const supabase = await createSupabaseServerClient();
+  // RLS: only the provider's members (or admins) can update; others match no row.
+  const { data, error } = await supabase
+    .from("experiences")
+    .update({ accepts_bookings: acceptsBookings })
     .eq("id", experienceId)
     .select("id");
   if (error) {

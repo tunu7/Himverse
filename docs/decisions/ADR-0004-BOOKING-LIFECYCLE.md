@@ -1,6 +1,6 @@
 # ADR-0004: Booking lifecycle — slots, provider confirmation and idempotency
 
-- Status: Accepted
+- Status: Accepted (amended 2026-10-15: everything bookable, see the end)
 - Date: 2026-10-12
 - Deciders: Product owner (availability model, price, expiry/cancellation defaults, contact sharing),
   Engineering
@@ -111,3 +111,51 @@ requested ──confirm──▶ confirmed ──date passes──▶ completed
 **Follow-up**
 
 - Payments (a separate ADR), notifications, rescheduling, and no-show and dispute handling.
+
+## Amendment (2026-10-15): everything bookable
+
+Migration `20261014205730_bookable_experiences_and_trip_booking`. Decided by the product owner: partners
+choose what is bookable, the AI plans only with bookable experiences, and travellers can book a whole
+itinerary.
+
+- **Partners choose what's bookable.** Each experience has an `accepts_bookings` switch, on by default.
+  Members of the experience's own provider (or an admin) can change it. Only public experiences with
+  `accepts_bookings` can be requested (`private.is_experience_bookable`), and AI retrieval only
+  considers them.
+- **Any future date.** `request_booking_on_date` accepts a bookable experience and any date from
+  tomorrow (India time).
+  - If an open published slot exists on that date, it is used, and the seat limits above still apply.
+  - Otherwise the booking has no slot (`slot_id` is null). The provider's confirmation is then the
+    availability check, and no seat counts are kept.
+  - Each traveller can have only one active request per experience and date.
+  - The 48-hour response window, the 24-hour cancellation rule and completion use the booking's date.
+  - This supersedes the "Pure requests with no slots: rejected" alternative above. Slots remain
+    optional, for partners who want capacity limits.
+- **Book a whole trip.** `request_itinerary_bookings` lets the itinerary's owner request every item of
+  a version in one call.
+  - Dates and party size come from the stored version, never from the client.
+  - Each item is requested independently: unbookable items report a reason and don't block the rest.
+  - Item keys are derived from one client key (`md5(key:item_id)`), so a retry replays rather than
+    duplicating.
+- **Request limits** are 30 per hour, 60 per day and 40 awaiting a response, so a whole trip fits.
+- **Closed dates stay closed.** A date that has a published slot but no open one (the provider closed
+  it) can't be requested or confirmed as a plain date.
+- **Seat limits survive late publishing.** When the provider confirms a date request, an open slot that
+  has since been published on that date absorbs the party, under the slot lock. `seats_confirmed <=
+capacity` therefore still holds for every published date.
+- **Retries:** a date request is identified by experience and date, so a retry still replays after a
+  slot appears or disappears.
+- **Request limits:** each traveller's requests are serialised with an advisory lock, so concurrent
+  calls can't exceed the limits.
+- **Horizon:** dates can be at most two years ahead, the same as provider slots.
+- **Whole trip:** only expected refusals are reported per item. Unexpected errors abort the call, and
+  the app logs them.
+- **Timing:** a date request without a start time starts at midnight India time. The 48-hour response
+  window and the 24-hour cancellation rule are measured from then. Example: a request at 23:50 for
+  tomorrow leaves the provider about 10 minutes to reply.
+- **Pending requests after switching off:** a provider who stops accepting requests can still confirm
+  or decline the ones already pending.
+- **Plans built earlier:** "AI plans only with bookable experiences" is applied at planning time. If a
+  provider switches requests off later, an item in an existing plan fails with a clear reason when the
+  trip is booked. Any version of an itinerary the traveller owns can be booked.
+- `request_booking` (by slot) is kept for compatibility. The app now uses date requests.

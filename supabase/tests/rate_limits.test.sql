@@ -19,9 +19,9 @@ insert into public.destinations (id, slug, name, district, is_published)
 values ('d0000000-0000-4000-8000-000000000001', 'limits-town', 'Limits Town', 'Tawang', true);
 insert into public.experiences (id, provider_id, destination_id, slug, title, category, duration_minutes, price_from_minor, status)
 values ('e0000000-0000-4000-8000-000000000001', 'a0000000-0000-4000-8000-000000000001', 'd0000000-0000-4000-8000-000000000001', 'limits-walk', 'Limits walk', 'culture', 60, 1000, 'published');
--- 25 future dates so the one-active-booking-per-slot rule doesn't interfere.
+-- 45 future dates so the one-active-booking-per-slot rule doesn't interfere.
 insert into public.availability_slots (experience_id, starts_on, capacity)
-select 'e0000000-0000-4000-8000-000000000001', private.today_ist() + n, 5 from generate_series(10, 34) as n;
+select 'e0000000-0000-4000-8000-000000000001', private.today_ist() + n, 5 from generate_series(10, 54) as n;
 
 -- Booking request rate ------------------------------------------------------------------
 set local role authenticated;
@@ -29,12 +29,12 @@ select set_config('request.jwt.claims', '{"sub":"11111111-1111-4111-8111-1111111
 select lives_ok(
   $$ select count(*) from (
        select public.request_booking(s.id, 1, 0, '+91 98765 43210', '', gen_random_uuid())
-       from public.availability_slots s order by s.starts_on limit 10) as made $$,
-  'ten booking requests in an hour are allowed');
+       from public.availability_slots s order by s.starts_on limit 30) as made $$,
+  'thirty booking requests in an hour are allowed (a whole trip fits)');
 select throws_ok(
   $$ select * from public.request_booking(
        (select id from public.availability_slots order by starts_on desc limit 1), 1, 0, '+91 98765 43210', '', gen_random_uuid()) $$,
-  '54000', null, 'the eleventh request within an hour is refused');
+  '54000', null, 'the thirty-first request within an hour is refused');
 
 -- Too many unanswered requests (older than the hourly/daily windows)
 reset role;
@@ -45,12 +45,12 @@ select 'HV-' || upper(substr(md5(n::text), 1, 6)), '11111111-1111-4111-8111-1111
   'a0000000-0000-4000-8000-000000000001', 'e0000000-0000-4000-8000-000000000001',
   (select id from public.availability_slots order by starts_on limit 1 offset (n - 1)),
   'Limits walk', private.today_ist() + 10, 1, '+91 98765 43210', now() + interval '1 day', gen_random_uuid(), now() - interval '3 days'
-from generate_series(1, 20) as n;
+from generate_series(1, 40) as n;
 set local role authenticated;
 select throws_ok(
   $$ select * from public.request_booking(
        (select id from public.availability_slots order by starts_on desc limit 1), 1, 0, '+91 98765 43210', '', gen_random_uuid()) $$,
-  '54000', null, 'a traveler with 20 unanswered requests must wait');
+  '54000', null, 'a traveler with 40 unanswered requests must wait');
 
 -- Provider applications --------------------------------------------------------------
 select lives_ok(
@@ -64,7 +64,7 @@ select throws_ok(
 -- Open dates per experience -------------------------------------------------------
 reset role;
 insert into public.availability_slots (experience_id, starts_on, capacity)
-select 'e0000000-0000-4000-8000-000000000001', private.today_ist() + n, 5 from generate_series(35, 375) as n; -- 25 + 341 = exactly 366 open dates
+select 'e0000000-0000-4000-8000-000000000001', private.today_ist() + n, 5 from generate_series(55, 375) as n; -- 45 + 321 = exactly 366 open dates
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"33333333-3333-4333-8333-333333333333","role":"authenticated"}', true);
 select throws_ok(

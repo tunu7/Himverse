@@ -25,10 +25,18 @@ import { PendingLabel } from "@/components/ui";
 export type SlotOption = { id: string; label: string; seatsLeft: number };
 
 export function BookingRequestForm({
+  experienceId,
+  minDate,
+  maxDate,
   slots,
   idempotencyKey,
   priceFromMinor,
 }: {
+  experienceId: string;
+  /** First and last requestable dates (India), YYYY-MM-DD. */
+  minDate: string;
+  maxDate: string;
+  /** Published dates, shown as availability hints; any future date can be requested. */
   slots: readonly SlotOption[];
   idempotencyKey: string;
   priceFromMinor: number | null;
@@ -40,20 +48,31 @@ export function BookingRequestForm({
     <form action={action} className="flex flex-col gap-4" noValidate>
       {/* Same key on retries and double clicks: the server returns the same booking. */}
       <input type="hidden" name="idempotencyKey" value={idempotencyKey} />
+      <input type="hidden" name="experienceId" value={experienceId} />
       <label className="flex flex-col gap-1">
         <span className="text-sm font-medium">Date</span>
-        <select name="slotId" defaultValue="" required className={inputClass}>
-          <option value="" disabled>
-            Choose a date…
-          </option>
-          {slots.map((s) => (
-            <option key={s.id} value={s.id} disabled={s.seatsLeft === 0}>
-              {s.label} · {s.seatsLeft === 0 ? "full" : `${s.seatsLeft} seats left`}
-            </option>
-          ))}
-        </select>
-        <FieldError errors={errors("slotId")} />
+        <input
+          type="date"
+          name="date"
+          min={minDate}
+          max={maxDate}
+          required
+          className={inputClass}
+        />
+        <FieldError errors={errors("date")} />
       </label>
+      {slots.length > 0 ? (
+        <div className="flex flex-col gap-1 text-sm">
+          <span className="text-muted">Dates the provider has published:</span>
+          <ul className="flex flex-wrap gap-2" data-testid="published-dates">
+            {slots.map((s) => (
+              <li key={s.id} className="rounded-full border border-line px-3 py-1 text-fg-soft">
+                {s.label} · {s.seatsLeft === 0 ? "full" : `${s.seatsLeft} seats left`}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="flex flex-col gap-1">
           <span className="text-sm font-medium">Adults</span>

@@ -15,6 +15,7 @@ import type { PublicDestination } from "@/server/catalog/catalog";
 import {
   addExperience,
   applyAsProvider,
+  changeExperienceAcceptsBookings,
   changeExperienceStatus,
   submitForReview,
 } from "../actions";
@@ -204,6 +205,27 @@ export function ExperienceStatusForm({
       <input type="hidden" name="status" value={status} />
       <button type="submit" disabled={pending} className={secondaryButtonClass}>
         {label}
+      </button>
+      <FormAlert state={state} />
+    </form>
+  );
+}
+
+/** Partner switch: whether travellers can request this experience. */
+export function AcceptsBookingsForm({
+  experienceId,
+  acceptsBookings,
+}: {
+  experienceId: string;
+  acceptsBookings: boolean;
+}) {
+  const [state, action, pending] = useActionState(changeExperienceAcceptsBookings, null);
+  return (
+    <form action={action} className="inline-flex flex-col gap-1">
+      <input type="hidden" name="experienceId" value={experienceId} />
+      <input type="hidden" name="acceptsBookings" value={acceptsBookings ? "false" : "true"} />
+      <button type="submit" disabled={pending} className={secondaryButtonClass}>
+        {acceptsBookings ? "Stop booking requests" : "Accept booking requests"}
       </button>
       <FormAlert state={state} />
     </form>

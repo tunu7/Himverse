@@ -7,11 +7,13 @@ import { parseInput } from "@/lib/validation";
 import {
   createExperience,
   createProviderApplication,
+  setExperienceAcceptsBookings,
   setExperienceStatus,
   submitProviderApplication,
 } from "@/server/providers/providers";
 
 import {
+  acceptsBookingsSchema,
   experienceStatusSchema,
   newExperienceSchema,
   providerApplicationSchema,
@@ -85,5 +87,19 @@ export async function changeExperienceStatus(
     return ok({ done: true });
   } catch (error) {
     return toLoggedFailure("providers.change_experience_status_failed", error);
+  }
+}
+
+export async function changeExperienceAcceptsBookings(
+  _prev: ProviderActionResult,
+  formData: FormData,
+): Promise<ProviderActionResult> {
+  try {
+    const input = parseInput(acceptsBookingsSchema, formData);
+    await setExperienceAcceptsBookings(input.experienceId, input.acceptsBookings);
+    refresh();
+    return ok({ done: true });
+  } catch (error) {
+    return toLoggedFailure("providers.change_accepts_bookings_failed", error);
   }
 }

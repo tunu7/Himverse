@@ -18,7 +18,7 @@ select tables_are('public', array[
 select functions_are('public', array[
   'create_provider_application', 'submit_provider_application', 'review_provider',
   'save_itinerary_version', 'begin_itinerary_generation', 'finish_itinerary_generation',
-  'request_booking', 'respond_to_booking', 'cancel_booking', 'ai_generations_today'
+  'request_booking', 'request_booking_on_date', 'request_itinerary_bookings', 'respond_to_booking', 'cancel_booking', 'ai_generations_today'
 ], 'public (RPC-exposed) functions are exactly the reviewed set');
 
 select is_empty(
@@ -154,7 +154,9 @@ select results_eq(
        ('public', 'cancel_booking(p_booking_id uuid, p_reason text)', 'authenticated'),
        ('public', 'create_provider_application(p_slug text, p_display_name text, p_description text, p_district text, p_legal_name text, p_contact_email text, p_contact_phone text)', 'authenticated'),
        ('public', 'finish_itinerary_generation(p_generation_id bigint, p_outcome itinerary_generation_outcome, p_error_code text, p_model text, p_prompt_version text, p_latency_ms integer, p_input_tokens integer, p_output_tokens integer)', 'authenticated'),
+       ('public', 'request_booking_on_date(p_experience_id uuid, p_date date, p_adults integer, p_children integer, p_contact_phone text, p_note text, p_idempotency_key uuid)', 'authenticated'),
        ('public', 'request_booking(p_slot_id uuid, p_adults integer, p_children integer, p_contact_phone text, p_note text, p_idempotency_key uuid)', 'authenticated'),
+       ('public', 'request_itinerary_bookings(p_version_id uuid, p_contact_phone text, p_note text, p_idempotency_key uuid)', 'authenticated'),
        ('public', 'respond_to_booking(p_booking_id uuid, p_decision booking_status, p_final_total_minor bigint, p_note text)', 'authenticated'),
        ('public', 'review_provider(p_provider_id uuid, p_decision provider_status, p_note text)', 'authenticated'),
        ('public', 'save_itinerary_version(p_generation_id bigint, p_itinerary_id uuid, p_title text, p_kind itinerary_version_kind, p_preferences jsonb, p_plan jsonb, p_schema_version text, p_prompt_version text, p_model text, p_travelers integer, p_warnings jsonb, p_items jsonb)', 'authenticated'),
@@ -181,10 +183,10 @@ select results_eq(
        ('destinations', 'authenticated', 'INSERT', 'description,district,is_published,name,slug,summary'),
        ('destinations', 'authenticated', 'SELECT', 'created_at,description,district,id,is_published,name,search_vector,slug,summary,updated_at'),
        ('destinations', 'authenticated', 'UPDATE', 'description,district,is_published,name,slug,summary'),
-       ('experiences', 'anon', 'SELECT', 'category,created_at,currency,description,destination_id,duration_minutes,id,moderation_locked,price_from_minor,provider_id,published_at,search_vector,slug,status,summary,title,updated_at'),
-       ('experiences', 'authenticated', 'INSERT', 'category,description,destination_id,duration_minutes,price_from_minor,provider_id,slug,status,summary,title'),
-       ('experiences', 'authenticated', 'SELECT', 'category,created_at,currency,description,destination_id,duration_minutes,id,moderation_locked,price_from_minor,provider_id,published_at,search_vector,slug,status,summary,title,updated_at'),
-       ('experiences', 'authenticated', 'UPDATE', 'category,description,destination_id,duration_minutes,price_from_minor,slug,status,summary,title'),
+       ('experiences', 'anon', 'SELECT', 'accepts_bookings,category,created_at,currency,description,destination_id,duration_minutes,id,moderation_locked,price_from_minor,provider_id,published_at,search_vector,slug,status,summary,title,updated_at'),
+       ('experiences', 'authenticated', 'INSERT', 'accepts_bookings,category,description,destination_id,duration_minutes,price_from_minor,provider_id,slug,status,summary,title'),
+       ('experiences', 'authenticated', 'SELECT', 'accepts_bookings,category,created_at,currency,description,destination_id,duration_minutes,id,moderation_locked,price_from_minor,provider_id,published_at,search_vector,slug,status,summary,title,updated_at'),
+       ('experiences', 'authenticated', 'UPDATE', 'accepts_bookings,category,description,destination_id,duration_minutes,price_from_minor,slug,status,summary,title'),
        ('itineraries', 'authenticated', 'SELECT', 'created_at,current_version_id,id,owner_id,title,updated_at'),
        ('itineraries', 'authenticated', 'UPDATE', 'current_version_id,title'),
        ('itinerary_generations', 'authenticated', 'SELECT', 'created_at,error_code,id,input_tokens,itinerary_id,latency_ms,model,outcome,output_tokens,prompt_version,user_id'),

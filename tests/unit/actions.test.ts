@@ -13,6 +13,7 @@ const server = {
   submitProviderApplication: vi.fn(),
   createExperience: vi.fn(),
   setExperienceStatus: vi.fn(),
+  setExperienceAcceptsBookings: vi.fn(),
   reviewProvider: vi.fn(),
   updateMyDisplayName: vi.fn(),
 };
@@ -21,14 +22,20 @@ vi.mock("@/server/providers/providers", () => ({
   submitProviderApplication: (...a: unknown[]) => server.submitProviderApplication(...a),
   createExperience: (...a: unknown[]) => server.createExperience(...a),
   setExperienceStatus: (...a: unknown[]) => server.setExperienceStatus(...a),
+  setExperienceAcceptsBookings: (...a: unknown[]) => server.setExperienceAcceptsBookings(...a),
   reviewProvider: (...a: unknown[]) => server.reviewProvider(...a),
 }));
 vi.mock("@/server/profiles/profiles", () => ({
   updateMyDisplayName: (...a: unknown[]) => server.updateMyDisplayName(...a),
 }));
 
-const { applyAsProvider, submitForReview, addExperience, changeExperienceStatus } =
-  await import("@/features/providers/actions");
+const {
+  applyAsProvider,
+  submitForReview,
+  addExperience,
+  changeExperienceStatus,
+  changeExperienceAcceptsBookings,
+} = await import("@/features/providers/actions");
 const { reviewProviderAction } = await import("@/features/admin/actions");
 const { updateProfile } = await import("@/features/account/actions");
 
@@ -56,6 +63,7 @@ const validInputs = {
     durationMinutes: "120",
   }),
   changeExperienceStatus: form({ experienceId: UUID, status: "published" }),
+  changeExperienceAcceptsBookings: form({ experienceId: UUID, acceptsBookings: "false" }),
   reviewProviderAction: form({ providerId: UUID, decision: "verified" }),
   updateProfile: form({ displayName: "Asha" }),
 };
@@ -68,6 +76,11 @@ const cases = [
     name: "changeExperienceStatus",
     action: changeExperienceStatus,
     serverFn: "setExperienceStatus",
+  },
+  {
+    name: "changeExperienceAcceptsBookings",
+    action: changeExperienceAcceptsBookings,
+    serverFn: "setExperienceAcceptsBookings",
   },
   { name: "reviewProviderAction", action: reviewProviderAction, serverFn: "reviewProvider" },
   { name: "updateProfile", action: updateProfile, serverFn: "updateMyDisplayName" },

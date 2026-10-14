@@ -9,6 +9,7 @@ import {
   RefineForm,
   RegenerateButton,
 } from "@/features/itineraries/components/itinerary-controls";
+import { TripBookingSection } from "@/features/bookings/components/trip-booking-section";
 import { ItineraryPlan } from "@/features/itineraries/components/itinerary-view";
 import { requireUserForPage } from "@/server/auth/session";
 import { getMyItinerary } from "@/server/itineraries/repository";
@@ -48,6 +49,8 @@ async function ItineraryDetail({ params, searchParams }: PageProps<"/itineraries
       </header>
 
       <ItineraryPlan itinerary={itinerary} />
+
+      <TripBookingSection version={version} />
 
       <section className="flex flex-col gap-3" aria-labelledby="refine-heading">
         <h2 id="refine-heading" className="text-lg font-semibold">

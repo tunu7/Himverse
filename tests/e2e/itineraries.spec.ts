@@ -133,3 +133,33 @@ test("an itinerary can be deleted", async ({ page }) => {
   await expect(page).toHaveURL(/\/itineraries$/);
   await expect(page.getByText("You haven't planned any trips yet.")).toBeVisible();
 });
+
+test("book whole trip: one request per item, retries don't duplicate", async ({ page }) => {
+  test.setTimeout(120_000);
+  await signUp(page, "tripbooker");
+  await fillTrip(page, { place: "Ziro Valley", startDate: istDatePlus(9) });
+  await page.getByRole("button", { name: "Plan my trip" }).click();
+  await expect(page).toHaveURL(/\/itineraries\/[0-9a-f-]{36}$/);
+  const itineraryUrl = page.url();
+  await expect(page.getByRole("heading", { name: "Book this trip" })).toBeVisible();
+  const itemCount = await page.getByTestId("itinerary-item").filter({ visible: true }).count();
+  expect(itemCount).toBeGreaterThan(0);
+
+  await page.getByRole("button", { name: "Book whole trip" }).click();
+  await expect(page.getByText("Enter a phone number the provider can reach you on.")).toBeVisible();
+  await page.getByLabel(/Contact phone/).fill("+91 98765 43210");
+  await page.getByRole("button", { name: "Book whole trip" }).click();
+  const results = page.getByTestId("trip-booking-results").filter({ visible: true });
+  await expect(results).toContainText("Booking requests sent for every item.");
+  await expect(results.getByRole("listitem")).toHaveCount(itemCount);
+  await expect(results.getByRole("link", { name: /^Requested · HV-/ })).toHaveCount(itemCount);
+
+  // A second attempt from a fresh page reports the existing requests instead of duplicating.
+  await page.goto(itineraryUrl);
+  await page.getByLabel(/Contact phone/).fill("+91 98765 43210");
+  await page.getByRole("button", { name: "Book whole trip" }).click();
+  await expect(results.getByText(/Already requested/)).toHaveCount(itemCount);
+
+  await page.goto("/bookings");
+  await expect(page.getByText("Awaiting provider confirmation")).toHaveCount(itemCount);
+});

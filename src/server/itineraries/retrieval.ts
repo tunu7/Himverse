@@ -8,7 +8,8 @@ import type { Candidates } from "@/server/itineraries/schemas";
 /**
  * Deterministic retrieval of eligible inventory. Uses the anonymous client, so
  * only publicly visible experiences (published, verified provider, published
- * destination) can ever be candidates. Bounded to keep prompts small.
+ * destination) can ever be candidates, and only those whose provider accepts
+ * booking requests at planning time (ADR-0004 amendment). Bounded to keep prompts small.
  */
 export const MAX_CANDIDATE_EXPERIENCES = 40;
 export const MAX_CANDIDATE_DESTINATIONS = 10;
@@ -48,6 +49,7 @@ async function query(prefs: TripPreferences, categories: TripPreferences["intere
   let q = supabase
     .from("experiences")
     .select(COLUMNS)
+    .eq("accepts_bookings", true)
     // Must fit inside the trip.
     .lte("duration_minutes", prefs.durationDays * 1440);
   if (prefs.destinationSlug) {
