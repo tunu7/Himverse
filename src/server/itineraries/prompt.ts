@@ -1,14 +1,22 @@
 import { PACES } from "@/lib/itinerary-options";
 import { dateOfDay, type TripPreferences, travelerCount } from "@/server/itineraries/preferences";
-import type { Candidates, ItineraryDraft } from "@/server/itineraries/schemas";
+import { z } from "zod";
+
+import {
+  type Candidates,
+  type ItineraryDraft,
+  itineraryDraftSchemaFor,
+} from "@/server/itineraries/schemas";
 
 /**
  * Prompt construction (versioned). The model sees:
  *   - trip parameters (no names, emails or account data),
  *   - candidate records under short aliases (E1.., D1..), never database ids,
- *   - the traveler's free-text notes, fenced and marked as data, not instructions.
+ *   - the traveler's free-text notes, fenced and marked as data, not instructions,
+ *   - (v2) the exact JSON Schema of the answer, because some providers (Ollama
+ *     Cloud) ignore API-level structured-output settings and reply in Markdown.
  */
-export const PROMPT_VERSION = "itinerary-v1";
+export const PROMPT_VERSION = "itinerary-v2";
 export const MAX_PROMPT_CHARS = 24_000;
 
 export type AliasMap = {
@@ -100,7 +108,23 @@ export function buildPrompt(
   if (prompt.length > MAX_PROMPT_CHARS) {
     throw new Error(`Prompt exceeds ${MAX_PROMPT_CHARS} characters`);
   }
-  return { system: SYSTEM, prompt };
+  return { system: `${SYSTEM}\n\n${outputFormat(prefs, aliases)}`, prompt };
+}
+
+/** The request-narrowed answer schema, spelled out for providers that don't enforce it. */
+function outputFormat(prefs: TripPreferences, aliases: AliasMap): string {
+  const schema = z.toJSONSchema(
+    itineraryDraftSchemaFor({
+      days: prefs.durationDays,
+      destinations: [...aliases.destinations.keys()],
+      experiences: [...aliases.experiences.keys()],
+    }),
+    { target: "draft-7" },
+  );
+  delete schema.$schema;
+  return `Output format:
+Respond with ONLY one JSON object: no Markdown, no code fences and no other text. It must match this JSON Schema:
+${JSON.stringify(schema)}`;
 }
 
 /** Repair request after validation errors: same context plus the specific problems. */

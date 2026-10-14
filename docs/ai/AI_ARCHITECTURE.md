@@ -16,7 +16,7 @@ See [ITINERARY_GENERATION](ITINERARY_GENERATION.md) for the module map and check
 1. **Input schema:** validated trip preferences.
 2. **Retriever:** deterministic SQL filters over public catalogue data (region, interests, duration,
    budget). Semantic search only via a future ADR.
-3. **Prompt builder:** versioned (`itinerary-v1`), stored with each version. Records appear as aliases;
+3. **Prompt builder:** versioned (`itinerary-v2`, which spells out the answer schema), stored with each version. Records appear as aliases;
    traveller text is fenced as data.
 4. **Model client:** the `ItineraryModel` interface. One AI SDK 7 adapter serves the Vercel AI Gateway and
    Ollama (free local models), and there is a deterministic test mock. `AI_PROVIDER` and

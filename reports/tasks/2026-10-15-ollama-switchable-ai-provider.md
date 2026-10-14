@@ -100,3 +100,16 @@ No database changes. A new model adapter boundary is described in ADR-0006, whic
 - **Unverified:** no live call to Ollama Cloud, because no key is available in this session. The request
   shape is covered by unit tests only.
 - **Manual step:** create an Ollama Cloud key, then set the four variables in Vercel and redeploy.
+
+## Addendum: production failures on Ollama Cloud
+
+- **Symptom:** every production trip failed with `UPSTREAM_UNAVAILABLE` after 8–12 s, with no
+  provider error logged.
+- **Cause:** Ollama Cloud ignores structured-output settings, and `gpt-oss:120b` answered in
+  Markdown. Reproduced with `curl` using the exact request body.
+- **Fix:** prompt `itinerary-v2` spells out the narrowed JSON Schema in the system prompt. In manual
+  `curl` runs, cloud models returned valid JSON 6 of 6 times (`gpt-oss:120b`, `gemma4:31b`,
+  `gpt-oss:20b`).
+- **Vercel production env:** `AI_PROVIDER`, `OLLAMA_BASE_URL`, `AI_ITINERARY_MODEL=gpt-oss:120b` and
+  `OLLAMA_API_KEY` (sensitive) are set.
+- `npm run verify`: pass (287 unit tests).

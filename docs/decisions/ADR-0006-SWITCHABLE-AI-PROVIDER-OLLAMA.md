@@ -42,6 +42,13 @@ owner wants a free model that works now, and the ability to change models later 
    self-hosted Ollama behind an authenticating HTTPS proxy. The default timeout for a remote Ollama is
    90 s, so two attempts fit inside Vercel's 300 s function limit.
 
+9. **The answer schema is spelled out in the prompt** _(amended 2026-10-15, prompt `itinerary-v2`)_.
+   Ollama Cloud ignores `response_format` (`json_schema` and `json_object`) and the native `format`
+   field. `gpt-oss:120b`, `gpt-oss:20b` and `gemma4:31b` all replied in Markdown, so every production
+   plan failed as `invalid_output`. With the request-narrowed JSON Schema and a "JSON only"
+   instruction in the system prompt, 6 of 6 cloud calls returned valid itinerary JSON in 2–21 s. The
+   API-level schema is still sent for providers that enforce it.
+
 ## Models tested (M1, 8 GB, local seed catalogue)
 
 | Base model         | Result                                                                                                     |

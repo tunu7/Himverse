@@ -96,7 +96,7 @@ describe("runItineraryGeneration", () => {
     expect(t.saved[0]?.plan.days[0]?.items[0]?.experienceId).toBe(E(1));
     expect(t.saved[0]).toMatchObject({
       schemaVersion: "itinerary.v1",
-      promptVersion: "itinerary-v1",
+      promptVersion: "itinerary-v2",
       travelers: 2,
     });
     expect(t.logs).toEqual([
