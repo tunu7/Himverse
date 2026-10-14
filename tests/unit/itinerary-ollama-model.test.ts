@@ -58,6 +58,22 @@ describe("ollama itinerary model adapter", () => {
     const body = JSON.parse(String(init.body));
     expect(body.model).toBe("qwen2.5:3b");
     expect(body.response_format).toMatchObject({ type: "json_schema" });
+    // Local Ollama: no credentials sent.
+    expect(new Headers(init.headers).has("authorization")).toBe(false);
+  });
+
+  it("sends OLLAMA_API_KEY as a bearer token to a remote Ollama", async () => {
+    const fetchMock = vi.fn(async () => chatCompletion(JSON.stringify(validDraft)));
+    vi.stubGlobal("fetch", fetchMock);
+    const model = createOllamaItineraryModel({
+      modelId: "gpt-oss:120b",
+      baseUrl: "https://ollama.com/v1",
+      apiKey: "test-key",
+    });
+    await model.generate(request);
+    const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
+    expect(url).toBe("https://ollama.com/v1/chat/completions");
+    expect(new Headers(init.headers).get("authorization")).toBe("Bearer test-key");
   });
 
   it("asks for exactly N days and only known aliases, but leaves alias errors to validation", async () => {

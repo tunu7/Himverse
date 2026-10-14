@@ -124,22 +124,49 @@ describe("parseAiEnv", () => {
     expect(() => parseAiEnv(env)).toThrow(EnvValidationError);
   });
 
-  it("refuses a localhost Ollama on deployed Vercel environments only", () => {
-    expect(() => parseAiEnv({ AI_PROVIDER: "ollama", VERCEL_ENV: "production" })).toThrow(
-      EnvValidationError,
-    );
-    expect(() => parseAiEnv({ AI_PROVIDER: "ollama", VERCEL_ENV: "preview" })).toThrow(
-      EnvValidationError,
-    );
-    expect(parseAiEnv({ AI_PROVIDER: "ollama", VERCEL_ENV: "development" }).AI_PROVIDER).toBe(
-      "ollama",
-    );
-    expect(
-      parseAiEnv({
-        AI_PROVIDER: "ollama",
-        VERCEL_ENV: "production",
-        OLLAMA_BASE_URL: "https://ollama.example.com/v1",
-      }).AI_PROVIDER,
-    ).toBe("ollama");
+  const cloud = {
+    AI_PROVIDER: "ollama",
+    OLLAMA_BASE_URL: "https://ollama.com/v1",
+    OLLAMA_API_KEY: "test-key",
+    AI_ITINERARY_MODEL: "gpt-oss:120b",
+  };
+
+  it.each(["production", "preview"])("accepts a remote HTTPS Ollama with a key on %s", (vercel) => {
+    expect(parseAiEnv({ ...cloud, VERCEL_ENV: vercel })).toMatchObject({
+      AI_PROVIDER: "ollama",
+      OLLAMA_API_KEY: "test-key",
+      AI_ITINERARY_MODEL: "gpt-oss:120b",
+      AI_MODEL_TIMEOUT_MS: 90_000,
+    });
+  });
+
+  it.each([
+    {
+      name: "a localhost URL",
+      env: { OLLAMA_BASE_URL: "http://127.0.0.1:11434/v1" },
+      key: "OLLAMA_BASE_URL",
+    },
+    {
+      name: "plain HTTP",
+      env: { OLLAMA_BASE_URL: "http://ollama.example.com/v1" },
+      key: "OLLAMA_BASE_URL",
+    },
+    { name: "no API key", env: { OLLAMA_API_KEY: undefined }, key: "OLLAMA_API_KEY" },
+    {
+      name: "no explicit model",
+      env: { AI_ITINERARY_MODEL: undefined },
+      key: "AI_ITINERARY_MODEL",
+    },
+  ])("refuses a deployed Ollama with $name", ({ env, key }) => {
+    for (const vercel of ["production", "preview"]) {
+      expect(() => parseAiEnv({ ...cloud, ...env, VERCEL_ENV: vercel })).toThrow(key);
+    }
+  });
+
+  it("keeps local Ollama free of deployment rules (no key, localhost, default model)", () => {
+    expect(parseAiEnv({ AI_PROVIDER: "ollama", VERCEL_ENV: "development" })).toMatchObject({
+      AI_ITINERARY_MODEL: "himverse-planner",
+      AI_MODEL_TIMEOUT_MS: 180_000,
+    });
   });
 });

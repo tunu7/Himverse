@@ -21,6 +21,7 @@ export function getItineraryModel(): ItineraryModel {
       return createOllamaItineraryModel({
         modelId: env.AI_ITINERARY_MODEL,
         baseUrl: env.OLLAMA_BASE_URL,
+        apiKey: env.OLLAMA_API_KEY,
         timeoutMs: env.AI_MODEL_TIMEOUT_MS,
       });
     case "gateway":

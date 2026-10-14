@@ -28,8 +28,9 @@ Defined and documented in [.env.example](../../.env.example); validated in `src/
 | `AI_PROVIDER`                          | Server   | `gateway` (default), `ollama` (free local models, ADR-0006) or `mock` (tests only; see `AI_ALLOW_MOCK`)           |
 | `AI_ALLOW_MOCK`                        | Server   | `false` (default). Mock refused on Vercel production always, and in any production build unless `true` (E2E only) |
 | `AI_ITINERARY_MODEL`                   | Server   | Default `anthropic/claude-sonnet-5.5` (gateway) or `himverse-planner` (ollama)                                    |
-| `OLLAMA_BASE_URL`                      | Server   | Default `http://127.0.0.1:11434/v1`. A localhost URL is refused on Vercel preview/production                      |
-| `AI_MODEL_TIMEOUT_MS`                  | Server   | Per-call model timeout; default 45000 (gateway) or 180000 (ollama)                                                |
+| `OLLAMA_BASE_URL`                      | Server   | Default `http://127.0.0.1:11434/v1`. On Vercel preview/production: remote HTTPS only                              |
+| `OLLAMA_API_KEY`                       | Server   | Bearer token for Ollama Cloud or an auth proxy. Required on Vercel preview/production. Never `NEXT_PUBLIC_`       |
+| `AI_MODEL_TIMEOUT_MS`                  | Server   | Per-call model timeout; default 45000 (gateway), 180000 (local ollama), 90000 (remote ollama)                     |
 | `AI_GATEWAY_API_KEY`                   | Server   | Local only; on Vercel the gateway uses OIDC. Never `NEXT_PUBLIC_`                                                 |
 | `AI_ITINERARY_ENABLED`                 | Server   | Kill switch, `true` (default) / `false`. Takes effect on the next deployment                                      |
 | `AI_DAILY_GENERATION_LIMIT`            | Server   | Platform-wide model calls per IST day (default 300; 0 blocks all generation)                                      |
@@ -46,6 +47,23 @@ needed. To use a model tag directly, set `AI_ITINERARY_MODEL=<tag>`, but make su
 window of at least 16k tokens. For Claude or another hosted model, set `AI_PROVIDER=gateway` and
 `AI_ITINERARY_MODEL=<provider/model>`. On an 8 GB Mac, 7B models with a 16k context don't fit in GPU memory
 and time out; 3–4B models run in about 45 s per plan. ADR-0006 lists the models tested.
+
+## Ollama in production (Vercel)
+
+A Vercel function can't reach Ollama on a developer machine. Use a remote Ollama:
+
+- **Ollama Cloud** (simplest). Create a key at ollama.com → Settings → Keys, then set these for
+  Production (and Preview):
+  `AI_PROVIDER=ollama`, `OLLAMA_BASE_URL=https://ollama.com/v1`, `OLLAMA_API_KEY=<key>` (sensitive) and
+  `AI_ITINERARY_MODEL=<cloud model>`, for example `gpt-oss:120b`. The free tier's quota and model list
+  change often and allow one concurrent request; check ollama.com/pricing before launch.
+- **Self-hosted Ollama** on a GPU server. Put it behind an HTTPS reverse proxy that checks a bearer
+  token, because Ollama has no auth of its own. Start the server with `OLLAMA_CONTEXT_LENGTH=16384`.
+  Then set the same four variables.
+
+`getAiEnv` refuses a localhost or plain-HTTP URL, a missing key or a missing model on Vercel
+preview/production, so a misconfiguration fails loudly rather than on every request. Env changes apply
+to new deployments only, so redeploy after changing them.
 
 ## Rules
 

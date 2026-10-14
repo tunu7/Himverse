@@ -89,3 +89,14 @@ No database changes. A new model adapter boundary is described in ADR-0006, whic
 ## Follow-up tasks
 
 - An evaluation set comparing models ([AI_EVALUATION](../../docs/ai/AI_EVALUATION.md)).
+
+## Addendum: Ollama in production
+
+- `OLLAMA_API_KEY` is new and sent as a bearer token. On Vercel preview and production, an Ollama setup
+  needs a remote HTTPS `OLLAMA_BASE_URL`, a key and an explicit model; anything else fails env
+  validation. The default timeout for a remote Ollama is 90 s.
+- Docs: ENVIRONMENTS ("Ollama in production"), RELEASE_CHECKLIST, ADR-0006 decision 8, `.env.example`.
+- Tests: 286 unit tests pass, including the deployed-env rules and the bearer header.
+- **Unverified:** no live call to Ollama Cloud, because no key is available in this session. The request
+  shape is covered by unit tests only.
+- **Manual step:** create an Ollama Cloud key, then set the four variables in Vercel and redeploy.

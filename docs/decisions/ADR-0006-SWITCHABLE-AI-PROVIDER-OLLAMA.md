@@ -36,6 +36,12 @@ owner wants a free model that works now, and the ability to change models later 
    can't work. Each rejected plan is logged as `itineraries.plan_rejected`. The log holds the server's
    messages only, with no traveller text, so models can be compared.
 
+8. **Production uses a remote Ollama** _(amended 2026-10-15)_. On Vercel preview and production,
+   `OLLAMA_BASE_URL` must be remote HTTPS, and `OLLAMA_API_KEY` (sent as a bearer token) and an explicit
+   `AI_ITINERARY_MODEL` are required. The target is Ollama Cloud (`https://ollama.com/v1`), or a
+   self-hosted Ollama behind an authenticating HTTPS proxy. The default timeout for a remote Ollama is
+   90 s, so two attempts fit inside Vercel's 300 s function limit.
+
 ## Models tested (M1, 8 GB, local seed catalogue)
 
 | Base model         | Result                                                                                                     |
@@ -54,12 +60,15 @@ A 7B model, or `AI_PROVIDER=gateway` with Claude, should give better plans on ma
   Modelfile step covers the context problem.
 - **Raising `OLLAMA_CONTEXT_LENGTH` on the server:** works, but depends on how Ollama is launched (app,
   brew service, Docker), and it is lost silently. Documented as an alternative only.
-- **Hosting Ollama for production:** out of scope. The env supports a remote `OLLAMA_BASE_URL` if that
-  is ever wanted.
+- **Exposing a developer machine through a tunnel:** rejected. It is not reliable for production, and
+  it exposes an unauthenticated Ollama.
 
 ## Consequences
 
-- Free local generation works end to end, with every ADR-0003 safety check intact.
+- Free local generation works end to end, with every ADR-0003 safety check intact. Production can use
+  Ollama Cloud with only env changes.
+- Ollama Cloud's free tier has an unpublished, changing quota and one concurrent request, so it fits
+  low traffic only. Paid plans or the gateway are needed for real load.
 - Small local models produce simpler plans than Claude, and fail some trips: the user sees the existing
   "couldn't create a valid itinerary" message. Nothing invalid is saved.
 - Local generation takes about 45 s, against "usually under a minute" in the UI copy, which still holds.

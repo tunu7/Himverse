@@ -18,7 +18,8 @@ Launch scope: discovery, AI itineraries and booking **requests** (no online paym
 - [ ] Vercel project created, region `bom1`, Git integration on, preview → staging DB.
 - [ ] Supabase staging and production projects in `ap-south-1`; `pg_cron` enabled; migrations applied;
       `supabase migration list` matches.
-- [ ] Environment variables set per environment; `AI_PROVIDER=gateway`; `AI_ALLOW_MOCK` unset;
+- [ ] Environment variables set per environment; `AI_PROVIDER` is `gateway`, or `ollama` with a remote
+      `OLLAMA_BASE_URL`, `OLLAMA_API_KEY` and model (ENVIRONMENTS.md); `AI_ALLOW_MOCK` unset;
       `AI_DAILY_GENERATION_LIMIT` set deliberately; no `NEXT_PUBLIC_` secrets.
 - [ ] AI Gateway spend limit/alert configured in Vercel.
 - [ ] Domain, HTTPS and `NEXT_PUBLIC_SITE_URL` set.
