@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { localSql, signUp, uniqueEmail, UUID } from "./support";
+import { localSql, setUpTwoStep, signUp, uniqueEmail, UUID } from "./support";
 
 // Admin console: overview, destination curation and experience moderation, and
 // that none of it is revealed to non-admins. Uses its own provider, destination
@@ -53,7 +53,8 @@ test("admin console: hidden from non-admins; overview, destinations and moderati
   test.setTimeout(120_000);
 
   // A signed-in non-admin sees no admin link and a plain 404.
-  await signUp(page, uniqueEmail("console-admin"), "Console Admin");
+  const adminEmail = uniqueEmail("console-admin");
+  await signUp(page, adminEmail, "Console Admin");
   await expect(page.getByRole("link", { name: /Admin/ })).toHaveCount(0);
   for (const path of ["/admin", "/admin/destinations", "/admin/experiences", "/admin/bookings"]) {
     await page.goto(path);
@@ -68,6 +69,19 @@ test("admin console: hidden from non-admins; overview, destinations and moderati
   localSql(
     `insert into public.user_roles (user_id, role, granted_by) values ('${adminId}', 'admin', null) returning user_id`,
   );
+
+  // Admins must set up two-step login before the console opens.
+  await page.goto("/admin");
+  await setUpTwoStep(page, adminEmail, /\/admin$/);
+
+  // Granting admin makes it an admin account (ADR-0007): traveller areas are off
+  // limits and booking is refused, while the console opens.
+  for (const path of ["/account", "/itineraries/new", "/bookings", "/provider"]) {
+    await page.goto(path);
+    await expect(page).toHaveURL(/\/admin$/);
+  }
+  await page.goto("/experiences/demo-siang-rafting");
+  await expect(page.getByTestId("booking-not-for-account").filter({ visible: true })).toBeVisible();
 
   // Overview.
   await page.goto("/admin");

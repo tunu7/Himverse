@@ -12,12 +12,13 @@ export const metadata: Metadata = { title: "Create your account · Himverse.AI" 
 const AUDIENCES = {
   traveller: {
     label: "Traveller",
-    intro: "Free to join. Save AI trip plans and request experiences from local providers.",
+    intro:
+      "Free to join. Plan trips with AI and book experiences, stays, guides and transport from verified local partners.",
   },
   partner: {
     label: "Tourism partner",
     intro:
-      "List your experiences on Himverse. Create an account, then complete your business application for review.",
+      "For businesses: list experiences, stays, guide services or transport. Create a partner account, then complete your business application for review. Partner accounts manage listings and can't book trips.",
   },
 } as const;
 
@@ -50,8 +51,11 @@ async function SignUpContent({ searchParams }: PageProps<"/sign-up">) {
         })}
       </nav>
       <p className="text-muted">{AUDIENCES[audience].intro}</p>
-      <GoogleSignIn next={destination} />
-      <SignUpForm next={destination} />
+      {/* Google accounts choose their type on /welcome; preselect this one. */}
+      <GoogleSignIn
+        next={`/welcome?as=${audience}${destination ? `&next=${encodeURIComponent(destination)}` : ""}`}
+      />
+      <SignUpForm next={destination} accountType={audience} />
     </div>
   );
 }

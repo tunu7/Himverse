@@ -3,31 +3,31 @@ import { describe, expect, it, vi } from "vitest";
 vi.mock("server-only", () => ({}));
 const { landingPathFor } = await import("@/server/auth/landing");
 
-type Rows = { data: unknown[] | null; error: { message: string } | null };
-function client(roles: Rows, members: Rows) {
-  const table = (rows: Rows) => {
-    const q = { select: () => q, eq: () => q, limit: () => Promise.resolve(rows) };
-    return q;
-  };
-  return {
-    from: (name: string) => table(name === "user_roles" ? roles : members),
-  } as unknown as Parameters<typeof landingPathFor>[0];
+type Row = { data: { account_type: string | null } | null; error: { message: string } | null };
+function client(row: Row) {
+  const q = { select: () => q, eq: () => q, maybeSingle: () => Promise.resolve(row) };
+  return { from: () => q } as unknown as Parameters<typeof landingPathFor>[0];
 }
-const none: Rows = { data: [], error: null };
-const one: Rows = { data: [{}], error: null };
-const failed: Rows = { data: null, error: { message: "boom" } };
+const typed = (accountType: string | null): Row => ({
+  data: { account_type: accountType },
+  error: null,
+});
 
+// One home per account type (ADR-0007).
 describe("landingPathFor", () => {
-  it("sends admins to the console, even if they are also partners", async () => {
-    expect(await landingPathFor(client(one, one), "u")).toBe("/admin");
+  it.each([
+    ["admin", "/admin"],
+    ["partner", "/provider"],
+    ["traveller", "/account"],
+  ])("sends %s accounts to %s", async (accountType, path) => {
+    expect(await landingPathFor(client(typed(accountType)), "u")).toBe(path);
   });
-  it("sends tourism partners to their portal", async () => {
-    expect(await landingPathFor(client(none, one), "u")).toBe("/provider");
+  it("sends accounts without a type (new Google sign-ups) to choose one", async () => {
+    expect(await landingPathFor(client(typed(null)), "u")).toBe("/welcome");
   });
-  it("sends everyone else to their account", async () => {
-    expect(await landingPathFor(client(none, none), "u")).toBe("/account");
-  });
-  it("falls back to the traveller page when lookups fail (never grants an area)", async () => {
-    expect(await landingPathFor(client(failed, failed), "u")).toBe("/account");
+  it("never grants an area when the lookup fails", async () => {
+    expect(await landingPathFor(client({ data: null, error: { message: "boom" } }), "u")).toBe(
+      "/welcome",
+    );
   });
 });

@@ -60,7 +60,7 @@ select lives_ok(
 -- Traveler T -----------------------------------------------------------------------
 reset role;
 set local role authenticated;
-select set_config('request.jwt.claims', '{"sub":"cccccccc-cccc-4ccc-8ccc-cccccccccccc","role":"authenticated"}', true);
+select set_config('request.jwt.claims', '{"sub":"cccccccc-cccc-4ccc-8ccc-cccccccccccc","role":"authenticated","aal":"aal2"}', true);
 select throws_ok(
   $$ select public.review_provider('10000000-0000-4000-8000-000000000001', 'verified', null) $$,
   '42501', null, 'traveler cannot call review_provider');
@@ -77,7 +77,7 @@ select throws_ok(
   '23514', null, 'whitespace-padded display_name is rejected');
 
 -- Owner O: details editable only before review (M2) -------------------------------
-select set_config('request.jwt.claims', '{"sub":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","role":"authenticated"}', true);
+select set_config('request.jwt.claims', '{"sub":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","role":"authenticated","aal":"aal2"}', true);
 select isnt_empty(
   $$ update public.provider_private_details set legal_name = 'O Legal Pvt Ltd'
      where provider_id = '10000000-0000-4000-8000-000000000001' returning 1 $$,
@@ -108,7 +108,7 @@ select is_empty(
   'public profile is frozen while pending review');
 
 -- Admin A: RPC gaps ------------------------------------------------------------------
-select set_config('request.jwt.claims', '{"sub":"dddddddd-dddd-4ddd-8ddd-dddddddddddd","role":"authenticated"}', true);
+select set_config('request.jwt.claims', '{"sub":"dddddddd-dddd-4ddd-8ddd-dddddddddddd","role":"authenticated","aal":"aal2"}', true);
 select is(
   (select count(*) from public.provider_members),
   2::bigint, 'admin can read all memberships');
@@ -126,7 +126,7 @@ select throws_ok(
   '22023', null, 'suspending requires a note');
 
 -- Rejected -> owner edits -> resubmits
-select set_config('request.jwt.claims', '{"sub":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","role":"authenticated"}', true);
+select set_config('request.jwt.claims', '{"sub":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","role":"authenticated","aal":"aal2"}', true);
 select isnt_empty(
   $$ update public.provider_private_details set legal_name = 'O Legal Pvt Ltd (Reg 123)'
      where provider_id = '10000000-0000-4000-8000-000000000001' returning 1 $$,
@@ -136,7 +136,7 @@ select is(
   'pending_review'::public.provider_status, 'owner can resubmit after rejection');
 
 -- Verified provider P: details frozen after verification (M2) -----------------------
-select set_config('request.jwt.claims', '{"sub":"bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb","role":"authenticated"}', true);
+select set_config('request.jwt.claims', '{"sub":"bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb","role":"authenticated","aal":"aal2"}', true);
 select is_empty(
   $$ update public.provider_private_details set legal_name = 'Someone Else Entirely'
      where provider_id = '10000000-0000-4000-8000-000000000002' returning 1 $$,
@@ -150,7 +150,7 @@ select throws_ok(
   '42501', null, 'members cannot write moderation_locked directly');
 
 -- M1: admin moderation sticks -------------------------------------------------------
-select set_config('request.jwt.claims', '{"sub":"dddddddd-dddd-4ddd-8ddd-dddddddddddd","role":"authenticated"}', true);
+select set_config('request.jwt.claims', '{"sub":"dddddddd-dddd-4ddd-8ddd-dddddddddddd","role":"authenticated","aal":"aal2"}', true);
 select lives_ok(
   $$ update public.experiences set status = 'archived' where id = '30000000-0000-4000-8000-000000000001' $$,
   'admin archives an experience');
@@ -162,7 +162,7 @@ select throws_ok(
      where id = '30000000-0000-4000-8000-000000000001' $$,
   '42501', null, 'admin cannot publish at an unpublished destination');
 
-select set_config('request.jwt.claims', '{"sub":"bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb","role":"authenticated"}', true);
+select set_config('request.jwt.claims', '{"sub":"bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb","role":"authenticated","aal":"aal2"}', true);
 select throws_ok(
   $$ update public.experiences set status = 'published' where id = '30000000-0000-4000-8000-000000000001' $$,
   '42501', null, 'provider cannot republish an experience an admin archived');
@@ -171,7 +171,7 @@ select lives_ok(
      where id = '30000000-0000-4000-8000-000000000001' $$,
   'provider can still revise a locked experience as a draft');
 
-select set_config('request.jwt.claims', '{"sub":"dddddddd-dddd-4ddd-8ddd-dddddddddddd","role":"authenticated"}', true);
+select set_config('request.jwt.claims', '{"sub":"dddddddd-dddd-4ddd-8ddd-dddddddddddd","role":"authenticated","aal":"aal2"}', true);
 select lives_ok(
   $$ update public.experiences set status = 'published' where id = '30000000-0000-4000-8000-000000000001' $$,
   'admin can republish after review');
@@ -184,7 +184,7 @@ select is(
 reset role;
 update public.providers set status = 'suspended' where id = '10000000-0000-4000-8000-000000000002';
 set local role authenticated;
-select set_config('request.jwt.claims', '{"sub":"bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb","role":"authenticated"}', true);
+select set_config('request.jwt.claims', '{"sub":"bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb","role":"authenticated","aal":"aal2"}', true);
 select is_empty(
   $$ update public.providers set display_name = 'Impersonated Brand'
      where id = '10000000-0000-4000-8000-000000000002' returning 1 $$,

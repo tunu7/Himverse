@@ -18,7 +18,7 @@ select tables_are('public', array[
 select functions_are('public', array[
   'create_provider_application', 'submit_provider_application', 'review_provider',
   'save_itinerary_version', 'begin_itinerary_generation', 'finish_itinerary_generation',
-  'request_booking', 'request_booking_on_date', 'request_itinerary_bookings', 'respond_to_booking', 'cancel_booking', 'ai_generations_today'
+  'auth_attempt_allowed', 'choose_account_type', 'record_auth_failure', 'request_booking', 'request_booking_on_date', 'request_itinerary_bookings', 'respond_to_booking', 'cancel_booking', 'ai_generations_today'
 ], 'public (RPC-exposed) functions are exactly the reviewed set');
 
 select is_empty(
@@ -134,6 +134,7 @@ select results_eq(
      order by 1, 2, 3 $$,
   $$ values
        ('private', 'can_view_booking(p_booking_id uuid)', 'authenticated'),
+       ('private', 'current_account_type()', 'authenticated'),
        ('private', 'has_role(p_role app_role)', 'anon'),
        ('private', 'has_role(p_role app_role)', 'authenticated'),
        ('private', 'is_destination_published(p_destination_id uuid)', 'anon'),
@@ -150,10 +151,13 @@ select results_eq(
        ('private', 'today_ist()', 'anon'),
        ('private', 'today_ist()', 'authenticated'),
        ('public', 'ai_generations_today()', 'authenticated'),
+       ('public', 'auth_attempt_allowed(p_kind text)', 'authenticated'),
        ('public', 'begin_itinerary_generation(p_itinerary_id uuid, p_global_daily_limit integer)', 'authenticated'),
        ('public', 'cancel_booking(p_booking_id uuid, p_reason text)', 'authenticated'),
+       ('public', 'choose_account_type(p_type account_type)', 'authenticated'),
        ('public', 'create_provider_application(p_slug text, p_display_name text, p_description text, p_district text, p_legal_name text, p_contact_email text, p_contact_phone text)', 'authenticated'),
        ('public', 'finish_itinerary_generation(p_generation_id bigint, p_outcome itinerary_generation_outcome, p_error_code text, p_model text, p_prompt_version text, p_latency_ms integer, p_input_tokens integer, p_output_tokens integer)', 'authenticated'),
+       ('public', 'record_auth_failure(p_kind text)', 'authenticated'),
        ('public', 'request_booking_on_date(p_experience_id uuid, p_date date, p_adults integer, p_children integer, p_contact_phone text, p_note text, p_idempotency_key uuid)', 'authenticated'),
        ('public', 'request_booking(p_slot_id uuid, p_adults integer, p_children integer, p_contact_phone text, p_note text, p_idempotency_key uuid)', 'authenticated'),
        ('public', 'request_itinerary_bookings(p_version_id uuid, p_contact_phone text, p_note text, p_idempotency_key uuid)', 'authenticated'),
@@ -192,7 +196,7 @@ select results_eq(
        ('itinerary_generations', 'authenticated', 'SELECT', 'created_at,error_code,id,input_tokens,itinerary_id,latency_ms,model,outcome,output_tokens,prompt_version,user_id'),
        ('itinerary_items', 'authenticated', 'SELECT', 'day_number,destination_id,destination_name_snapshot,duration_snapshot_minutes,experience_id,experience_title_snapshot,id,position,price_snapshot_minor,rationale,time_of_day,version_id'),
        ('itinerary_versions', 'authenticated', 'SELECT', 'created_at,currency,estimated_total_minor,id,itinerary_id,kind,model,plan,preferences,prompt_version,schema_version,travelers,unpriced_item_count,version_number,warnings'),
-       ('profiles', 'authenticated', 'SELECT', 'created_at,display_name,id,updated_at'),
+       ('profiles', 'authenticated', 'SELECT', 'account_type,created_at,display_name,id,updated_at'),
        ('profiles', 'authenticated', 'UPDATE', 'display_name'),
        ('provider_members', 'authenticated', 'SELECT', 'created_at,member_role,provider_id,user_id'),
        ('provider_private_details', 'authenticated', 'SELECT', 'contact_email,contact_phone,legal_name,provider_id,updated_at'),

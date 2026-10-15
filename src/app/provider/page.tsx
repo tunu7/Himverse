@@ -10,7 +10,7 @@ import {
 } from "@/features/providers/components/provider-forms";
 import { AddSlotForm, SlotStatusButton } from "@/features/bookings/components/booking-forms";
 import { formatDuration, formatPriceFrom, formatSlot } from "@/lib/format";
-import { requireUserForPage } from "@/server/auth/session";
+import { requireAccountForPage } from "@/server/auth/session";
 import { listSlotsForExperiences, type ProviderSlot } from "@/server/bookings/repository";
 import { listPublishedDestinations } from "@/server/catalog/catalog";
 import { todayInTripZone } from "@/server/itineraries/preferences";
@@ -18,7 +18,7 @@ import { listMyProviders, type MyProvider } from "@/server/providers/providers";
 import { canSubmitForReview, PROVIDER_STATUS_LABELS } from "@/server/providers/status";
 
 async function ProviderWorkspace() {
-  await requireUserForPage("/provider");
+  await requireAccountForPage("/provider", ["partner"]);
   const [providers, destinations] = await Promise.all([
     listMyProviders(),
     listPublishedDestinations(),

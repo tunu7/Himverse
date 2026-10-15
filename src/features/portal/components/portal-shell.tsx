@@ -9,12 +9,14 @@ import { type PortalLink, PortalNav, PortalNavItems } from "./portal-nav";
 const AREA = {
   admin: {
     label: "Admin console",
+    account: "/admin/account",
     bar: "bg-ink/95 text-white border-white/10 backdrop-blur-xl",
     badge: "bg-emerald-400/10 text-emerald-300 ring-1 ring-emerald-300/25",
     link: "text-white/60 hover:bg-white/10 hover:text-white",
   },
   partner: {
     label: "Partner portal",
+    account: "/provider/account",
     bar: "bg-canvas/80 text-fg border-line backdrop-blur-xl backdrop-saturate-150",
     badge: "bg-accent-soft text-accent-soft-fg ring-1 ring-accent/15",
     link: "text-muted hover:bg-surface-muted hover:text-fg",
@@ -56,10 +58,10 @@ export function PortalShell({
           </Link>
           <div className="ml-auto flex items-center gap-1 text-sm">
             <Link href="/" className={`rounded-full px-3 py-1.5 transition-colors ${style.link}`}>
-              Back to site
+              View site
             </Link>
             <Link
-              href="/account"
+              href={style.account}
               className={`rounded-full px-3 py-1.5 transition-colors ${style.link}`}
             >
               Account

@@ -25,6 +25,13 @@ vi.mock("@/server/providers/providers", () => ({
   setExperienceAcceptsBookings: (...a: unknown[]) => server.setExperienceAcceptsBookings(...a),
   reviewProvider: (...a: unknown[]) => server.reviewProvider(...a),
 }));
+// Account-type guard (ADR-0007): allowed by default; tests below refuse it.
+const requireAccount = vi.fn<(types: readonly string[]) => Promise<{ id: string }>>(async () => ({
+  id: "u1",
+}));
+vi.mock("@/server/auth/session", () => ({
+  requireAccount: (types: readonly string[]) => requireAccount(types),
+}));
 vi.mock("@/server/profiles/profiles", () => ({
   updateMyDisplayName: (...a: unknown[]) => server.updateMyDisplayName(...a),
 }));
@@ -88,6 +95,32 @@ const cases = [
 
 beforeEach(() => {
   for (const fn of Object.values(server)) fn.mockReset();
+  requireAccount.mockClear();
+});
+
+describe.each([
+  ["applyAsProvider", applyAsProvider, "createProviderApplication"],
+  ["submitForReview", submitForReview, "submitProviderApplication"],
+  ["addExperience", addExperience, "createExperience"],
+  ["changeExperienceStatus", changeExperienceStatus, "setExperienceStatus"],
+  [
+    "changeExperienceAcceptsBookings",
+    changeExperienceAcceptsBookings,
+    "setExperienceAcceptsBookings",
+  ],
+] as const)("%s is for partner accounts only", (name, action, serverFn) => {
+  it("asks for a partner account and refuses others before the server layer", async () => {
+    requireAccount.mockRejectedValueOnce(
+      new AppError("FORBIDDEN", "This isn't available to traveller accounts."),
+    );
+    const result = await action(null, validInputs[name]);
+    expect(requireAccount).toHaveBeenCalledWith(["partner"]);
+    expect(result).toEqual({
+      ok: false,
+      error: { code: "FORBIDDEN", message: "This isn't available to traveller accounts." },
+    });
+    expect(server[serverFn]).not.toHaveBeenCalled();
+  });
 });
 
 describe.each(cases)("$name", ({ name, action, serverFn }) => {

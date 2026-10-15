@@ -24,6 +24,13 @@ vi.mock("@/server/bookings/repository", () => ({
   updateSlot: (...a: unknown[]) => repo.updateSlot(...a),
 }));
 
+const requireAccount = vi.fn<(types: readonly string[]) => Promise<{ id: string }>>(async () => ({
+  id: "u1",
+}));
+vi.mock("@/server/auth/session", () => ({
+  requireAccount: (types: readonly string[]) => requireAccount(types),
+}));
+
 const actions = await import("@/features/bookings/actions");
 
 const ID = "5eed0000-0000-4000-8000-000000000001";
@@ -37,6 +44,39 @@ const form = (entries: Record<string, string>) => {
 beforeEach(() => {
   for (const fn of Object.values(repo)) fn.mockReset();
   redirect.mockReset();
+  requireAccount.mockClear();
+});
+
+describe("account types (ADR-0007)", () => {
+  const future = istDate(new Date(), 10);
+  it.each([
+    [
+      "requestBookingAction",
+      ["traveller"],
+      {
+        experienceId: ID,
+        date: future,
+        adults: "1",
+        contactPhone: "+91 98765 43210",
+        idempotencyKey: KEY,
+      },
+    ],
+    [
+      "bookTripAction",
+      ["traveller"],
+      { versionId: ID, contactPhone: "+91 98765 43210", idempotencyKey: KEY },
+    ],
+    ["respondToBookingAction", ["partner"], { bookingId: ID, decision: "declined", note: "Full" }],
+    ["cancelBookingAction", ["traveller", "partner"], { bookingId: ID }],
+    ["addSlotAction", ["partner"], { experienceId: ID, startsOn: future, capacity: "4" }],
+    ["setSlotStatusAction", ["partner"], { slotId: ID, status: "closed" }],
+  ] as const)("%s requires %j and stops other accounts", async (name, types, input) => {
+    requireAccount.mockRejectedValueOnce(new AppError("FORBIDDEN", "Not for this account."));
+    const result = await actions[name](null, form(input as Record<string, string>));
+    expect(requireAccount).toHaveBeenCalledWith(types);
+    expect(result).toMatchObject({ ok: false, error: { code: "FORBIDDEN" } });
+    for (const fn of Object.values(repo)) expect(fn).not.toHaveBeenCalled();
+  });
 });
 
 describe("booking display rules", () => {

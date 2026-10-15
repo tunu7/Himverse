@@ -10,13 +10,20 @@ const redirect = vi.fn();
 vi.mock("next/navigation", () => ({ redirect: (url: string) => redirect(url) }));
 
 const fns = {
-  requireUser: vi.fn(async () => ({ id: "u1", email: null })),
+  requireAccount: vi.fn<(types: readonly string[]) => Promise<{ id: string; email: null }>>(
+    async () => ({
+      id: "u1",
+      email: null,
+    }),
+  ),
   generate: vi.fn(),
   getMyItinerary: vi.fn(),
   setCurrentVersion: vi.fn(),
   deleteItinerary: vi.fn(),
 };
-vi.mock("@/server/auth/session", () => ({ requireUser: () => fns.requireUser() }));
+vi.mock("@/server/auth/session", () => ({
+  requireAccount: (types: readonly string[]) => fns.requireAccount(types),
+}));
 vi.mock("@/server/itineraries/service", () => ({
   generateItineraryForCurrentUser: (...a: unknown[]) => fns.generate(...a),
 }));
@@ -43,8 +50,20 @@ const futureDate = () => {
 
 beforeEach(() => {
   for (const fn of Object.values(fns)) fn.mockReset();
-  fns.requireUser.mockResolvedValue({ id: "u1", email: null });
+  fns.requireAccount.mockResolvedValue({ id: "u1", email: null });
   redirect.mockReset();
+});
+
+describe("account types (ADR-0007)", () => {
+  it("only traveller accounts plan trips; others are refused before any generation", async () => {
+    fns.requireAccount.mockRejectedValueOnce(
+      new AppError("FORBIDDEN", "This isn't available to partner accounts."),
+    );
+    const result = await actions.createItinerary(null, form({ startDate: futureDate() }));
+    expect(fns.requireAccount).toHaveBeenCalledWith(["traveller"]);
+    expect(result).toMatchObject({ ok: false, error: { code: "FORBIDDEN" } });
+    expect(fns.generate).not.toHaveBeenCalled();
+  });
 });
 
 describe("createItinerary", () => {

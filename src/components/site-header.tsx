@@ -5,18 +5,39 @@ import { AccountMenu } from "@/components/account-menu";
 import { BrandLogo } from "@/components/brand";
 import { MobileMenu, MobileNav, NavLinkItems, NavLinks } from "@/components/nav-links";
 import { signOut } from "@/features/auth/actions";
-import { getCurrentUser, isCurrentUserAdmin, isCurrentUserPartner } from "@/server/auth/session";
+import { type AccountType, getCurrentAccount } from "@/server/auth/session";
+
+type MenuLink = { href: string; label: string; tone?: "accent" };
+
+/** Each account type sees only its own area (ADR-0007). */
+const MENU: Record<AccountType | "untyped", readonly MenuLink[]> = {
+  traveller: [
+    { href: "/account", label: "My account" },
+    { href: "/itineraries", label: "My trips" },
+    { href: "/bookings", label: "My bookings" },
+  ],
+  partner: [
+    { href: "/provider", label: "Partner portal", tone: "accent" },
+    { href: "/provider/bookings", label: "Booking requests" },
+    { href: "/provider/account", label: "Account settings" },
+  ],
+  admin: [
+    { href: "/admin", label: "Admin console", tone: "accent" },
+    { href: "/admin/account", label: "Account settings" },
+  ],
+  untyped: [{ href: "/welcome", label: "Finish setting up", tone: "accent" }],
+};
 
 async function AuthLinks() {
-  const user = await getCurrentUser();
-  if (!user) {
+  const account = await getCurrentAccount();
+  if (!account) {
     return (
       <span className="flex items-center gap-1">
         <Link
           href="/sign-up?as=partner"
           className="hidden rounded-full px-3.5 py-1.5 text-muted transition-colors hover:text-fg lg:inline-block"
         >
-          List your experiences
+          List your business
         </Link>
         <Link
           href="/sign-in"
@@ -27,17 +48,13 @@ async function AuthLinks() {
       </span>
     );
   }
-  const [isAdmin, isPartner] = await Promise.all([isCurrentUserAdmin(), isCurrentUserPartner()]);
-  const links = [
-    { href: "/account", label: "My account" },
-    { href: "/itineraries", label: "My trips" },
-    { href: "/bookings", label: "My bookings" },
-    isPartner
-      ? { href: "/provider", label: "Partner portal", tone: "accent" as const }
-      : { href: "/provider", label: "Become a tourism partner" },
-    ...(isAdmin ? [{ href: "/admin", label: "Admin console", tone: "accent" as const }] : []),
-  ];
-  return <AccountMenu initial={(user.email ?? "?").slice(0, 1)} links={links} signOut={signOut} />;
+  return (
+    <AccountMenu
+      initial={(account.email ?? "?").slice(0, 1)}
+      links={MENU[account.accountType ?? "untyped"]}
+      signOut={signOut}
+    />
+  );
 }
 
 export function SiteHeader() {

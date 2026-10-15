@@ -13,11 +13,11 @@ One responsibility, one location. Directories are created when first needed — 
 ├── src/
 │   ├── app/                      Routes, layouts, route handlers, error/loading boundaries
 │   ├── components/               Shared, feature-agnostic UI
-│   ├── features/<feature>/       Feature module (auth, account, providers, admin, discovery, itineraries, bookings)
+│   ├── features/<feature>/       Feature module (auth, account, providers, portal, admin, discovery, itineraries, bookings)
 │   │   ├── components/           Feature UI
 │   │   ├── actions.ts            Server Actions ("use server") — validate, authorize, call server/
 │   │   └── schemas.ts            Zod input schemas shared by form and action
-│   ├── server/<domain>/          "server-only" domain services and queries (auth, profiles, providers, catalog)
+│   ├── server/<domain>/          "server-only" domain services (auth, profiles, providers, catalog, itineraries, bookings, admin)
 │   ├── lib/
 │   │   ├── env.ts                Public env schema (+ server env parser)
 │   │   ├── env.server.ts         Server-only secret access

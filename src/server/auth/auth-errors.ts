@@ -1,3 +1,4 @@
+import { EMAIL_NOT_CONFIRMED_MESSAGE } from "@/features/auth/schemas";
 import { AppError } from "@/lib/errors";
 
 /** The parts of a supabase-js AuthError we branch on. */
@@ -32,11 +33,7 @@ export function signInError(error: AuthErrorLike): AppError {
   }
   if (error.code === "email_not_confirmed") {
     // Supabase returns this only after the password has been verified.
-    return new AppError(
-      "UNAUTHENTICATED",
-      "Please confirm your email address first. Check your inbox for the link.",
-      { cause: error },
-    );
+    return new AppError("UNAUTHENTICATED", EMAIL_NOT_CONFIRMED_MESSAGE, { cause: error });
   }
   return new AppError("UNAUTHENTICATED", "Email or password is incorrect.", { cause: error });
 }

@@ -83,7 +83,7 @@ select lives_ok(
 -- Signed-in travelers see the same public set ------------------------------------
 reset role;
 set local role authenticated;
-select set_config('request.jwt.claims', '{"sub":"cccccccc-cccc-4ccc-8ccc-cccccccccccc","role":"authenticated"}', true);
+select set_config('request.jwt.claims', '{"sub":"cccccccc-cccc-4ccc-8ccc-cccccccccccc","role":"authenticated","aal":"aal2"}', true);
 select results_eq(
   $$ select slug from public.experiences
      where search_vector @@ websearch_to_tsquery('english', 'rafting') order by slug $$,

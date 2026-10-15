@@ -41,15 +41,15 @@ select is((select column_default from information_schema.columns
           'true', 'experiences accept bookings by default');
 
 set local role authenticated;
-select set_config('request.jwt.claims', '{"sub":"44444444-4444-4444-8444-444444444444","role":"authenticated"}', true);
+select set_config('request.jwt.claims', '{"sub":"44444444-4444-4444-8444-444444444444","role":"authenticated","aal":"aal2"}', true);
 select is_empty(
   $$ update public.experiences set accepts_bookings = false where id = 'e0000000-0000-4000-8000-000000000001' returning 1 $$,
   'another provider cannot change bookability');
-select set_config('request.jwt.claims', '{"sub":"11111111-1111-4111-8111-111111111111","role":"authenticated"}', true);
+select set_config('request.jwt.claims', '{"sub":"11111111-1111-4111-8111-111111111111","role":"authenticated","aal":"aal2"}', true);
 select is_empty(
   $$ update public.experiences set accepts_bookings = false where id = 'e0000000-0000-4000-8000-000000000001' returning 1 $$,
   'travelers cannot change bookability');
-select set_config('request.jwt.claims', '{"sub":"33333333-3333-4333-8333-333333333333","role":"authenticated"}', true);
+select set_config('request.jwt.claims', '{"sub":"33333333-3333-4333-8333-333333333333","role":"authenticated","aal":"aal2"}', true);
 select results_eq(
   $$ update public.experiences set accepts_bookings = false where id = 'e0000000-0000-4000-8000-000000000002' returning accepts_bookings $$,
   $$ values (false) $$, 'the provider can switch bookings off for its own experience');
@@ -66,7 +66,7 @@ select throws_ok($$ select * from public.request_itinerary_bookings(gen_random_u
 -- Date requests -------------------------------------------------------------------------
 reset role;
 set local role authenticated;
-select set_config('request.jwt.claims', '{"sub":"11111111-1111-4111-8111-111111111111","role":"authenticated"}', true);
+select set_config('request.jwt.claims', '{"sub":"11111111-1111-4111-8111-111111111111","role":"authenticated","aal":"aal2"}', true);
 select results_eq(
   $$ select booking_status, replayed from public.request_booking_on_date('e0000000-0000-4000-8000-000000000001', private.today_ist() + 10, 2, 0, '+91 98765 43210', 'Veg', 'f0000000-0000-4000-8000-000000000001') $$,
   $$ values ('requested'::public.booking_status, false) $$,
@@ -105,11 +105,11 @@ select is(
   (select slot_id from public.bookings where idempotency_key = 'f0000000-0000-4000-8000-000000000003'),
   '50000000-0000-4000-8000-000000000001'::uuid, 'a published slot on that date is used (seat limits apply)');
 set local role authenticated;
-select set_config('request.jwt.claims', '{"sub":"11111111-1111-4111-8111-111111111111","role":"authenticated"}', true);
+select set_config('request.jwt.claims', '{"sub":"11111111-1111-4111-8111-111111111111","role":"authenticated","aal":"aal2"}', true);
 select throws_ok(
   $$ select * from public.request_booking_on_date('e0000000-0000-4000-8000-000000000003', private.today_ist() + 12, 3, 0, '+91 98765 43210', '', gen_random_uuid()) $$,
   '55000', null, 'seat limits still apply on dates with a published slot');
-select set_config('request.jwt.claims', '{"sub":"33333333-3333-4333-8333-333333333333","role":"authenticated"}', true);
+select set_config('request.jwt.claims', '{"sub":"33333333-3333-4333-8333-333333333333","role":"authenticated","aal":"aal2"}', true);
 select throws_ok(
   $$ select * from public.request_booking_on_date('e0000000-0000-4000-8000-000000000001', private.today_ist() + 20, 1, 0, '+91 98765 43210', '', gen_random_uuid()) $$,
   '42501', null, 'providers cannot request their own experiences');
@@ -118,13 +118,13 @@ select throws_ok(
 reset role;
 select set_config('test.d1', (select id::text from public.bookings where idempotency_key = 'f0000000-0000-4000-8000-000000000001'), true);
 set local role authenticated;
-select set_config('request.jwt.claims', '{"sub":"44444444-4444-4444-8444-444444444444","role":"authenticated"}', true);
+select set_config('request.jwt.claims', '{"sub":"44444444-4444-4444-8444-444444444444","role":"authenticated","aal":"aal2"}', true);
 select throws_ok($$ select public.respond_to_booking(current_setting('test.d1')::uuid, 'confirmed', 200000, null) $$,
   'P0002', null, 'another provider cannot confirm a date request');
-select set_config('request.jwt.claims', '{"sub":"33333333-3333-4333-8333-333333333333","role":"authenticated"}', true);
+select set_config('request.jwt.claims', '{"sub":"33333333-3333-4333-8333-333333333333","role":"authenticated","aal":"aal2"}', true);
 select is(public.respond_to_booking(current_setting('test.d1')::uuid, 'confirmed', 200000, 'See you'),
   'confirmed'::public.booking_status, 'the provider confirms a date request');
-select set_config('request.jwt.claims', '{"sub":"11111111-1111-4111-8111-111111111111","role":"authenticated"}', true);
+select set_config('request.jwt.claims', '{"sub":"11111111-1111-4111-8111-111111111111","role":"authenticated","aal":"aal2"}', true);
 select is(public.cancel_booking(current_setting('test.d1')::uuid, null),
   'cancelled'::public.booking_status, 'the traveler cancels it more than 24 h ahead');
 
@@ -133,7 +133,7 @@ reset role;
 insert into public.availability_slots (id, experience_id, starts_on, capacity, status) values
   ('50000000-0000-4000-8000-000000000003', 'e0000000-0000-4000-8000-000000000001', private.today_ist() + 15, 4, 'closed');
 set local role authenticated;
-select set_config('request.jwt.claims', '{"sub":"11111111-1111-4111-8111-111111111111","role":"authenticated"}', true);
+select set_config('request.jwt.claims', '{"sub":"11111111-1111-4111-8111-111111111111","role":"authenticated","aal":"aal2"}', true);
 select throws_ok(
   $$ select * from public.request_booking_on_date('e0000000-0000-4000-8000-000000000001', private.today_ist() + 15, 1, 0, '+91 98765 43210', '', gen_random_uuid()) $$,
   'P0002', null, 'a date the provider closed cannot be requested as a plain date');
@@ -156,7 +156,7 @@ select throws_ok(
 reset role;
 select set_config('test.d40', (select id::text from public.bookings where idempotency_key = 'f0000000-0000-4000-8000-000000000040'), true);
 set local role authenticated;
-select set_config('request.jwt.claims', '{"sub":"33333333-3333-4333-8333-333333333333","role":"authenticated"}', true);
+select set_config('request.jwt.claims', '{"sub":"33333333-3333-4333-8333-333333333333","role":"authenticated","aal":"aal2"}', true);
 select is(public.respond_to_booking(current_setting('test.d40')::uuid, 'confirmed', 1, null),
   'confirmed'::public.booking_status, 'the provider confirms it');
 reset role;
@@ -167,20 +167,20 @@ select results_eq(
   'confirming counts the party against the slot published since (no overbooking)');
 
 set local role authenticated;
-select set_config('request.jwt.claims', '{"sub":"11111111-1111-4111-8111-111111111111","role":"authenticated"}', true);
+select set_config('request.jwt.claims', '{"sub":"11111111-1111-4111-8111-111111111111","role":"authenticated","aal":"aal2"}', true);
 select lives_ok(
   $$ select * from public.request_booking_on_date('e0000000-0000-4000-8000-000000000001', private.today_ist() + 1, 1, 0, '+91 98765 43210', '', 'f0000000-0000-4000-8000-0000000001b1') $$,
   'a request for tomorrow');
 reset role;
 select set_config('test.d1b', (select id::text from public.bookings where idempotency_key = 'f0000000-0000-4000-8000-0000000001b1'), true);
 set local role authenticated;
-select set_config('request.jwt.claims', '{"sub":"22222222-2222-4222-8222-222222222222","role":"authenticated"}', true);
+select set_config('request.jwt.claims', '{"sub":"22222222-2222-4222-8222-222222222222","role":"authenticated","aal":"aal2"}', true);
 select throws_ok($$ select public.cancel_booking(current_setting('test.d1b')::uuid, null) $$,
   'P0002', null, 'another traveler cannot cancel a date request');
-select set_config('request.jwt.claims', '{"sub":"33333333-3333-4333-8333-333333333333","role":"authenticated"}', true);
+select set_config('request.jwt.claims', '{"sub":"33333333-3333-4333-8333-333333333333","role":"authenticated","aal":"aal2"}', true);
 select lives_ok($$ select public.respond_to_booking(current_setting('test.d1b')::uuid, 'confirmed', 1, null) $$,
   'the provider confirms the short-notice date request');
-select set_config('request.jwt.claims', '{"sub":"11111111-1111-4111-8111-111111111111","role":"authenticated"}', true);
+select set_config('request.jwt.claims', '{"sub":"11111111-1111-4111-8111-111111111111","role":"authenticated","aal":"aal2"}', true);
 select throws_ok($$ select public.cancel_booking(current_setting('test.d1b')::uuid, null) $$,
   '55000', null, 'confirmed date requests cannot be cancelled within 24 hours of the date');
 
@@ -200,11 +200,11 @@ insert into public.itinerary_items (id, version_id, day_number, position, experi
   ('30000000-0000-4000-8000-000000000003', '20000000-0000-4000-8000-000000000001', 2, 2, 'e0000000-0000-4000-8000-000000000004', 'd0000000-0000-4000-8000-000000000001', 'X4 by Q', 'Ziro Valley', 'afternoon', 120);
 
 set local role authenticated;
-select set_config('request.jwt.claims', '{"sub":"22222222-2222-4222-8222-222222222222","role":"authenticated"}', true);
+select set_config('request.jwt.claims', '{"sub":"22222222-2222-4222-8222-222222222222","role":"authenticated","aal":"aal2"}', true);
 select throws_ok(
   $$ select * from public.request_itinerary_bookings('20000000-0000-4000-8000-000000000001', '+91 91234 56789', '', gen_random_uuid()) $$,
   'P0002', null, 'only the owner can book an itinerary');
-select set_config('request.jwt.claims', '{"sub":"11111111-1111-4111-8111-111111111111","role":"authenticated"}', true);
+select set_config('request.jwt.claims', '{"sub":"11111111-1111-4111-8111-111111111111","role":"authenticated","aal":"aal2"}', true);
 select results_eq(
   $$ select item_id, booking_status, error_code from public.request_itinerary_bookings(
        '20000000-0000-4000-8000-000000000001', '+91 98765 43210', 'Trip', 'f0000000-0000-4000-8000-0000000000aa') $$,
@@ -228,7 +228,7 @@ select results_eq(
        '20000000-0000-4000-8000-000000000001', '+91 98765 43210', 'Trip', gen_random_uuid())
      where item_id <> '30000000-0000-4000-8000-000000000002' $$,
   $$ values ('23505'::text), ('23505'::text) $$, 'a second click with a new key reports the existing requests');
-select set_config('request.jwt.claims', '{"sub":"44444444-4444-4444-8444-444444444444","role":"authenticated"}', true);
+select set_config('request.jwt.claims', '{"sub":"44444444-4444-4444-8444-444444444444","role":"authenticated","aal":"aal2"}', true);
 select is((select count(*) from public.bookings), 1::bigint, 'provider Q sees only its own trip request');
 
 -- Sweep completes past slot-less bookings ---------------------------------------------------

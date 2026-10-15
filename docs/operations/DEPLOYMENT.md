@@ -1,7 +1,9 @@
 # Deployment
 
-Status: **not deployed.** The GitHub repository exists and CI runs on it; no Vercel project or Supabase
-cloud project exists yet. Go-live gates are in [RELEASE_CHECKLIST](RELEASE_CHECKLIST.md).
+Status: **production live** (Vercel + Supabase production project, sample content, not yet launched).
+No staging Supabase project yet. Go-live gates are in [RELEASE_CHECKLIST](RELEASE_CHECKLIST.md).
+Production database pushes and deploys are run by the owner; agents are blocked from them by
+`.claude/settings.json`.
 
 ## Target setup
 
@@ -46,7 +48,7 @@ with the code currently deployed (expand → migrate → contract).
    types-drift check against the migration.
 2. **Back up first** if the migration rewrites or drops data: confirm the latest managed backup/PITR
    point and take a logical dump ([BACKUP_AND_RESTORE](BACKUP_AND_RESTORE.md)).
-3. **Staging first:** `npx supabase link --project-ref <staging>` → `npx supabase db push --dry-run` →
+3. **Staging first** (once a staging project exists; until then dry-run against production and review): `npx supabase link --project-ref <staging>` → `npx supabase db push --dry-run` →
    read the list → `npx supabase db push`. Run the staging smoke tests (`npm run test:smoke`).
 4. **Production:** the same against the production project, only after staging passes, with explicit
    approval. Then merge/deploy the code.
@@ -59,8 +61,8 @@ Never edit an applied migration. Never run `supabase db reset` against a linked 
 
 `20261012183833_security_review_phases_3_4` changes the `save_itinerary_version` signature and drops
 `record_itinerary_generation`. Code deployed **before** it can't save itineraries once it's applied, and
-code deployed after it can't save without it. With no production deployment yet this is acceptable.
-After launch, a change like this must keep the old function until the new code is live (expand →
+code deployed after it can't save without it. This was acceptable only before production existed.
+From now on, a change like this must keep the old function until the new code is live (expand →
 contract).
 
 ## Releasing

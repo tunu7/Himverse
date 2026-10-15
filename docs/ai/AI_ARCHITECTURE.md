@@ -39,14 +39,14 @@ See [ITINERARY_GENERATION](ITINERARY_GENERATION.md) for the module map and check
 
 ## Decided (ADR-0003)
 
-- **Provider:** Vercel AI Gateway through AI SDK 7, model `anthropic/claude-sonnet-5.5` (configurable).
-  Ollama for free local models (ADR-0006).
+- **Provider:** switchable by `AI_PROVIDER` (ADR-0006). Production: Ollama Cloud, `gpt-oss:120b`.
+  Local: Ollama (`himverse-planner`). Also supported: Vercel AI Gateway (`anthropic/claude-sonnet-5.5`).
 - **Results:** complete, validated results are returned (no partial streaming).
 - **Limits:** 10 generations per hour and 30 per day per user, reserved atomically before the model
   call; a platform-wide daily cap and a kill switch (Phase 5); output tokens capped per request.
 
 ## Open questions
 
-- Monetary cost ceiling per itinerary. This needs real usage data, so a gateway key first.
+- Ollama Cloud quota and concurrency limits at launch traffic; cost ceiling per itinerary.
 - Language support for prompts and outputs (English only today).
-- The gateway's zero-data-retention settings for production.
+- Data-retention terms of the production model provider (Ollama Cloud).

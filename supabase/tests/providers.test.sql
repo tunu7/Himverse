@@ -31,7 +31,7 @@ select throws_ok(
 -- Owner O applies -----------------------------------------------------------------
 reset role;
 set local role authenticated;
-select set_config('request.jwt.claims', '{"sub":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","role":"authenticated"}', true);
+select set_config('request.jwt.claims', '{"sub":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","role":"authenticated","aal":"aal2"}', true);
 
 select lives_ok(
   $$ select public.create_provider_application('o-treks', 'O Treks', 'Guided treks around Ziro', 'Lower Subansiri',
@@ -109,7 +109,7 @@ select throws_ok(
 );
 
 -- Owner P has a separate provider -----------------------------------------------
-select set_config('request.jwt.claims', '{"sub":"bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb","role":"authenticated"}', true);
+select set_config('request.jwt.claims', '{"sub":"bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb","role":"authenticated","aal":"aal2"}', true);
 select lives_ok(
   $$ select public.create_provider_application('p-homestays', 'P Homestays', '', 'Tawang', 'P Homestays LLP', 'p@example.test', null) $$,
   'second owner creates their own application'
@@ -129,7 +129,7 @@ select is_empty(
 );
 
 -- Traveler T --------------------------------------------------------------------
-select set_config('request.jwt.claims', '{"sub":"cccccccc-cccc-4ccc-8ccc-cccccccccccc","role":"authenticated"}', true);
+select set_config('request.jwt.claims', '{"sub":"cccccccc-cccc-4ccc-8ccc-cccccccccccc","role":"authenticated","aal":"aal2"}', true);
 select is_empty(
   $$ select 1 from public.providers $$,
   'traveler cannot see unverified providers'
@@ -145,7 +145,7 @@ select throws_ok(
 );
 
 -- Admin A -----------------------------------------------------------------------
-select set_config('request.jwt.claims', '{"sub":"dddddddd-dddd-4ddd-8ddd-dddddddddddd","role":"authenticated"}', true);
+select set_config('request.jwt.claims', '{"sub":"dddddddd-dddd-4ddd-8ddd-dddddddddddd","role":"authenticated","aal":"aal2"}', true);
 select is(
   (select count(*) from public.provider_private_details),
   2::bigint,
@@ -205,7 +205,7 @@ select throws_ok(
 
 reset role;
 set local role authenticated;
-select set_config('request.jwt.claims', '{"sub":"dddddddd-dddd-4ddd-8ddd-dddddddddddd","role":"authenticated"}', true);
+select set_config('request.jwt.claims', '{"sub":"dddddddd-dddd-4ddd-8ddd-dddddddddddd","role":"authenticated","aal":"aal2"}', true);
 select is(
   (select public.review_provider(current_setting('test.o_id')::uuid, 'suspended', 'Safety complaint under investigation')),
   'suspended'::public.provider_status,
@@ -222,7 +222,7 @@ select is_empty(
 
 reset role;
 set local role authenticated;
-select set_config('request.jwt.claims', '{"sub":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","role":"authenticated"}', true);
+select set_config('request.jwt.claims', '{"sub":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","role":"authenticated","aal":"aal2"}', true);
 select is(
   (select status from public.providers where id = current_setting('test.o_id')::uuid),
   'suspended'::public.provider_status,
@@ -234,16 +234,16 @@ select throws_ok(
   'suspended provider cannot resubmit to get re-verified'
 );
 
--- Admin who is also a provider member cannot review their own provider ----------
-select set_config('request.jwt.claims', '{"sub":"dddddddd-dddd-4ddd-8ddd-dddddddddddd","role":"authenticated"}', true);
-select lives_ok(
-  $$ select public.submit_provider_application(public.create_provider_application('a-tours', 'A Tours', '', null, 'A Tours', 'admin@example.test', null)) $$,
-  'admin can apply as a provider like anyone else'
-);
+-- Admin accounts cannot run a business (one role per account, ADR-0007) ----------
+select set_config('request.jwt.claims', '{"sub":"dddddddd-dddd-4ddd-8ddd-dddddddddddd","role":"authenticated","aal":"aal2"}', true);
 select throws_ok(
-  $$ select public.review_provider((select id from public.providers where slug = 'a-tours'), 'verified', null) $$,
+  $$ select public.create_provider_application('a-tours', 'A Tours', '', null, 'A Tours', 'admin@example.test', null) $$,
   '42501', null,
-  'admin cannot verify a provider they belong to'
+  'admin accounts cannot apply as a provider'
+);
+select is_empty(
+  $$ select 1 from public.providers where slug = 'a-tours' $$,
+  'the refused application left nothing behind'
 );
 
 select * from finish();

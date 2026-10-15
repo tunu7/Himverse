@@ -1,6 +1,6 @@
 # ADR-0002: Authorization model — database-enforced roles and provider membership
 
-- Status: Accepted
+- Status: Accepted; partly superseded by [ADR-0007](ADR-0007-ONE-ACCOUNT-TYPE-PER-ACCOUNT.md) (one account type per account)
 - Date: 2026-10-12
 - Deciders: Product owner, Engineering (Phase 1 planning)
 - Implementation: Phase 1, migrations `20261012131029_identity_and_roles`, `20261012131030_providers`,

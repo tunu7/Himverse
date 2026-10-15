@@ -11,12 +11,12 @@ import {
 } from "@/features/itineraries/components/itinerary-controls";
 import { TripBookingSection } from "@/features/bookings/components/trip-booking-section";
 import { ItineraryPlan } from "@/features/itineraries/components/itinerary-view";
-import { requireUserForPage } from "@/server/auth/session";
+import { requireAccountForPage } from "@/server/auth/session";
 import { getMyItinerary } from "@/server/itineraries/repository";
 
 async function ItineraryDetail({ params, searchParams }: PageProps<"/itineraries/[id]">) {
   const { id } = await params;
-  await requireUserForPage(`/itineraries/${id}`);
+  await requireAccountForPage(`/itineraries/${id}`, ["traveller"]);
   const raw = (await searchParams).version;
   const requested = typeof raw === "string" && /^\d{1,4}$/.test(raw) ? Number(raw) : undefined;
   // RLS returns nothing for someone else's itinerary: same not-found as a missing one.

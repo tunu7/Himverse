@@ -4,8 +4,8 @@
 | ----------- | --------------------- | ------------------------------------------------------- | ---------------------------- |
 | Local       | `npm run dev` (:3000) | `npx supabase start` (Docker)                           | Development, tests           |
 | CI          | GitHub Actions        | Throwaway local Supabase (`npx supabase start`) per run | Quality gates, DB tests, E2E |
-| Preview     | Vercel preview per PR | Supabase staging project (TBD)                          | Review and QA                |
-| Production  | Vercel production     | Supabase production project (TBD)                       | Live users                   |
+| Preview     | Vercel preview per PR | Supabase staging project (not created yet)              | Review and QA                |
+| Production  | Vercel production     | Supabase production project (live)                      | Live users                   |
 
 Preview deployments must **never** point at the production database.
 
@@ -89,8 +89,23 @@ to new deployments only, so redeploy after changing them.
   3. Supabase → Authentication → URL Configuration → Redirect URLs: add
      `<site>/auth/callback` (as well as `<site>/auth/confirm`).
   4. Vercel: `NEXT_PUBLIC_AUTH_GOOGLE_ENABLED=true`, then redeploy (public values are built in).
-     Google accounts sign in as travellers; roles still come only from `user_roles`. A Google sign-in
-     with the same verified email as an existing password account is linked to it by Supabase.
+     A new Google account chooses traveller or partner once, on `/welcome` (ADR-0007). Admin still comes
+     only from `user_roles`. A Google sign-in with the same verified email as an existing password
+     account is linked to it by Supabase.
+- **Password reset** (Phase 2): `/forgot-password` sends a PKCE reset email. The link only works in the
+  browser that asked for it, and lands on `<site>/auth/reset`, then `/reset-password`. Add
+  `<site>/auth/reset` to the Redirect URLs allow-list. Keep the default "Reset password" template
+  (`{{ .ConfirmationURL }}`). Don't switch it to a `token_hash` link: that would allow login CSRF.
+- **Email delivery:** Supabase's built-in sender allows only a few emails per hour and is meant for
+  testing. Confirmation, resend and password-reset emails need a real SMTP provider. Set one up under
+  Supabase → Authentication → Emails → SMTP Settings (for example Resend: verify the domain, then paste
+  host `smtp.resend.com`, port 465, user `resend`, and the API key as the password). Then raise the
+  email rate limit under Authentication → Rate Limits.
+- **Two-step login (TOTP):** Supabase → Authentication → Multi-Factor → enable **TOTP** (app
+  authenticator). Partner and admin accounts must enroll before their area opens. The database refuses
+  their powers to sessions below `aal2` (migration `two_step_login`).
+  - **Lost authenticator:** see the runbook in [SECURITY](../security/SECURITY.md#accounts-and-sign-in-adr-0007).
+    Delete the factor and sign the user out everywhere.
 - Adding a variable: update `.env.example`, the Zod schema, this table, and Vercel settings in the same PR.
 - `NEXT_PUBLIC_*` values are inlined at build time and visible to anyone — never put secrets there.
 - Rotate keys immediately if exposed ([INCIDENT_RESPONSE](INCIDENT_RESPONSE.md)).

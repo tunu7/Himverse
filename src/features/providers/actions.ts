@@ -4,6 +4,7 @@ import { refresh } from "next/cache";
 
 import { type ActionResult, ok, toLoggedFailure } from "@/lib/errors";
 import { parseInput } from "@/lib/validation";
+import { requireAccount } from "@/server/auth/session";
 import {
   createExperience,
   createProviderApplication,
@@ -31,6 +32,7 @@ export async function applyAsProvider(
 ): Promise<ProviderActionResult> {
   try {
     const input = parseInput(providerApplicationSchema, formData);
+    await requireAccount(["partner"]);
     await createProviderApplication(input);
     refresh();
     return ok({ done: true });
@@ -44,6 +46,7 @@ export async function submitForReview(
   formData: FormData,
 ): Promise<ProviderActionResult> {
   try {
+    await requireAccount(["partner"]);
     const { providerId } = parseInput(providerIdSchema, formData);
     await submitProviderApplication(providerId);
     refresh();
@@ -59,6 +62,7 @@ export async function addExperience(
 ): Promise<ProviderActionResult> {
   try {
     const input = parseInput(newExperienceSchema, formData);
+    await requireAccount(["partner"]);
     await createExperience({
       providerId: input.providerId,
       destinationId: input.destinationId,
@@ -82,6 +86,7 @@ export async function changeExperienceStatus(
 ): Promise<ProviderActionResult> {
   try {
     const input = parseInput(experienceStatusSchema, formData);
+    await requireAccount(["partner"]);
     await setExperienceStatus(input.experienceId, input.status);
     refresh();
     return ok({ done: true });
@@ -96,6 +101,7 @@ export async function changeExperienceAcceptsBookings(
 ): Promise<ProviderActionResult> {
   try {
     const input = parseInput(acceptsBookingsSchema, formData);
+    await requireAccount(["partner"]);
     await setExperienceAcceptsBookings(input.experienceId, input.acceptsBookings);
     refresh();
     return ok({ done: true });

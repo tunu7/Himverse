@@ -3,7 +3,7 @@ import { connection } from "next/server";
 
 import { istDate, MAX_BOOKING_DAYS_AHEAD } from "@/lib/booking-options";
 import { formatSlot } from "@/lib/format";
-import { getCurrentUser } from "@/server/auth/session";
+import { getCurrentAccount } from "@/server/auth/session";
 import { listOpenSlots } from "@/server/bookings/repository";
 
 import { BookingRequestForm } from "./booking-forms";
@@ -40,9 +40,34 @@ export async function ExperienceBooking({
       </div>
     );
   }
-  const [slots, user] = await Promise.all([listOpenSlots(experienceId), getCurrentUser()]);
+  const [slots, account] = await Promise.all([listOpenSlots(experienceId), getCurrentAccount()]);
 
-  if (!user) {
+  if (account?.accountType === "partner" || account?.accountType === "admin") {
+    // One role per account (ADR-0007): the database refuses these anyway.
+    return (
+      <p
+        className="rounded-2xl bg-surface-muted p-4 text-sm text-fg-soft"
+        data-testid="booking-not-for-account"
+      >
+        Booking is for traveller accounts. You&apos;re signed in with a {account.accountType}{" "}
+        account; to travel, use a separate traveller account.
+      </p>
+    );
+  }
+  if (account && !account.accountType) {
+    return (
+      <p className="text-sm">
+        <Link
+          href={`/welcome?next=${encodeURIComponent(`/experiences/${experienceSlug}`)}`}
+          className="font-medium text-accent underline-offset-4 hover:underline"
+        >
+          Finish setting up your account
+        </Link>{" "}
+        to request a booking.
+      </p>
+    );
+  }
+  if (!account) {
     return (
       <p className="text-sm">
         <Link

@@ -3,12 +3,12 @@ import { Suspense } from "react";
 import { LoadingBlock, PageShell } from "@/components/page-shell";
 import { PreferencesForm } from "@/features/itineraries/components/preferences-form";
 import { getAiEnv } from "@/lib/env.server";
-import { requireUserForPage } from "@/server/auth/session";
+import { requireAccountForPage } from "@/server/auth/session";
 import { listPublicDistricts, listPublishedDestinations } from "@/server/catalog/catalog";
 import { todayInTripZone } from "@/server/itineraries/preferences";
 
 async function NewItinerary() {
-  await requireUserForPage("/itineraries/new");
+  await requireAccountForPage("/itineraries/new", ["traveller"]);
   if (getAiEnv().AI_ITINERARY_ENABLED !== "true") {
     return (
       <p

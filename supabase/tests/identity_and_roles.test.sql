@@ -63,7 +63,7 @@ select throws_ok(
 -- Traveler A ------------------------------------------------------------------
 reset role;
 set local role authenticated;
-select set_config('request.jwt.claims', '{"sub":"11111111-1111-4111-8111-111111111111","role":"authenticated"}', true);
+select set_config('request.jwt.claims', '{"sub":"11111111-1111-4111-8111-111111111111","role":"authenticated","aal":"aal2"}', true);
 
 select results_eq(
   $$ select id from public.profiles $$,
@@ -125,10 +125,13 @@ select is(
 );
 
 -- Admin -----------------------------------------------------------------------
-select set_config('request.jwt.claims', '{"sub":"33333333-3333-4333-8333-333333333333","role":"authenticated"}', true);
+select set_config('request.jwt.claims', '{"sub":"33333333-3333-4333-8333-333333333333","role":"authenticated","aal":"aal2"}', true);
 
 select is(
-  (select count(*) from public.profiles),
+  -- Counted over this file's fixtures so local data doesn't change the result.
+  (select count(*) from public.profiles where id in (
+    '11111111-1111-4111-8111-111111111111', '22222222-2222-4222-8222-222222222222',
+    '33333333-3333-4333-8333-333333333333', '44444444-4444-4444-8444-444444444444')),
   4::bigint,
   'admin can read all profiles'
 );

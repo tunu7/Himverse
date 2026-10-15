@@ -29,7 +29,7 @@ insert into public.experiences (id, provider_id, destination_id, slug, title, ca
 
 -- M2: saves must consume a fresh, own, pending generation ----------------------------
 set local role authenticated;
-select set_config('request.jwt.claims', '{"sub":"11111111-1111-4111-8111-111111111111","role":"authenticated"}', true);
+select set_config('request.jwt.claims', '{"sub":"11111111-1111-4111-8111-111111111111","role":"authenticated","aal":"aal2"}', true);
 select throws_ok(
   $$ select * from public.save_itinerary_version(null, null, 'T', 'generate', '{"adults":1}', '{}', 'itinerary.v1', 'x', 'mock', 1, '[]',
        '[{"day_number":1,"position":1,"experience_id":"e0000000-0000-4000-8000-000000000001","destination_id":"d0000000-0000-4000-8000-000000000001","time_of_day":"morning","rationale":""}]') $$,
@@ -65,7 +65,7 @@ select throws_ok(
   $$ select * from public.save_itinerary_version(current_setting('test.stale')::bigint, null, 'T', 'generate', '{"adults":1}', '{}', 'itinerary.v1', 'x', 'mock', 1, '[]',
        '[{"day_number":1,"position":1,"experience_id":"e0000000-0000-4000-8000-000000000001","destination_id":"d0000000-0000-4000-8000-000000000001","time_of_day":"morning","rationale":""}]') $$,
   '55000', null, 'a reservation older than 15 minutes cannot be used');
-select set_config('request.jwt.claims', '{"sub":"22222222-2222-4222-8222-222222222222","role":"authenticated"}', true);
+select set_config('request.jwt.claims', '{"sub":"22222222-2222-4222-8222-222222222222","role":"authenticated","aal":"aal2"}', true);
 select throws_ok(
   $$ select * from public.save_itinerary_version(
        (select max(id) from public.itinerary_generations), null, 'T', 'generate', '{"adults":1}', '{}', 'itinerary.v1', 'x', 'mock', 1, '[]',
@@ -77,11 +77,11 @@ select lives_ok($$ select public.begin_itinerary_generation(null, null) from gen
 select throws_ok($$ select public.begin_itinerary_generation(null, null) $$, '54000', null, 'the eleventh reservation in an hour is refused');
 
 -- M3: dates only for verified providers, at most two years ahead ---------------------------
-select set_config('request.jwt.claims', '{"sub":"44444444-4444-4444-8444-444444444444","role":"authenticated"}', true);
+select set_config('request.jwt.claims', '{"sub":"44444444-4444-4444-8444-444444444444","role":"authenticated","aal":"aal2"}', true);
 select throws_ok(
   $$ insert into public.availability_slots (experience_id, starts_on, capacity) values ('e0000000-0000-4000-8000-000000000002', private.today_ist() + 10, 5) $$,
   '42501', null, 'members of unverified providers cannot add dates');
-select set_config('request.jwt.claims', '{"sub":"33333333-3333-4333-8333-333333333333","role":"authenticated"}', true);
+select set_config('request.jwt.claims', '{"sub":"33333333-3333-4333-8333-333333333333","role":"authenticated","aal":"aal2"}', true);
 select throws_ok(
   $$ insert into public.availability_slots (experience_id, starts_on, capacity) values ('e0000000-0000-4000-8000-000000000001', private.today_ist() + 731, 5) $$,
   '42501', null, 'dates more than two years ahead are refused');

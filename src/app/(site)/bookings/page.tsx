@@ -7,11 +7,11 @@ import { LoadingBlock, PageShell } from "@/components/page-shell";
 import { EmptyState } from "@/components/ui";
 import { BookingStatusBadge } from "@/features/bookings/components/booking-status";
 import { formatSlot } from "@/lib/format";
-import { requireUserForPage } from "@/server/auth/session";
+import { requireAccountForPage } from "@/server/auth/session";
 import { listMyBookings } from "@/server/bookings/repository";
 
 async function BookingList() {
-  await requireUserForPage("/bookings");
+  await requireAccountForPage("/bookings", ["traveller"]);
   await connection();
   const now = new Date();
   const bookings = await listMyBookings();

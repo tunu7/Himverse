@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 
 import { type ActionResult, AppError, ok, toLoggedFailure } from "@/lib/errors";
 import { parseInput } from "@/lib/validation";
-import { requireUser } from "@/server/auth/session";
+import { requireAccount } from "@/server/auth/session";
 import {
   deleteItinerary,
   getMyItinerary,
@@ -33,7 +33,7 @@ export async function createItinerary(
 ): Promise<ItineraryActionResult> {
   let itineraryId: string;
   try {
-    await requireUser();
+    await requireAccount(["traveller"]);
     const prefs = preferencesFromForm(formData, new Date());
     const saved = await generateItineraryForCurrentUser({
       prefs,
@@ -65,6 +65,7 @@ export async function refineItinerary(
 ): Promise<ItineraryActionResult> {
   try {
     const input = parseInput(refineSchema, formData);
+    await requireAccount(["traveller"]);
     const { itinerary, preferences } = await loadOwned(input.itineraryId);
     const prefs = refinedPreferences(
       preferences,
@@ -89,6 +90,7 @@ export async function regenerateItinerary(
   formData: FormData,
 ): Promise<ItineraryActionResult> {
   try {
+    await requireAccount(["traveller"]);
     const { itineraryId } = parseInput(itineraryIdSchema, formData);
     const { itinerary, preferences } = await loadOwned(itineraryId);
     const prefs = refinedPreferences(preferences, {}, new Date());
@@ -106,6 +108,7 @@ export async function makeVersionCurrent(
 ): Promise<ItineraryActionResult> {
   try {
     const input = parseInput(setVersionSchema, formData);
+    await requireAccount(["traveller"]);
     await setCurrentVersion(input.itineraryId, input.version);
     refresh();
     return ok({ done: true });
@@ -119,6 +122,7 @@ export async function removeItinerary(
   formData: FormData,
 ): Promise<ItineraryActionResult> {
   try {
+    await requireAccount(["traveller"]);
     const { itineraryId } = parseInput(itineraryIdSchema, formData);
     await deleteItinerary(itineraryId);
   } catch (error) {

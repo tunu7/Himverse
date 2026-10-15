@@ -8,9 +8,11 @@ truncate public.booking_events, public.bookings, public.availability_slots, publ
   public.experiences, public.destinations, public.provider_status_events,
   public.provider_private_details, public.provider_members, public.providers;
 
-insert into auth.users (id, email, aud, role) values
-  ('11111111-1111-4111-8111-111111111111', 'busy.traveler@example.test', 'authenticated', 'authenticated'),
-  ('33333333-3333-4333-8333-333333333333', 'owner@example.test', 'authenticated', 'authenticated');
+insert into auth.users (id, email, aud, role, raw_user_meta_data) values
+  ('11111111-1111-4111-8111-111111111111', 'busy.traveler@example.test', 'authenticated', 'authenticated', '{"account_type":"traveller"}'),
+  ('33333333-3333-4333-8333-333333333333', 'owner@example.test', 'authenticated', 'authenticated', '{"account_type":"partner"}'),
+  ('66666666-6666-4666-8666-666666666666', 'applicant@example.test', 'authenticated', 'authenticated', '{"account_type":"partner"}'),
+  ('77777777-7777-4777-8777-777777777777', 'planner@example.test', 'authenticated', 'authenticated', '{"account_type":"traveller"}');
 insert into public.providers (id, slug, display_name, status, verified_at)
 values ('a0000000-0000-4000-8000-000000000001', 'limits-co', 'Limits Co', 'verified', now());
 insert into public.provider_members (provider_id, user_id)
@@ -25,7 +27,7 @@ select 'e0000000-0000-4000-8000-000000000001', private.today_ist() + n, 5 from g
 
 -- Booking request rate ------------------------------------------------------------------
 set local role authenticated;
-select set_config('request.jwt.claims', '{"sub":"11111111-1111-4111-8111-111111111111","role":"authenticated"}', true);
+select set_config('request.jwt.claims', '{"sub":"11111111-1111-4111-8111-111111111111","role":"authenticated","aal":"aal2"}', true);
 select lives_ok(
   $$ select count(*) from (
        select public.request_booking(s.id, 1, 0, '+91 98765 43210', '', gen_random_uuid())
@@ -52,7 +54,8 @@ select throws_ok(
        (select id from public.availability_slots order by starts_on desc limit 1), 1, 0, '+91 98765 43210', '', gen_random_uuid()) $$,
   '54000', null, 'a traveler with 40 unanswered requests must wait');
 
--- Provider applications --------------------------------------------------------------
+-- Provider applications (partner accounts only) -----------------------------------------
+select set_config('request.jwt.claims', '{"sub":"66666666-6666-4666-8666-666666666666","role":"authenticated","aal":"aal2"}', true);
 select lives_ok(
   $$ select public.create_provider_application('limits-a-' || n, 'Applicant ' || n, '', null, 'Applicant Ltd', 'a@example.test', null)
      from generate_series(1, 3) as n $$,
@@ -66,7 +69,7 @@ reset role;
 insert into public.availability_slots (experience_id, starts_on, capacity)
 select 'e0000000-0000-4000-8000-000000000001', private.today_ist() + n, 5 from generate_series(55, 375) as n; -- 45 + 321 = exactly 366 open dates
 set local role authenticated;
-select set_config('request.jwt.claims', '{"sub":"33333333-3333-4333-8333-333333333333","role":"authenticated"}', true);
+select set_config('request.jwt.claims', '{"sub":"33333333-3333-4333-8333-333333333333","role":"authenticated","aal":"aal2"}', true);
 select throws_ok(
   $$ insert into public.availability_slots (experience_id, starts_on, capacity)
      values ('e0000000-0000-4000-8000-000000000001', private.today_ist() + 500, 5) $$,
@@ -74,11 +77,14 @@ select throws_ok(
 
 -- Global AI usage counter ----------------------------------------------------------
 reset role;
+-- Start from an empty log so the global count doesn't depend on local data.
+delete from public.itinerary_generations;
 insert into public.itinerary_generations (user_id, outcome, created_at) values
   ('11111111-1111-4111-8111-111111111111', 'succeeded', now()),
-  ('33333333-3333-4333-8333-333333333333', 'failed_upstream', now()),
-  ('33333333-3333-4333-8333-333333333333', 'succeeded', now() - interval '2 days');
+  ('77777777-7777-4777-8777-777777777777', 'failed_upstream', now()),
+  ('77777777-7777-4777-8777-777777777777', 'succeeded', now() - interval '2 days');
 set local role authenticated;
+select set_config('request.jwt.claims', '{"sub":"77777777-7777-4777-8777-777777777777","role":"authenticated","aal":"aal2"}', true);
 select is((select public.ai_generations_today()), 2, 'counts today''s generations across all users');
 select is_empty($$ select 1 from public.itinerary_generations where user_id = '11111111-1111-4111-8111-111111111111' $$,
   'the counter does not expose other users'' rows (caller still sees only their own log)');

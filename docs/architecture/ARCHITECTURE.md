@@ -15,25 +15,25 @@ Supabase project (Postgres, Auth). Decision record: [ADR-0001](../decisions/ADR-
 ├──────────────────────────────────────────────────────────────┤
 │ src/lib            env, supabase clients, errors, utilities  │
 └──────────────────────────────────────────────────────────────┘
-          │ Supabase (Postgres + RLS, Auth)   │ AI provider (TBD)
+          │ Supabase (Postgres + RLS, Auth)   │ AI: Ollama / AI Gateway (ADR-0006)
 ```
 
 - Imports point **downward only**. `src/server` never imports from `src/app` or `src/features`.
 - Features do not import each other's internals; shared logic moves down to `src/server` or `src/lib`.
 - `src/components` holds feature-agnostic UI and may be used by `app` and `features`.
 
-## Module boundaries (planned)
+## Module boundaries
 
-| Module (feature + server) | Owns                                                       |
-| ------------------------- | ---------------------------------------------------------- |
-| `catalog`                 | Destinations, experiences, provider public profiles        |
-| `providers`               | Provider onboarding, verification state, availability      |
-| `itineraries`             | Trip parameters, AI generation, versions, grounding checks |
-| `bookings`                | Booking requests, lifecycle, idempotency                   |
-| `accounts`                | Profiles and roles on top of Supabase Auth                 |
-| `admin`                   | Curation and verification tools, audit log                 |
+| Module (feature + server)     | Owns                                                         |
+| ----------------------------- | ------------------------------------------------------------ |
+| `discovery` / `catalog`       | Destinations, experiences, search, provider public profiles  |
+| `providers`, `portal`         | Partner onboarding, verification state, listings, portal UI  |
+| `itineraries`                 | Trip parameters, AI generation, versions, grounding checks   |
+| `bookings`                    | Booking requests, lifecycle, idempotency, whole-trip booking |
+| `auth`, `account`, `profiles` | Sign-in/up, Google OAuth, landing, profiles and roles        |
+| `admin`                       | Console: verification, curation, moderation, bookings        |
 
-None exist yet; they are created when their phase starts ([ROADMAP](../product/ROADMAP.md)).
+Feature folders live in `src/features/`, server domains in `src/server/` ([PROJECT_STRUCTURE](PROJECT_STRUCTURE.md)).
 
 ## Trust boundaries
 
@@ -42,7 +42,7 @@ None exist yet; they are created when their phase starts ([ROADMAP](../product/R
    key is reserved for documented admin/system paths.
 3. **Server ↔ AI provider:** AI output is untrusted data; validated and grounded before use
    ([AI_ARCHITECTURE](../ai/AI_ARCHITECTURE.md)).
-4. **Server ↔ payment/provider systems (future):** webhooks verified by signature; state changes idempotent.
+4. **Server ↔ payment systems (post-MVP, ADR-0005):** webhooks verified by signature; state changes idempotent.
 
 ## Rendering model
 

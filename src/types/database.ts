@@ -229,14 +229,14 @@ isOneToOne: false
                   ]
                 },"profiles": {
                   Row: {
-                    "created_at": string,"display_name": string,"id": string,"updated_at": string
+                    "account_type": Database["public"]['Enums']["account_type"] | null,"created_at": string,"display_name": string,"id": string,"updated_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "created_at"?: string,"display_name": string,"id": string,"updated_at"?: string
+                    "account_type"?: Database["public"]['Enums']["account_type"] | null,"created_at"?: string,"display_name": string,"id": string,"updated_at"?: string
                   }
                   Update: {
-                    "created_at"?: string,"display_name"?: string,"id"?: string,"updated_at"?: string
+                    "account_type"?: Database["public"]['Enums']["account_type"] | null,"created_at"?: string,"display_name"?: string,"id"?: string,"updated_at"?: string
                   }
                   Relationships: [
                     
@@ -338,17 +338,26 @@ isOneToOne: false
             "ai_generations_today":
 { Args: Record<PropertyKey, never>; Returns: number
                            },
+"auth_attempt_allowed":
+{ Args: { "p_kind": string }; Returns: boolean
+                           },
 "begin_itinerary_generation":
 { Args: { "p_global_daily_limit": number,"p_itinerary_id": string }; Returns: number
                            },
 "cancel_booking":
 { Args: { "p_booking_id": string,"p_reason": string }; Returns: Database["public"]['Enums']["booking_status"]
                            },
+"choose_account_type":
+{ Args: { "p_type": Database["public"]['Enums']["account_type"] }; Returns: Database["public"]['Enums']["account_type"]
+                           },
 "create_provider_application":
 { Args: { "p_contact_email": string,"p_contact_phone": string,"p_description": string,"p_display_name": string,"p_district": string,"p_legal_name": string,"p_slug": string }; Returns: string
                            },
 "finish_itinerary_generation":
 { Args: { "p_error_code": string,"p_generation_id": number,"p_input_tokens": number,"p_latency_ms": number,"p_model": string,"p_outcome": Database["public"]['Enums']["itinerary_generation_outcome"],"p_output_tokens": number,"p_prompt_version": string }; Returns: undefined
+                           },
+"record_auth_failure":
+{ Args: { "p_kind": string }; Returns: undefined
                            },
 "request_booking":
 { Args: { "p_adults": number,"p_children": number,"p_contact_phone": string,"p_idempotency_key": string,"p_note": string,"p_slot_id": string }; Returns: {
@@ -381,7 +390,7 @@ isOneToOne: false
                            }
           }
           Enums: {
-            "app_role": "admin","availability_slot_status": "open"|"closed","booking_actor": "traveler"|"provider"|"system","booking_status": "requested"|"confirmed"|"declined"|"cancelled"|"expired"|"completed","experience_category": "culture"|"nature"|"adventure"|"trekking"|"wildlife"|"food_and_drink"|"festivals"|"wellness"|"other","experience_status": "draft"|"published"|"archived","itinerary_generation_outcome": "pending"|"succeeded"|"failed_validation"|"failed_upstream"|"failed_timeout"|"failed_save","itinerary_time_of_day": "morning"|"afternoon"|"evening"|"full_day","itinerary_version_kind": "generate"|"refine"|"regenerate","provider_member_role": "owner","provider_status": "draft"|"pending_review"|"verified"|"rejected"|"suspended"
+            "account_type": "traveller"|"partner"|"admin","app_role": "admin","availability_slot_status": "open"|"closed","booking_actor": "traveler"|"provider"|"system","booking_status": "requested"|"confirmed"|"declined"|"cancelled"|"expired"|"completed","experience_category": "culture"|"nature"|"adventure"|"trekking"|"wildlife"|"food_and_drink"|"festivals"|"wellness"|"other","experience_status": "draft"|"published"|"archived","itinerary_generation_outcome": "pending"|"succeeded"|"failed_validation"|"failed_upstream"|"failed_timeout"|"failed_save","itinerary_time_of_day": "morning"|"afternoon"|"evening"|"full_day","itinerary_version_kind": "generate"|"refine"|"regenerate","provider_member_role": "owner","provider_status": "draft"|"pending_review"|"verified"|"rejected"|"suspended"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -501,7 +510,7 @@ export const Constants = {
           }
         },"public": {
           Enums: {
-            "app_role": ["admin"],"availability_slot_status": ["open", "closed"],"booking_actor": ["traveler", "provider", "system"],"booking_status": ["requested", "confirmed", "declined", "cancelled", "expired", "completed"],"experience_category": ["culture", "nature", "adventure", "trekking", "wildlife", "food_and_drink", "festivals", "wellness", "other"],"experience_status": ["draft", "published", "archived"],"itinerary_generation_outcome": ["pending", "succeeded", "failed_validation", "failed_upstream", "failed_timeout", "failed_save"],"itinerary_time_of_day": ["morning", "afternoon", "evening", "full_day"],"itinerary_version_kind": ["generate", "refine", "regenerate"],"provider_member_role": ["owner"],"provider_status": ["draft", "pending_review", "verified", "rejected", "suspended"]
+            "account_type": ["traveller", "partner", "admin"],"app_role": ["admin"],"availability_slot_status": ["open", "closed"],"booking_actor": ["traveler", "provider", "system"],"booking_status": ["requested", "confirmed", "declined", "cancelled", "expired", "completed"],"experience_category": ["culture", "nature", "adventure", "trekking", "wildlife", "food_and_drink", "festivals", "wellness", "other"],"experience_status": ["draft", "published", "archived"],"itinerary_generation_outcome": ["pending", "succeeded", "failed_validation", "failed_upstream", "failed_timeout", "failed_save"],"itinerary_time_of_day": ["morning", "afternoon", "evening", "full_day"],"itinerary_version_kind": ["generate", "refine", "regenerate"],"provider_member_role": ["owner"],"provider_status": ["draft", "pending_review", "verified", "rejected", "suspended"]
           }
         }
 } as const

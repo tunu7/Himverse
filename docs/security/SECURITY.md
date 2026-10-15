@@ -44,6 +44,29 @@ public issues for vulnerabilities.
    abandoned packages.
 10. **Never weaken controls to pass a build** (disable RLS, broaden a policy, skip a test).
 
+## Accounts and sign-in (ADR-0007)
+
+- **Account types:** one per account (traveller, partner or admin), enforced by the database
+  (`supabase/tests/accounts.test.sql`).
+- **Two-step login (TOTP):** required for partners and admins. Without an `aal2` session,
+  `has_role` and `is_provider_member` grant nothing (`two_step.test.sql`).
+- **Password reset:**
+  - PKCE email link (same browser), handled at `/auth/reset`.
+  - `/reset-password` needs a recovery sign-in from the last 15 minutes, plus the second step if
+    enrolled. Other sessions are signed out.
+- **Password change:** checks the current password on a separate cookie-less client, requires the
+  second step if enrolled, and signs out other sessions.
+- **Wrong two-step codes and wrong current passwords:** each limited to 5 per account per 15 minutes
+  (`auth_attempt_limits`). Failures are logged without the guessed value.
+- **No account enumeration:** forgot-password and resend give the same answer whether or not the
+  address exists, including Supabase's per-address limit. Sign-in uses one message for a wrong email
+  or a wrong password.
+- **Lost authenticator (owner runbook):**
+  1. Verify the person out-of-band.
+  2. In Supabase → Authentication → Users, delete their TOTP factor **and** sign them out of all
+     sessions, because an existing `aal2` token stays valid for up to an hour.
+  3. They enrol again at their next sign-in.
+
 ## Rate limits and abuse controls
 
 Enforced in the database by `BEFORE INSERT` triggers or `security definer` functions keyed on the
@@ -71,6 +94,18 @@ law includes India's Digital Personal Data Protection Act, 2023 — retention, c
 requirements are an **open question** for legal review before launch.
 
 ## Known accepted risks (foundation)
+
+- **First-time two-step setup needs only the password.** An attacker who already knows a partner's
+  or admin's password could enrol their own authenticator first, locking the owner out until support
+  resets it. This is not a regression (a password alone used to grant everything). Mitigation for
+  now:
+  - admins enrol in a controlled bootstrap before launch;
+  - partners are told to enrol promptly.
+
+  A follow-up option is to require an email code before enrolment.
+
+- **Sign-in, forgot-password and resend have no per-IP limit of our own.** They rely on Supabase's
+  limits, which see the server's IP. A captcha (for example Turnstile) is the follow-up.
 
 `npm audit` (2026-10-12) reports 5 high-severity advisories, all in the dev-only ESLint chain
 `braces` → `micromatch` → `fast-glob` → `@next/eslint-plugin-next` → `eslint-config-next`. None ship to

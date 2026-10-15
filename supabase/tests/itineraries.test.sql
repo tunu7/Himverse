@@ -42,7 +42,7 @@ select throws_ok($$ select id from public.itineraries $$, '42501', null, 'anon c
 -- Owner A saves a new itinerary ------------------------------------------------------
 reset role;
 set local role authenticated;
-select set_config('request.jwt.claims', '{"sub":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","role":"authenticated"}', true);
+select set_config('request.jwt.claims', '{"sub":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","role":"authenticated","aal":"aal2"}', true);
 
 select results_eq(
   $$ select version_number, estimated_total_minor, unpriced_item_count
@@ -130,7 +130,7 @@ select lives_ok(
   'owner can record a generation');
 
 -- Another traveler B -------------------------------------------------------------------
-select set_config('request.jwt.claims', '{"sub":"bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb","role":"authenticated"}', true);
+select set_config('request.jwt.claims', '{"sub":"bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb","role":"authenticated","aal":"aal2"}', true);
 select is_empty($$ select 1 from public.itineraries $$, 'B cannot see A''s itineraries');
 select is_empty($$ select 1 from public.itinerary_versions $$, 'B cannot see A''s versions');
 select is_empty($$ select 1 from public.itinerary_items $$, 'B cannot see A''s items');
@@ -155,7 +155,7 @@ select is(
 
 -- A cannot point current_version at B's version ---------------------------------------
 set local role authenticated;
-select set_config('request.jwt.claims', '{"sub":"bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb","role":"authenticated"}', true);
+select set_config('request.jwt.claims', '{"sub":"bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb","role":"authenticated","aal":"aal2"}', true);
 select lives_ok(
   $$ select * from public.save_itinerary_version(public.begin_itinerary_generation(null, null), null, 'B trip', 'generate', '{"adults":1}', '{}', 'itinerary.v1', 'itinerary-v1', 'mock', 1, '[]',
        '[{"day_number":1,"position":1,"experience_id":"30000000-0000-4000-8000-000000000001","destination_id":"20000000-0000-4000-8000-000000000001","time_of_day":"morning","rationale":""}]') $$,
@@ -163,7 +163,7 @@ select lives_ok(
 reset role;
 select set_config('test.b_version', (select v.id::text from public.itinerary_versions v join public.itineraries i on i.id = v.itinerary_id where i.title = 'B trip'), true);
 set local role authenticated;
-select set_config('request.jwt.claims', '{"sub":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","role":"authenticated"}', true);
+select set_config('request.jwt.claims', '{"sub":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","role":"authenticated","aal":"aal2"}', true);
 select throws_ok(
   $$ update public.itineraries set current_version_id = current_setting('test.b_version')::uuid
      where id = current_setting('test.itinerary')::uuid;

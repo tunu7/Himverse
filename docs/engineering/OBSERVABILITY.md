@@ -1,8 +1,7 @@
 # Observability
 
 Status: **logging, a health check and SQL signals exist; no error-tracking or alerting vendor is connected
-yet.** Sentry (errors) is planned via the Vercel Marketplace once the Vercel project exists (Phase 5,
-Workstream B). Until then, alerts below are checked manually or by an uptime monitor on `/api/health`.
+yet.** Sentry (errors) is planned via the Vercel Marketplace (Phase 5, Workstream B). Until then, alerts below are checked manually or by an uptime monitor on `/api/health`.
 
 ## Logging (`src/lib/logger.ts`)
 

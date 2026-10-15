@@ -49,7 +49,7 @@ select throws_ok(
 
 reset role;
 set local role authenticated;
-select set_config('request.jwt.claims', '{"sub":"cccccccc-cccc-4ccc-8ccc-cccccccccccc","role":"authenticated"}', true);
+select set_config('request.jwt.claims', '{"sub":"cccccccc-cccc-4ccc-8ccc-cccccccccccc","role":"authenticated","aal":"aal2"}', true);
 select throws_ok(
   $$ insert into public.destinations (slug, name, district) values ('x-place', 'X', 'Tawang') $$,
   '42501', null,
@@ -64,7 +64,7 @@ select is_empty(
   'traveler cannot delete destinations'
 );
 
-select set_config('request.jwt.claims', '{"sub":"dddddddd-dddd-4ddd-8ddd-dddddddddddd","role":"authenticated"}', true);
+select set_config('request.jwt.claims', '{"sub":"dddddddd-dddd-4ddd-8ddd-dddddddddddd","role":"authenticated","aal":"aal2"}', true);
 select lives_ok(
   $$ insert into public.destinations (slug, name, district, is_published) values ('dirang', 'Dirang', 'West Kameng', false) $$,
   'admin can create destinations'
@@ -76,7 +76,7 @@ select is(
 );
 
 -- Verified provider owner V -------------------------------------------------------
-select set_config('request.jwt.claims', '{"sub":"eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee","role":"authenticated"}', true);
+select set_config('request.jwt.claims', '{"sub":"eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee","role":"authenticated","aal":"aal2"}', true);
 select lives_ok(
   $$ insert into public.experiences (provider_id, destination_id, slug, title, category, duration_minutes)
      values ('10000000-0000-4000-8000-000000000001', '20000000-0000-4000-8000-000000000001',
@@ -120,7 +120,7 @@ select throws_ok(
 );
 
 -- Unverified provider owner U -----------------------------------------------------
-select set_config('request.jwt.claims', '{"sub":"ffffffff-ffff-4fff-8fff-ffffffffffff","role":"authenticated"}', true);
+select set_config('request.jwt.claims', '{"sub":"ffffffff-ffff-4fff-8fff-ffffffffffff","role":"authenticated","aal":"aal2"}', true);
 select lives_ok(
   $$ insert into public.experiences (provider_id, destination_id, slug, title, category, duration_minutes)
      values ('10000000-0000-4000-8000-000000000002', '20000000-0000-4000-8000-000000000001',
@@ -166,7 +166,7 @@ select throws_ok(
 
 reset role;
 set local role authenticated;
-select set_config('request.jwt.claims', '{"sub":"cccccccc-cccc-4ccc-8ccc-cccccccccccc","role":"authenticated"}', true);
+select set_config('request.jwt.claims', '{"sub":"cccccccc-cccc-4ccc-8ccc-cccccccccccc","role":"authenticated","aal":"aal2"}', true);
 select results_eq(
   $$ select slug from public.experiences $$,
   $$ values ('v-live-trek') $$,
@@ -179,7 +179,7 @@ select isnt(
 );
 
 -- Suspension hides everything and blocks publishing ------------------------------
-select set_config('request.jwt.claims', '{"sub":"dddddddd-dddd-4ddd-8ddd-dddddddddddd","role":"authenticated"}', true);
+select set_config('request.jwt.claims', '{"sub":"dddddddd-dddd-4ddd-8ddd-dddddddddddd","role":"authenticated","aal":"aal2"}', true);
 select is(
   (select public.review_provider('10000000-0000-4000-8000-000000000001', 'suspended', 'Under investigation')),
   'suspended'::public.provider_status,
@@ -201,7 +201,7 @@ select is_empty(
 
 reset role;
 set local role authenticated;
-select set_config('request.jwt.claims', '{"sub":"eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee","role":"authenticated"}', true);
+select set_config('request.jwt.claims', '{"sub":"eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee","role":"authenticated","aal":"aal2"}', true);
 select throws_ok(
   $$ update public.experiences set status = 'published' where slug = 'v-draft-walk' $$,
   '42501', null,
@@ -219,7 +219,7 @@ select is(
 );
 
 -- Reinstatement restores visibility without republishing ---------------------------
-select set_config('request.jwt.claims', '{"sub":"dddddddd-dddd-4ddd-8ddd-dddddddddddd","role":"authenticated"}', true);
+select set_config('request.jwt.claims', '{"sub":"dddddddd-dddd-4ddd-8ddd-dddddddddddd","role":"authenticated","aal":"aal2"}', true);
 select is(
   (select public.review_provider('10000000-0000-4000-8000-000000000001', 'verified', null)),
   'verified'::public.provider_status,
@@ -238,7 +238,7 @@ select results_eq(
 -- Unpublishing a destination hides its experiences -------------------------------
 reset role;
 set local role authenticated;
-select set_config('request.jwt.claims', '{"sub":"dddddddd-dddd-4ddd-8ddd-dddddddddddd","role":"authenticated"}', true);
+select set_config('request.jwt.claims', '{"sub":"dddddddd-dddd-4ddd-8ddd-dddddddddddd","role":"authenticated","aal":"aal2"}', true);
 select lives_ok(
   $$ update public.destinations set is_published = false where slug = 'ziro' $$,
   'admin unpublishes a destination'

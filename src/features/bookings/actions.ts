@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { type ActionResult, AppError, ok, toLoggedFailure } from "@/lib/errors";
 import { istDate, MAX_BOOKING_DAYS_AHEAD } from "@/lib/booking-options";
 import { parseInput } from "@/lib/validation";
+import { requireAccount } from "@/server/auth/session";
 import {
   cancelBooking,
   createSlot,
@@ -39,6 +40,7 @@ export async function requestBookingAction(
   let bookingId: string;
   try {
     const input = parseInput(requestBookingSchema, formData);
+    await requireAccount(["traveller"]);
     // Clear message here; the database also refuses dates that have started.
     if (input.date <= todayInTripZone(new Date())) {
       throw new AppError("VALIDATION_FAILED", "Please check the highlighted fields.", {
@@ -66,6 +68,7 @@ export async function bookTripAction(
 ): Promise<TripBookingActionResult> {
   try {
     const input = parseInput(tripBookingSchema, formData);
+    await requireAccount(["traveller"]);
     const items = await requestItineraryBookings(input);
     if (items.some((i) => i.booking && !i.alreadyRequested)) refresh();
     return ok({ items });
@@ -80,6 +83,7 @@ export async function respondToBookingAction(
 ): Promise<BookingActionResult> {
   try {
     const input = parseInput(respondSchema, formData);
+    await requireAccount(["partner"]);
     await respondToBooking(
       input.bookingId,
       input.decision,
@@ -99,6 +103,7 @@ export async function cancelBookingAction(
 ): Promise<BookingActionResult> {
   try {
     const input = parseInput(cancelSchema, formData);
+    await requireAccount(["traveller", "partner"]);
     await cancelBooking(input.bookingId, input.reason);
     refresh();
     return ok({ done: true });
@@ -113,6 +118,7 @@ export async function addSlotAction(
 ): Promise<BookingActionResult> {
   try {
     const input = parseInput(addSlotSchema, formData);
+    await requireAccount(["partner"]);
     // Clear message here; RLS also refuses past dates.
     if (input.startsOn < todayInTripZone(new Date())) {
       throw new AppError("VALIDATION_FAILED", "Please check the highlighted fields.", {
@@ -138,6 +144,7 @@ export async function setSlotStatusAction(
 ): Promise<BookingActionResult> {
   try {
     const input = parseInput(slotStatusSchema, formData);
+    await requireAccount(["partner"]);
     await updateSlot(input.slotId, { status: input.status });
     refresh();
     return ok({ done: true });

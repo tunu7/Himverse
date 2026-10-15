@@ -2,23 +2,30 @@
 // (React <Activity>), so test-id lookups only match visible elements.
 import { expect, test } from "@playwright/test";
 
+import { setUpTwoStep } from "./support";
+
 test("protected pages redirect signed-out visitors to sign in", async ({ page }) => {
   await page.goto("/provider");
   await expect(page).toHaveURL(/\/sign-in\?next=%2Fprovider$/);
   await expect(page.getByRole("heading", { name: "Sign in" })).toBeVisible();
 });
 
-test("a new user can sign up, edit their profile and apply as a provider", async ({ page }) => {
+test("a new partner can sign up, edit their profile and apply as a provider", async ({ page }) => {
   const unique = `${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
   const email = `e2e-${unique}@example.test`;
 
-  await page.goto("/sign-up");
-  await page.getByLabel("Your name").fill("E2E Traveler");
+  await page.goto("/sign-up?as=partner");
+  await page.getByLabel("Your name").fill("E2E Partner");
   await page.getByLabel("Email").fill(email);
-  await page.getByLabel(/Password/).fill("correct-horse-battery");
+  await page
+    .getByLabel(/Password/)
+    .first()
+    .fill("correct-horse-battery");
   await page.getByRole("button", { name: "Create account" }).click();
 
-  await expect(page).toHaveURL(/\/account$/);
+  // Partners set up two-step login before the portal opens.
+  await setUpTwoStep(page, email, /\/provider$/);
+  await page.goto("/provider/account");
   await expect(page.getByText(email)).toBeVisible();
 
   await page.getByLabel("Display name").fill("E2E Renamed");

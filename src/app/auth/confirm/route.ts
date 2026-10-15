@@ -5,9 +5,11 @@ import { z } from "zod";
 import { safeRedirectPath } from "@/lib/redirect";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-// Only the flows this app sends. Magic-link, recovery and invite tokens are refused:
-// an attacker can request those for their own account at will and use the link to
-// sign a victim into the attacker's account (login CSRF).
+// Only the flows this app sends. Magic-link, recovery and invite *token hashes* are
+// refused: an attacker can request those for their own account at will and use the
+// link to sign a victim into the attacker's account (login CSRF). PKCE codes are
+// bound to the browser that started the flow; password resets use /auth/reset, and
+// /reset-password requires a recovery sign-in, so a code here can't skip that.
 const otpTypes = ["signup", "email_change"] as const satisfies readonly EmailOtpType[];
 
 // Two link formats are accepted:

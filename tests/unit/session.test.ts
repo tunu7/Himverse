@@ -7,7 +7,7 @@ vi.mock("next/navigation", () => ({
   }),
 }));
 
-type Claims = { sub: string; email?: string } | null;
+type Claims = { sub: string; email?: string; aal?: string } | null;
 type RoleQueryResult = { data: { role: string } | null; error: { code: string } | null };
 
 const fake = {
@@ -24,6 +24,9 @@ vi.mock("@/lib/supabase/server", () => ({
         data: fake.claims ? { claims: fake.claims } : null,
         error: fake.claimsError,
       }),
+      mfa: {
+        listFactors: async () => ({ data: { totp: [{ id: "f1" }], all: [] }, error: null }),
+      },
     },
     from: (table: string) => {
       expect(table).toBe("user_roles");
@@ -112,11 +115,18 @@ describe("admin checks", () => {
     await expect(requireAdmin()).rejects.toMatchObject({ code: "FORBIDDEN" });
   });
 
-  it("requireAdmin returns the admin user", async () => {
-    fake.claims = { sub: USER };
+  it("requireAdmin returns the admin user after the second step (aal2)", async () => {
+    fake.claims = { sub: USER, aal: "aal2" };
     fake.roleResult = { data: { role: "admin" }, error: null };
     const { requireAdmin } = await loadSession();
     await expect(requireAdmin()).resolves.toEqual({ id: USER, email: null });
+  });
+
+  it("requireAdmin refuses an admin who hasn't passed two-step login", async () => {
+    fake.claims = { sub: USER, aal: "aal1" };
+    fake.roleResult = { data: { role: "admin" }, error: null };
+    const { requireAdmin } = await loadSession();
+    await expect(requireAdmin()).rejects.toMatchObject({ code: "FORBIDDEN" });
   });
 });
 

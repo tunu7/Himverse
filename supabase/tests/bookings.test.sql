@@ -62,7 +62,7 @@ select throws_ok($$ select id from public.bookings $$, '42501', null, 'anon cann
 -- Traveler T requests ------------------------------------------------------------------
 reset role;
 set local role authenticated;
-select set_config('request.jwt.claims', '{"sub":"11111111-1111-4111-8111-111111111111","role":"authenticated"}', true);
+select set_config('request.jwt.claims', '{"sub":"11111111-1111-4111-8111-111111111111","role":"authenticated","aal":"aal2"}', true);
 
 select results_eq(
   $$ select booking_status, replayed from public.request_booking('50000000-0000-4000-8000-000000000001', 2, 0, '+91 98765 43210', 'Vegetarian', 'f0000000-0000-4000-8000-000000000001') $$,
@@ -116,7 +116,7 @@ select throws_ok(
   'P0002', null, 'travelers cannot confirm their own booking');
 
 -- Traveler T2 ----------------------------------------------------------------------------
-select set_config('request.jwt.claims', '{"sub":"22222222-2222-4222-8222-222222222222","role":"authenticated"}', true);
+select set_config('request.jwt.claims', '{"sub":"22222222-2222-4222-8222-222222222222","role":"authenticated","aal":"aal2"}', true);
 select is_empty($$ select 1 from public.bookings $$, 'another traveler cannot see the booking');
 select is_empty($$ select 1 from public.booking_events $$, 'another traveler cannot see its history');
 select throws_ok($$ select public.cancel_booking(current_setting('test.b1')::uuid, null) $$, 'P0002', null, 'another traveler cannot cancel it');
@@ -128,7 +128,7 @@ select set_config('test.b2', (select id::text from public.bookings where idempot
 set local role authenticated;
 
 -- Other provider Q ---------------------------------------------------------------------
-select set_config('request.jwt.claims', '{"sub":"44444444-4444-4444-8444-444444444444","role":"authenticated"}', true);
+select set_config('request.jwt.claims', '{"sub":"44444444-4444-4444-8444-444444444444","role":"authenticated","aal":"aal2"}', true);
 select is_empty($$ select 1 from public.bookings $$, 'another provider cannot see these bookings');
 select throws_ok($$ select public.respond_to_booking(current_setting('test.b1')::uuid, 'confirmed', 1, null) $$, 'P0002', null, 'another provider cannot confirm them');
 select throws_ok(
@@ -139,7 +139,7 @@ select is_empty(
   'another provider cannot change this slot');
 
 -- Provider P ---------------------------------------------------------------------------
-select set_config('request.jwt.claims', '{"sub":"33333333-3333-4333-8333-333333333333","role":"authenticated"}', true);
+select set_config('request.jwt.claims', '{"sub":"33333333-3333-4333-8333-333333333333","role":"authenticated","aal":"aal2"}', true);
 select results_eq(
   $$ select traveler_name, contact_phone from public.bookings order by created_at $$,
   $$ values ('traveler.one'::text, '+91 98765 43210'::text), ('traveler.two'::text, '+91 91234 56789'::text) $$,
@@ -169,10 +169,10 @@ select results_eq(
 
 -- Cancellation ---------------------------------------------------------------------------
 set local role authenticated;
-select set_config('request.jwt.claims', '{"sub":"11111111-1111-4111-8111-111111111111","role":"authenticated"}', true);
+select set_config('request.jwt.claims', '{"sub":"11111111-1111-4111-8111-111111111111","role":"authenticated","aal":"aal2"}', true);
 select is((select public.cancel_booking(current_setting('test.b1')::uuid, 'Plans changed')), 'cancelled'::public.booking_status, 'the traveler cancels a confirmed booking well ahead');
 select throws_ok($$ select public.cancel_booking(current_setting('test.b1')::uuid, null) $$, '55000', null, 'a cancelled booking cannot be cancelled again');
-select set_config('request.jwt.claims', '{"sub":"33333333-3333-4333-8333-333333333333","role":"authenticated"}', true);
+select set_config('request.jwt.claims', '{"sub":"33333333-3333-4333-8333-333333333333","role":"authenticated","aal":"aal2"}', true);
 select is((select public.respond_to_booking(current_setting('test.b2')::uuid, 'confirmed', 200000, null)), 'confirmed'::public.booking_status, 'freed seats can be confirmed for the waiting traveler');
 select throws_ok($$ select public.cancel_booking(current_setting('test.b2')::uuid, null) $$, '22023', null, 'providers must give a reason to cancel');
 select is((select public.cancel_booking(current_setting('test.b2')::uuid, 'Guide unwell')), 'cancelled'::public.booking_status, 'the provider cancels with a reason');
@@ -185,7 +185,7 @@ select results_eq(
 
 -- 24-hour cancellation window ----------------------------------------------------------
 set local role authenticated;
-select set_config('request.jwt.claims', '{"sub":"11111111-1111-4111-8111-111111111111","role":"authenticated"}', true);
+select set_config('request.jwt.claims', '{"sub":"11111111-1111-4111-8111-111111111111","role":"authenticated","aal":"aal2"}', true);
 select lives_ok($$ select * from public.request_booking('50000000-0000-4000-8000-000000000007', 1, 0, '+91 98765 43210', '', 'f0000000-0000-4000-8000-000000000007') $$, 'requests close to the start are accepted');
 reset role;
 select set_config('test.b7', (select id::text from public.bookings where idempotency_key = 'f0000000-0000-4000-8000-000000000007'), true);
@@ -194,19 +194,19 @@ select ok(
    from public.bookings b join public.availability_slots s on s.id = b.slot_id where b.id = current_setting('test.b7')::uuid),
   'a request expires at the slot start when that comes before 48 hours');
 set local role authenticated;
-select set_config('request.jwt.claims', '{"sub":"33333333-3333-4333-8333-333333333333","role":"authenticated"}', true);
+select set_config('request.jwt.claims', '{"sub":"33333333-3333-4333-8333-333333333333","role":"authenticated","aal":"aal2"}', true);
 select lives_ok($$ select public.respond_to_booking(current_setting('test.b7')::uuid, 'confirmed', 100000, null) $$, 'the provider confirms the short-notice booking');
-select set_config('request.jwt.claims', '{"sub":"11111111-1111-4111-8111-111111111111","role":"authenticated"}', true);
+select set_config('request.jwt.claims', '{"sub":"11111111-1111-4111-8111-111111111111","role":"authenticated","aal":"aal2"}', true);
 select throws_ok($$ select public.cancel_booking(current_setting('test.b7')::uuid, null) $$, '55000', null, 'travelers cannot cancel within 24 hours of the start');
 
 -- Expiry and completion --------------------------------------------------------------
-select set_config('request.jwt.claims', '{"sub":"22222222-2222-4222-8222-222222222222","role":"authenticated"}', true);
+select set_config('request.jwt.claims', '{"sub":"22222222-2222-4222-8222-222222222222","role":"authenticated","aal":"aal2"}', true);
 select lives_ok($$ select * from public.request_booking('50000000-0000-4000-8000-000000000006', 1, 0, '+91 91234 56789', '', 'f0000000-0000-4000-8000-000000000006') $$, 'a request to provider Q');
 reset role;
 select set_config('test.b6', (select id::text from public.bookings where idempotency_key = 'f0000000-0000-4000-8000-000000000006'), true);
 update public.bookings set request_expires_at = now() - interval '1 minute' where id = current_setting('test.b6')::uuid;
 set local role authenticated;
-select set_config('request.jwt.claims', '{"sub":"44444444-4444-4444-8444-444444444444","role":"authenticated"}', true);
+select set_config('request.jwt.claims', '{"sub":"44444444-4444-4444-8444-444444444444","role":"authenticated","aal":"aal2"}', true);
 select throws_ok($$ select public.respond_to_booking(current_setting('test.b6')::uuid, 'confirmed', 1, null) $$, '55000', null, 'overdue requests cannot be confirmed even before the sweep runs');
 select throws_ok($$ select * from private.sweep_bookings() $$, '42501', null, 'API roles cannot run the sweep');
 reset role;
@@ -220,7 +220,7 @@ select results_eq(
 
 -- Admin --------------------------------------------------------------------------------
 set local role authenticated;
-select set_config('request.jwt.claims', '{"sub":"55555555-5555-4555-8555-555555555555","role":"authenticated"}', true);
+select set_config('request.jwt.claims', '{"sub":"55555555-5555-4555-8555-555555555555","role":"authenticated","aal":"aal2"}', true);
 select is((select count(*) from public.bookings), 4::bigint, 'admins can read all bookings for support');
 
 select * from finish();

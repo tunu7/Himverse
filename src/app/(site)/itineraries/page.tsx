@@ -4,11 +4,11 @@ import { Suspense } from "react";
 import { buttonClass } from "@/components/form-feedback";
 import { LoadingBlock, PageShell } from "@/components/page-shell";
 import { EmptyState } from "@/components/ui";
-import { requireUserForPage } from "@/server/auth/session";
+import { requireAccountForPage } from "@/server/auth/session";
 import { listMyItineraries } from "@/server/itineraries/repository";
 
 async function ItineraryList() {
-  await requireUserForPage("/itineraries");
+  await requireAccountForPage("/itineraries", ["traveller"]);
   const itineraries = await listMyItineraries();
   if (itineraries.length === 0) {
     return (

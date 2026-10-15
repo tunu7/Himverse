@@ -6,7 +6,7 @@ import { LoadingBlock, PageShell } from "@/components/page-shell";
 import { BookingStatusBadge } from "@/features/bookings/components/booking-status";
 import { effectiveStatus, type BookingStatus } from "@/lib/booking-options";
 import { formatSlot } from "@/lib/format";
-import { requireUserForPage } from "@/server/auth/session";
+import { requireAccountForPage } from "@/server/auth/session";
 import { listProviderBookings, type ProviderBooking } from "@/server/bookings/repository";
 
 function Group({
@@ -35,7 +35,7 @@ function Group({
             >
               <div>
                 <Link
-                  href={`/bookings/${b.id}`}
+                  href={`/provider/bookings/${b.id}`}
                   className="font-medium text-fg underline-offset-4 hover:text-accent hover:underline"
                 >
                   {b.experienceTitle}
@@ -59,7 +59,7 @@ function Group({
 }
 
 async function ProviderBookings() {
-  await requireUserForPage("/provider/bookings");
+  await requireAccountForPage("/provider/bookings", ["partner"]);
   await connection();
   const now = new Date();
   const bookings = await listProviderBookings();

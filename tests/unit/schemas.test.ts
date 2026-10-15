@@ -17,6 +17,7 @@ describe("parseInput", () => {
   it("ignores React $ACTION_ fields but rejects other unknown keys", () => {
     const ok = form({
       $ACTION_ID_abc: "",
+      accountType: "traveller",
       email: "a@b.co",
       password: "longenough",
       displayName: "A",
@@ -24,6 +25,7 @@ describe("parseInput", () => {
     expect(parseInput(signUpSchema, ok).email).toBe("a@b.co");
 
     const tampered = form({
+      accountType: "traveller",
       email: "a@b.co",
       password: "longenough",
       displayName: "A",
@@ -32,6 +34,13 @@ describe("parseInput", () => {
     expect(() => parseInput(signUpSchema, tampered)).toThrow(
       expect.objectContaining({ code: "VALIDATION_FAILED" }),
     );
+    // Admin is never self-serve (ADR-0007).
+    expect(() =>
+      parseInput(
+        signUpSchema,
+        form({ accountType: "admin", email: "a@b.co", password: "longenough", displayName: "A" }),
+      ),
+    ).toThrow(expect.objectContaining({ code: "VALIDATION_FAILED" }));
   });
 
   it("reports field errors", () => {

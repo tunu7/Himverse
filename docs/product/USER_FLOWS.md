@@ -1,7 +1,7 @@
 # User Flows (MVP)
 
-Flows describe intended behaviour; none are implemented yet. Each flow lists the states the UI must
-handle explicitly (loading, empty, success, error).
+Flows describe intended behaviour, with their implementation status. Each flow lists the states the UI
+must handle explicitly (loading, empty, success, error). Scope: [MVP_SCOPE](MVP_SCOPE.md).
 
 ## T1 — Discover destinations and experiences (traveler, anonymous or signed in) — implemented (Phase 2)
 
@@ -37,29 +37,31 @@ States: progress while generating; partial failure ("we couldn't fit X"); hard f
 
 ## T4 — Request a booking — implemented (Phase 4; see BOOKING_POLICY.md)
 
-1. From an itinerary item or experience page, traveler selects date and group size.
+1. From an experience page, traveler selects any future date (published dates shown as hints) and group
+   size; or, from an itinerary, uses **Book this trip** to request every item on its day at once.
 2. Server checks availability from authoritative data and creates a booking request with an
    idempotency key (double-click/retry safe).
 3. Status shows **Requested — awaiting provider confirmation**.
 4. Provider confirms or declines (P2). Traveler is notified and sees the updated status.
-   Requests not answered in time expire (window: open question).
+   Requests not answered within 48 h (or by the start, if sooner) expire.
 
-## T5 — View trip
+## T5 — View trip — implemented (itineraries and bookings)
 
 Traveler sees itineraries, booking statuses, provider contact details for confirmed bookings, and
 essential trip information (permit guidance scope is an open question in the [PRD](PRD.md#open-questions)).
 
-## P1 — Provider onboarding
+## P1 — Partner onboarding — implemented (Phase 1)
 
-Provider signs up, submits profile and verification details; admin verifies (A1). Unverified providers
-cannot publish experiences.
+Partner signs up in Tourism partner mode, submits profile and verification details, and lands in the
+partner portal; admin verifies (A1). Unverified partners cannot publish experiences.
+_(planned)_ TOTP 2-step sign-in; listing types guides, accommodation and transport.
 
-## P2 — Provider manages bookings — implemented (Phase 4)
+## P2 — Partner manages bookings — implemented (Phase 4)
 
 Provider sees incoming requests for their experiences only, confirms or declines with optional note,
-and manages availability.
+manages availability, and can switch booking requests off.
 
-## A1 — Admin verification and curation
+## A1 — Admin verification and curation — implemented (admin console)
 
 Admin reviews provider submissions, marks providers verified, and publishes/unpublishes experiences.
 All admin actions are audit-logged.

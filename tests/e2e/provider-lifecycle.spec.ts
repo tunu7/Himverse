@@ -4,6 +4,8 @@ import { execFileSync } from "node:child_process";
 // (React <Activity>), so test-id lookups only match visible elements.
 import { expect, type Page, test } from "@playwright/test";
 
+import { passTwoStep, setUpTwoStep, signUp } from "./support";
+
 // Critical journey: apply → admin verifies → provider publishes → visible on /explore →
 // admin suspends → hidden. Admin is granted the way the runbook does it (database owner,
 // by Account ID), against the LOCAL stack only (`--local`), and revoked afterwards.
@@ -40,16 +42,6 @@ function localSql(sql: string): unknown[] {
   throw new Error(`Unexpected supabase db query output: ${out.slice(0, 200)}`);
 }
 
-async function signUp(page: Page, email: string, name: string) {
-  await page.context().clearCookies();
-  await page.goto("/sign-up");
-  await page.getByLabel("Your name").fill(name);
-  await page.getByLabel("Email").fill(email);
-  await page.getByLabel(/Password/).fill(password);
-  await page.getByRole("button", { name: "Create account" }).click();
-  await expect(page).toHaveURL(/\/account$/);
-}
-
 /** Sign-in without `next` lands by role: admins /admin, partners /provider, else /account. */
 async function signIn(page: Page, email: string, landing: RegExp) {
   await page.context().clearCookies();
@@ -57,7 +49,8 @@ async function signIn(page: Page, email: string, landing: RegExp) {
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Password").fill(password);
   await page.getByRole("button", { name: "Sign in" }).click();
-  await expect(page).toHaveURL(landing);
+  // Partners and admins pass two-step login (ADR-0007).
+  await passTwoStep(page, email, landing);
 }
 
 async function visitExploreAnonymously(page: Page) {
@@ -77,7 +70,7 @@ test("provider lifecycle: verify, publish, suspend", async ({ page }) => {
   test.setTimeout(120_000);
 
   // Provider applies and submits for review.
-  await signUp(page, providerEmail, "Lifecycle Provider");
+  await signUp(page, providerEmail, "Lifecycle Provider", "partner");
   await page.goto("/provider");
   await page.getByLabel("Business name").fill(providerName);
   await page.getByLabel(/Short web address/).fill(`lifecycle-treks-${run}`);
@@ -90,7 +83,7 @@ test("provider lifecycle: verify, publish, suspend", async ({ page }) => {
   );
 
   // A new account is not an admin.
-  await signUp(page, adminEmail, "Lifecycle Admin");
+  await signUp(page, adminEmail, "Lifecycle Admin", "traveller");
   await page.goto("/admin/providers");
   await expect(page.getByText("This page could not be found.")).toBeVisible();
 
@@ -107,8 +100,9 @@ test("provider lifecycle: verify, publish, suspend", async ({ page }) => {
   );
   expect(granted).toHaveLength(1);
 
-  // Role is read live: no re-login needed.
+  // Role is read live: no re-login needed; admins set up two-step login first.
   await page.goto("/admin/providers");
+  await setUpTwoStep(page, adminEmail, /\/admin\/providers$/);
   const card = page.getByRole("listitem").filter({ hasText: providerName });
   await expect(card).toContainText("Pending review");
   await expect(card).toContainText("Lifecycle Treks Pvt Ltd");

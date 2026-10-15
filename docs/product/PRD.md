@@ -1,6 +1,6 @@
 # Product Requirements — Himverse.AI MVP
 
-Status: Draft v0.1 (2026-10-12). Owner: Product. Related: [MVP_SCOPE](MVP_SCOPE.md), [USER_FLOWS](USER_FLOWS.md).
+Status: v0.2 (2026-10-15). Owner: Product. Related: [MVP_SCOPE](MVP_SCOPE.md), [USER_FLOWS](USER_FLOWS.md).
 
 ## Problem
 
@@ -20,7 +20,7 @@ invent it.
 | Persona            | Need                                                                   |
 | ------------------ | ---------------------------------------------------------------------- |
 | Traveler           | Discover experiences, get a realistic itinerary, book with confidence. |
-| Provider           | List experiences, manage availability, receive and confirm bookings.   |
+| Partner (provider) | List experiences and services, receive and confirm bookings.           |
 | Himverse admin/ops | Verify providers, curate content, handle disputes and support.         |
 
 ## Goals (MVP)
@@ -35,8 +35,9 @@ invent it.
 
 ## Non-goals (MVP)
 
-Flights, trains, and generic hotel inventory; regions beyond Arunachal Pradesh; native mobile apps;
-provider payouts automation; public reviews (post-MVP — see [ROADMAP](ROADMAP.md)).
+Flights, trains, public buses and hotel aggregators (partner-run stays and transport are in scope);
+regions beyond Arunachal Pradesh; native mobile apps; online payments; partner payouts; public reviews
+(post-MVP — see [ROADMAP](ROADMAP.md)).
 
 ## Functional requirements
 
@@ -47,7 +48,9 @@ provider payouts automation; public reviews (post-MVP — see [ROADMAP](ROADMAP.
 - **Refinement:** modify budget, duration, pace, interests, swap/remove items; preserve history of versions.
 - **Booking:** request → pending → confirmed / declined / cancelled / expired; idempotent creation;
   traveler never sees "confirmed" before authoritative confirmation.
-- **Accounts:** email-based sign-in via Supabase Auth; roles traveler, provider, admin.
+- **Accounts:** Supabase Auth with email/password and Google; one role per account — traveller, partner
+  or admin ([MVP_SCOPE](MVP_SCOPE.md#roles-and-terminology)); TOTP 2-step for admins and partners _(planned)_.
+- **Listing types:** experiences today; guides, accommodation and transport _(planned)_.
 
 ## Non-functional requirements
 
@@ -65,9 +68,9 @@ a booking request; provider confirmation time; booking error/duplicate rate (tar
 
 ## Open questions
 
-- Payment provider and whether MVP takes payment online or confirms bookings with pay-at-provider.
+- Payments: MVP takes none (requests only). Razorpay is proposed for later ([ADR-0005](../decisions/ADR-0005-PAYMENTS-RAZORPAY.md)).
 - Provider verification process (documents, field visits) and who performs it.
 - Inner Line Permit (ILP/PAP) guidance: informational only, or integrated assistance?
-- AI model/provider choice and cost ceiling per itinerary (see [AI_ARCHITECTURE](../ai/AI_ARCHITECTURE.md)).
+- AI cost ceiling and quota per itinerary on Ollama Cloud (model decided: [ADR-0006](../decisions/ADR-0006-SWITCHABLE-AI-PROVIDER-OLLAMA.md)).
 - Languages beyond English (Hindi? local languages?) and currency display (INR only?).
 - Cancellation and refund policy ownership (platform vs provider).
