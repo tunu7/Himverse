@@ -16,13 +16,15 @@ yet.** Sentry (errors) is planned via the Vercel Marketplace (Phase 5, Workstrea
 
 Events in use:
 
-| Event                                    | Level | Meaning                                                        |
-| ---------------------------------------- | ----- | -------------------------------------------------------------- |
-| `auth.role_lookup_failed`                | error | Admin role check failed; the user is treated as non-admin      |
-| `itineraries.global_daily_limit_reached` | error | Platform AI cap hit; generation refused until the next IST day |
-| `itineraries.log_failed`                 | error | Finishing a generation log failed (result still returned)      |
-| `health.database_unreachable`            | error | `/api/health` couldn't read from the database                  |
-| `<feature>.<action>_failed`              | error | Unexpected error in a Server Action (`toLoggedFailure`)        |
+| Event                                                                                     | Level | Meaning                                                              |
+| ----------------------------------------------------------------------------------------- | ----- | -------------------------------------------------------------------- |
+| `auth.role_lookup_failed`                                                                 | error | Admin role check failed; the user is treated as non-admin            |
+| `itineraries.global_daily_limit_reached`                                                  | error | Platform AI cap hit; generation refused until the next IST day       |
+| `itineraries.log_failed`                                                                  | error | Finishing a generation log failed (result still returned)            |
+| `health.database_unreachable`                                                             | error | `/api/health` couldn't read from the database                        |
+| `account.deleted`                                                                         | info  | A user deleted their account (user ID only)                          |
+| `bookings.alerts_failed` / `bookings.partner_alerts_failed` / `bookings.mark_seen_failed` | error | In-app booking alerts couldn't be read or cleared (pages still work) |
+| `<feature>.<action>_failed`                                                               | error | Unexpected error in a Server Action (`toLoggedFailure`)              |
 
 ## Health check
 
@@ -80,6 +82,17 @@ listing and search at ~120–150 ms. That cost grows linearly with the number of
 RLS evaluates two visibility functions per row and each page also counts matches. Revisit when
 published experiences exceed ~3,000 or listing p95 exceeds 300 ms: options are a maintained
 `is_public` column with a partial index, or capping the exact count.
+
+## Production page weight (2026-10-15)
+
+Measured on `himverse.vercel.app`, first visit, compressed:
+
+- **Download:** about 180–215 KB of JavaScript and 14 KB of CSS; HTML is 7–19 KB.
+- **Time to first byte:** 0.40–0.56 s.
+
+The largest chunks are the React and Next.js runtime, and the Supabase client is not in the browser
+bundle. On a slow 4G link (about 200 KB/s), the first load takes about 1.2 s of transfer. Revisit
+when images arrive.
 
 ## Planned
 

@@ -318,7 +318,8 @@ export async function listProviderBookings(): Promise<ProviderBooking[]> {
       "provider_id",
       memberships.map((m) => m.provider_id),
     )
-    .neq("traveler_id", user.id)
+    // Not their own trips; anonymised bookings (no traveller) stay visible.
+    .or(`traveler_id.is.null,traveler_id.neq.${user.id}`)
     // Old trips would otherwise fill the page (oldest first, capped).
     .gte("slot_starts_on", istDate(new Date(), -30))
     .order("slot_starts_on", { ascending: true })

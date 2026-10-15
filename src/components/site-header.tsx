@@ -6,8 +6,9 @@ import { BrandLogo } from "@/components/brand";
 import { MobileMenu, MobileNav, NavLinkItems, NavLinks } from "@/components/nav-links";
 import { signOut } from "@/features/auth/actions";
 import { type AccountType, getCurrentAccount } from "@/server/auth/session";
+import { getMyBookingUpdates, getPartnerAlerts } from "@/server/bookings/alerts";
 
-type MenuLink = { href: string; label: string; tone?: "accent" };
+type MenuLink = { href: string; label: string; tone?: "accent"; count?: number };
 
 /** Each account type sees only its own area (ADR-0007). */
 const MENU: Record<AccountType | "untyped", readonly MenuLink[]> = {
@@ -49,12 +50,19 @@ async function AuthLinks() {
       </span>
     );
   }
+  // Alert counts: traveller booking updates, or partner requests awaiting a reply.
+  const counts: Record<string, number> = {};
+  if (account.accountType === "traveller") {
+    counts["/bookings"] = (await getMyBookingUpdates()).size;
+  } else if (account.accountType === "partner") {
+    counts["/provider/bookings"] = (await getPartnerAlerts()).needsResponse;
+  }
+  const links = MENU[account.accountType ?? "untyped"].map((link) => ({
+    ...link,
+    count: counts[link.href],
+  }));
   return (
-    <AccountMenu
-      initial={(account.email ?? "?").slice(0, 1)}
-      links={MENU[account.accountType ?? "untyped"]}
-      signOut={signOut}
-    />
+    <AccountMenu initial={(account.email ?? "?").slice(0, 1)} links={links} signOut={signOut} />
   );
 }
 

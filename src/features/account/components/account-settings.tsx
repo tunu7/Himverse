@@ -1,10 +1,12 @@
 import { cardClass } from "@/components/form-feedback";
 import { ChangePasswordForm } from "@/features/auth/components/password-forms";
+import { reauthMethodFor } from "@/server/auth/account-deletion";
 import { getAssurance } from "@/server/auth/assurance";
 import { hasPasswordSignIn } from "@/server/auth/passwords";
 import type { AccountType } from "@/server/auth/session";
 import { getMyProfile } from "@/server/profiles/profiles";
 
+import { DeleteAccountForm } from "./delete-account-form";
 import { ProfileForm } from "./profile-form";
 
 const TYPE_LABELS: Record<AccountType, string> = {
@@ -15,10 +17,11 @@ const TYPE_LABELS: Record<AccountType, string> = {
 
 /** Profile and sign-in settings, shared by every area's account page. */
 export async function AccountSettings({ accountType }: { accountType: AccountType }) {
-  const [profile, hasPassword, assurance] = await Promise.all([
+  const [profile, hasPassword, assurance, reauth] = await Promise.all([
     getMyProfile(),
     hasPasswordSignIn(),
     getAssurance(),
+    reauthMethodFor(),
   ]);
   return (
     <>
@@ -68,6 +71,12 @@ export async function AccountSettings({ accountType }: { accountType: AccountTyp
           </p>
         )}
       </section>
+
+      {accountType !== "admin" ? (
+        <div className="lg:col-span-2">
+          <DeleteAccountForm reauth={reauth} accountType={accountType} />
+        </div>
+      ) : null}
     </>
   );
 }

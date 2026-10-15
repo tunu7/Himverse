@@ -33,7 +33,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           />
         </svg>
         <Link href="/" className="group relative animate-fade text-lg">
-          <BrandLogo className="[&>span:first-child]:bg-white [&>span:first-child]:text-ink" />
+          <BrandLogo className="[&_.text-accent]:text-emerald-300 [&>span:first-child]:bg-white [&>span:first-child]:text-ink" />
         </Link>
         <div className="relative flex animate-rise flex-col gap-8">
           <p className="max-w-md text-4xl leading-[1.1] font-semibold tracking-[-0.03em]">

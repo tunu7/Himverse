@@ -46,7 +46,7 @@ export function PortalShell({
             <BrandLogo
               className={
                 area === "admin"
-                  ? "[&>span:first-child]:bg-white [&>span:first-child]:text-ink"
+                  ? "[&_.text-accent]:text-emerald-300 [&>span:first-child]:bg-white [&>span:first-child]:text-ink"
                   : ""
               }
             />

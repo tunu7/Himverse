@@ -8,9 +8,11 @@ import { LoadingBlock, PageShell } from "@/components/page-shell";
 import { EmptyState } from "@/components/ui";
 import { TravellerTabs } from "@/features/account/components/traveller-tabs";
 import { BookingStatusBadge } from "@/features/bookings/components/booking-status";
+import { MarkBookingsSeen } from "@/features/bookings/components/mark-bookings-seen";
 import { effectiveStatus, istDate } from "@/lib/booking-options";
 import { formatBookingDates } from "@/lib/format";
 import { requireAccountForPage } from "@/server/auth/session";
+import { getMyBookingUpdates } from "@/server/bookings/alerts";
 import { listMyBookings } from "@/server/bookings/repository";
 
 const VIEWS = {
@@ -29,7 +31,8 @@ async function BookingList({ searchParams }: PageProps<"/bookings">) {
   const view: View = typeof raw === "string" && raw in VIEWS ? (raw as View) : "all";
   const now = new Date();
   const today = istDate(now);
-  const all = (await listMyBookings()).map((b) => ({
+  const [mine, updated] = await Promise.all([listMyBookings(), getMyBookingUpdates()]);
+  const all = mine.map((b) => ({
     ...b,
     effective: effectiveStatus(b.status, b.requestExpiresAt, now),
   }));
@@ -67,6 +70,20 @@ async function BookingList({ searchParams }: PageProps<"/bookings">) {
   }
   return (
     <div className="flex flex-col gap-4">
+      {updated.size > 0 ? (
+        <>
+          <p
+            role="status"
+            data-testid="booking-updates"
+            className="rounded-xl border border-accent/30 bg-accent-soft px-4 py-3 text-sm text-accent-soft-fg"
+          >
+            {updated.size === 1
+              ? "1 booking has an update since your last visit."
+              : `${updated.size} bookings have updates since your last visit.`}
+          </p>
+          <MarkBookingsSeen />
+        </>
+      ) : null}
       {tabs}
       {bookings.length === 0 ? (
         <p className="rounded-2xl border border-dashed border-line-strong p-6 text-sm text-muted">
@@ -86,6 +103,11 @@ async function BookingList({ searchParams }: PageProps<"/bookings">) {
               >
                 {b.experienceTitle}
               </Link>
+              {updated.has(b.id) ? (
+                <span className="ml-2 rounded-full bg-accent-soft px-2 py-0.5 text-xs font-medium text-accent-soft-fg">
+                  Updated
+                </span>
+              ) : null}
               <p className="text-sm text-muted">
                 {formatBookingDates(b.slotStartsOn, b.slotStartTime, b.endsOn, b.listingType)} ·{" "}
                 {b.partySize} {b.partySize === 1 ? "person" : "people"} · {b.reference}

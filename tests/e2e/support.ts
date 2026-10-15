@@ -65,6 +65,13 @@ export function totp(secret: string, now = Date.now()): string {
 /** Authenticator secrets of accounts created in this test run, by email. */
 const secrets = new Map<string, string>();
 
+/** The current authenticator code for an account set up in this run. */
+export function currentTotp(email: string): string {
+  const secret = secrets.get(email);
+  if (!secret) throw new Error(`No authenticator secret recorded for ${email}`);
+  return totp(secret);
+}
+
 /** On /mfa/setup: scan (read the key), enter the first code, land on `landing`. */
 export async function setUpTwoStep(page: Page, email: string, landing: RegExp) {
   await expect(page).toHaveURL(/\/mfa\/setup/);

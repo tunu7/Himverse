@@ -43,3 +43,5 @@ bookings migration and `src/lib/booking-options.ts` together.
 10. **Contact phone retention:** the phone number given at booking stays on the booking indefinitely and
     is visible to the provider's members. How long should it be kept after the trip, and should it be
     hidden once the booking is closed? Needs the DPDP review. (Security review L3, Phase 5.)
+    _Partly answered (ADR-0009):_ deleting the account clears the phone, name and note from every
+    booking; retention for travellers who keep their account is still open.

@@ -61,7 +61,7 @@ async function ReviewQueue({ searchParams }: PageProps<"/admin/providers">) {
                   : "border-line-strong text-fg-soft hover:bg-surface-muted"
               }`}
             >
-              {f.label} <span className="text-subtle">({n})</span>
+              {f.label} <span className="font-normal">({n})</span>
             </Link>
           );
         })}

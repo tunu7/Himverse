@@ -103,7 +103,9 @@ export async function BookingDetail({
         {!booking.isTraveler ? (
           <div>
             <dt className="text-xs font-medium tracking-wide text-subtle uppercase">Contact</dt>
-            <dd className="font-medium">{booking.contactPhone}</dd>
+            <dd className="font-medium">
+              {booking.contactPhone || "Not available (the traveller deleted their account)"}
+            </dd>
           </div>
         ) : null}
         {status === "requested" ? (

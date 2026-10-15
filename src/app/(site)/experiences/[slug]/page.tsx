@@ -103,7 +103,7 @@ async function ExperienceDetail({ params }: PageProps<"/experiences/[slug]">) {
           <dd className="font-medium">
             <Link
               href={`/destinations/${experience.destination.slug}`}
-              className="font-medium text-accent underline-offset-4 hover:underline"
+              className="font-medium text-accent underline underline-offset-4"
             >
               {experience.destination.name}
             </Link>

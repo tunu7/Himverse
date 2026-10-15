@@ -24,6 +24,7 @@ Defined and documented in [.env.example](../../.env.example); validated in `src/
 | `NEXT_PUBLIC_SUPABASE_URL`             | Public   | Supabase API URL                                                                                                  |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Public   | Publishable (formerly anon) key; RLS applies                                                                      |
 | `NEXT_PUBLIC_AUTH_GOOGLE_ENABLED`      | Public   | `false` (default). `true` shows "Continue with Google" (set up the provider first)                                |
+| `NEXT_PUBLIC_SUPPORT_EMAIL`            | Public   | Optional. Support address shown on `/privacy` and `/terms`                                                        |
 | `SUPABASE_SECRET_KEY`                  | Server   | Secret (formerly service_role) key; bypasses RLS                                                                  |
 | `AI_PROVIDER`                          | Server   | `gateway` (default), `ollama` (free local models, ADR-0006) or `mock` (tests only; see `AI_ALLOW_MOCK`)           |
 | `AI_ALLOW_MOCK`                        | Server   | `false` (default). Mock refused on Vercel production always, and in any production build unless `true` (E2E only) |

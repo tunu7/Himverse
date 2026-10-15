@@ -97,18 +97,15 @@ export async function completePasswordReset(password: string): Promise<void> {
 }
 
 /**
- * Changes the password of a signed-in account after checking the current one.
- * The check signs in on a separate, cookie-less client, so the current
- * session (and its two-step level) is untouched; that check session is then
- * discarded. Signs out every other session.
+ * Checks the signed-in user's current password, limited per account. The
+ * check signs in on a separate, cookie-less client, so the current session
+ * (and its two-step level) is untouched; that check session is then discarded.
  */
-export async function changePassword(currentPassword: string, password: string): Promise<void> {
-  const user = await requireUser();
-  // Accounts with two-step login change passwords only after the second step.
-  const assurance = await getAssurance();
-  if (!assurance || (assurance.hasVerifiedTotp && assurance.aal !== "aal2")) {
-    throw new AppError("FORBIDDEN", "Verify your two-step login first.");
-  }
+export async function verifyCurrentPassword(
+  user: { id: string; email: string | null },
+  currentPassword: string,
+  field = "currentPassword",
+): Promise<void> {
   if (!user.email || !(await hasPasswordSignIn())) {
     throw new AppError("FORBIDDEN", "This account signs in with Google and has no password.");
   }
@@ -125,11 +122,53 @@ export async function changePassword(currentPassword: string, password: string):
     await recordFailedAttempt("current_password", user.id);
     throw new AppError("VALIDATION_FAILED", "Please check the highlighted fields.", {
       cause: checkError,
-      fieldErrors: { currentPassword: ["That isn't your current password."] },
+      fieldErrors: { [field]: ["That isn't your current password."] },
     });
   }
   const { error: discardError } = await checker.auth.signOut({ scope: "local" });
   if (discardError) logger.warn("auth.check_session_discard_failed", { code: discardError.code });
+}
+
+/**
+ * Signs the current session in again with the password, so its sign-in time is
+ * fresh (the database checks it before irreversible actions such as deleting
+ * the account). Only for accounts without two-step login: a new password
+ * sign-in would drop a two-step session back to the first step.
+ */
+export async function reauthenticateWithPassword(
+  user: { id: string; email: string | null },
+  password: string,
+): Promise<void> {
+  if (!user.email) {
+    throw new AppError("FORBIDDEN", "This account signs in with Google and has no password.");
+  }
+  await assertAttemptAllowed("current_password");
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase.auth.signInWithPassword({ email: user.email, password });
+  if (error || data.user?.id !== user.id) {
+    if (error && isRateLimited(error)) {
+      throw new AppError("RATE_LIMITED", RATE_LIMITED, { cause: error });
+    }
+    await recordFailedAttempt("current_password", user.id);
+    throw new AppError("VALIDATION_FAILED", "Please check the highlighted fields.", {
+      cause: error ?? undefined,
+      fieldErrors: { password: ["That isn't your current password."] },
+    });
+  }
+}
+
+/**
+ * Changes the password of a signed-in account after checking the current one.
+ * Signs out every other session.
+ */
+export async function changePassword(currentPassword: string, password: string): Promise<void> {
+  const user = await requireUser();
+  // Accounts with two-step login change passwords only after the second step.
+  const assurance = await getAssurance();
+  if (!assurance || (assurance.hasVerifiedTotp && assurance.aal !== "aal2")) {
+    throw new AppError("FORBIDDEN", "Verify your two-step login first.");
+  }
+  await verifyCurrentPassword(user, currentPassword);
 
   const supabase = await createSupabaseServerClient();
   const { error } = await supabase.auth.updateUser({ password });

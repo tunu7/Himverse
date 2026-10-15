@@ -10,8 +10,11 @@ Launch scope: discovery, AI itineraries and booking **requests** (no online paym
 
 - [ ] CI green on the release commit: format, lint, typecheck, unit, pgTAP, integration, types drift,
       build, E2E.
-- [ ] `npm audit --omit=dev` reviewed; no unaccepted production advisories.
-- [ ] Secret scan of the repository and the browser bundle clean.
+- [x] `npm audit --omit=dev` reviewed; no unaccepted production advisories. (2026-10-15: 0 production
+      advisories; 5 high in dev-only lint tooling (`braces` via `eslint-config-next`), accepted: no
+      production exposure, fix would downgrade Next's lint config.)
+- [x] Secret scan of the repository and the browser bundle clean. (2026-10-15; only a deliberately
+      fake value in `tests/unit/env.test.ts`.)
 
 ## 2. Environments (Workstream B)
 
@@ -41,12 +44,14 @@ Launch scope: discovery, AI itineraries and booking **requests** (no online paym
 ## 4. Notifications (blocker for booking requests)
 
 - [ ] Providers are told about new requests and travellers about confirmations, declines and expiries
-      (email via Resend). Without this, requests silently expire after 48 h.
+      (email via Resend). Without this, requests silently expire after 48 h. _In-app alerts are done
+      (ADR-0009): a partner-portal bar and menu counts, traveller "updated" labels. Email still needs a
+      sending domain._
 
 ## 5. Observability and operations
 
 - [ ] Error tracking (Sentry) receiving server and client errors with release tags; CSP `connect-src`
-      updated.
+      updated. _Waiting on the owner to accept the Sentry terms in the Vercel Marketplace._
 - [ ] Uptime monitor on `/api/health` alerting the on-call owner.
 - [ ] Monitoring SQL from [OBSERVABILITY](../engineering/OBSERVABILITY.md) run on staging; owner and
       cadence agreed.
@@ -58,8 +63,11 @@ Launch scope: discovery, AI itineraries and booking **requests** (no online paym
 - [ ] Production on a plan with daily backups; PITR enabled; RPO/RTO agreed.
 - [ ] Restore rehearsed on staging ([BACKUP_AND_RESTORE](BACKUP_AND_RESTORE.md)).
 - [ ] Privacy policy and terms published (DPDP Act 2023 review), including AI-generated content and
-      booking-request disclaimers.
-- [ ] Account deletion and data-access request process (at least manual, documented).
+      booking-request disclaimers. _`/privacy` and `/terms` are published and describe how the platform
+      works today; legal review is still needed. Set `NEXT_PUBLIC_SUPPORT_EMAIL` for the contact line._
+- [x] Account deletion and data-access request process (at least manual, documented). Self-serve
+      deletion in account settings (ADR-0009); data access: the account, bookings and trips pages show
+      everything held about the user.
 - [ ] Contact-phone retention decided (BOOKING_POLICY question 10).
 
 ## 7. Verification on staging

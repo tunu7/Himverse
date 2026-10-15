@@ -11,11 +11,13 @@ building; anything not listed there needs the owner's approval. Status and next 
 
 ## Current state (2026-10-15)
 
-- **Built:** discovery, AI itineraries, booking requests (any date, whole trip, partner switch), partner
-  portal `/provider`, admin console `/admin`, email + Google auth. Production is live on Vercel + Supabase
-  with sample content; no staging project yet.
-- **Planned next (Phase 6):** one role per account enforced in the DB, password reset/change, resend
-  confirmation, TOTP for admins and partners, partner listing types (guides, accommodation, transport).
+- **Built:** discovery, AI itineraries (with stays and transport), booking requests (any date, whole
+  trip, partner switch), listing types (experience, guide, stay, transport — ADR-0008), one role per
+  account (ADR-0007), password reset/change, TOTP for admins and partners, partner portal `/provider`,
+  admin console `/admin`, account deletion and in-app booking alerts (ADR-0009), privacy/terms pages,
+  automated a11y checks. Production is live on Vercel + Supabase with sample content; no staging yet.
+- **Remaining for launch:** [RELEASE_CHECKLIST](docs/operations/RELEASE_CHECKLIST.md) — Sentry, email
+  notifications (needs a domain), CAPTCHA, staging, legal review, sample content removal.
 - **Not in MVP:** online payments (ADR-0005 proposed only), reviews, notifications, other regions.
 
 ## Roles and terms

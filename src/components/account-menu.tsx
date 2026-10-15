@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRef } from "react";
 
-type MenuLink = { href: string; label: string; tone?: "accent" };
+type MenuLink = { href: string; label: string; tone?: "accent"; count?: number };
 
 /**
  * Signed-in account menu. A native <details> (works without JavaScript); links
@@ -20,6 +20,7 @@ export function AccountMenu({
 }) {
   const ref = useRef<HTMLDetailsElement>(null);
   const close = () => ref.current?.removeAttribute("open");
+  const alerts = links.reduce((sum, link) => sum + (link.count ?? 0), 0);
   return (
     <details ref={ref} className="group relative">
       <summary className="flex cursor-pointer list-none items-center gap-2 rounded-full border border-line bg-surface py-1 pr-2.5 pl-1 text-fg transition duration-200 hover:border-line-strong hover:shadow-sm [&::-webkit-details-marker]:hidden">
@@ -30,6 +31,15 @@ export function AccountMenu({
           {initial}
         </span>
         <span className="text-sm font-medium">Account</span>
+        {alerts > 0 ? (
+          <span
+            data-testid="account-alerts"
+            className="flex min-w-5 items-center justify-center rounded-full bg-accent px-1.5 text-xs font-semibold text-on-accent"
+          >
+            {alerts}
+            <span className="sr-only"> {alerts === 1 ? "update" : "updates"}</span>
+          </span>
+        ) : null}
         <svg
           viewBox="0 0 20 20"
           aria-hidden="true"
@@ -49,6 +59,12 @@ export function AccountMenu({
             }`}
           >
             {link.label}
+            {link.count ? (
+              <span className="rounded-full bg-accent-soft px-2 py-0.5 text-xs font-semibold text-accent-soft-fg">
+                {link.count}
+                <span className="sr-only"> new</span>
+              </span>
+            ) : null}
           </Link>
         ))}
         <form action={signOut} className="mt-1 border-t border-line pt-1">

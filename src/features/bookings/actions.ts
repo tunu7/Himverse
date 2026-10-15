@@ -7,6 +7,7 @@ import { type ActionResult, AppError, ok, toLoggedFailure } from "@/lib/errors";
 import { istDate, MAX_BOOKING_DAYS_AHEAD } from "@/lib/booking-options";
 import { parseInput } from "@/lib/validation";
 import { requireAccount } from "@/server/auth/session";
+import { markBookingsSeen } from "@/server/bookings/alerts";
 import {
   cancelBooking,
   createSlot,
@@ -191,5 +192,16 @@ export async function setSlotStatusAction(
     return ok({ done: true });
   } catch (error) {
     return toLoggedFailure("bookings.slot_status_failed", error);
+  }
+}
+
+/** The traveller opened their bookings: clear the "updated" alerts (no input). */
+export async function markBookingsSeenAction(): Promise<void> {
+  try {
+    await requireAccount(["traveller"]);
+    await markBookingsSeen();
+  } catch (error) {
+    // An alert that stays a little longer is harmless; never surface this.
+    toLoggedFailure("bookings.mark_seen_failed", error);
   }
 }

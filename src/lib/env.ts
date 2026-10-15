@@ -16,6 +16,8 @@ const publicEnvSchema = z.object({
   // Shows "Continue with Google". Enable only after the Google provider is
   // configured in Supabase Auth (docs/operations/ENVIRONMENTS.md).
   NEXT_PUBLIC_AUTH_GOOGLE_ENABLED: z.enum(["true", "false"]).default("false"),
+  // Shown on the privacy and terms pages when set.
+  NEXT_PUBLIC_SUPPORT_EMAIL: z.email().optional(),
 });
 
 const serverEnvSchema = z.object({
@@ -183,6 +185,7 @@ export function getPublicEnv(): PublicEnv {
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
     NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
     NEXT_PUBLIC_AUTH_GOOGLE_ENABLED: process.env.NEXT_PUBLIC_AUTH_GOOGLE_ENABLED || undefined,
+    NEXT_PUBLIC_SUPPORT_EMAIL: process.env.NEXT_PUBLIC_SUPPORT_EMAIL || undefined,
   });
   return cachedPublicEnv;
 }

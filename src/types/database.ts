@@ -65,14 +65,14 @@ isOneToOne: false
                   ]
                 },"bookings": {
                   Row: {
-                    "adults": number,"cancellation_reason": string | null,"cancelled_by": Database["public"]['Enums']["booking_actor"] | null,"children": number,"confirmed_total_minor": number | null,"contact_phone": string,"created_at": string,"currency": string,"ends_on": string | null,"estimated_total_minor": number | null,"experience_id": string,"experience_title": string,"id": string,"idempotency_key": string,"party_size": number | null,"pickup_note": string,"provider_id": string,"provider_note": string | null,"reference": string,"request_expires_at": string,"slot_id": string | null,"slot_start_time": string | null,"slot_starts_on": string,"status": Database["public"]['Enums']["booking_status"],"traveler_id": string,"traveler_name": string,"traveler_note": string,"units": number,"updated_at": string
+                    "adults": number,"cancellation_reason": string | null,"cancelled_by": Database["public"]['Enums']["booking_actor"] | null,"children": number,"confirmed_total_minor": number | null,"contact_phone": string,"created_at": string,"currency": string,"ends_on": string | null,"estimated_total_minor": number | null,"experience_id": string,"experience_title": string,"id": string,"idempotency_key": string,"party_size": number | null,"pickup_note": string,"provider_id": string,"provider_note": string | null,"reference": string,"request_expires_at": string,"slot_id": string | null,"slot_start_time": string | null,"slot_starts_on": string,"status": Database["public"]['Enums']["booking_status"],"traveler_id": string | null,"traveler_name": string,"traveler_note": string,"units": number,"updated_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "adults": number,"cancellation_reason"?: string | null,"cancelled_by"?: Database["public"]['Enums']["booking_actor"] | null,"children"?: number,"confirmed_total_minor"?: number | null,"contact_phone": string,"created_at"?: string,"currency"?: string,"ends_on"?: string | null,"estimated_total_minor"?: number | null,"experience_id": string,"experience_title": string,"id"?: string,"idempotency_key": string,"party_size"?: never,"pickup_note"?: string,"provider_id": string,"provider_note"?: string | null,"reference": string,"request_expires_at": string,"slot_id"?: string | null,"slot_start_time"?: string | null,"slot_starts_on": string,"status"?: Database["public"]['Enums']["booking_status"],"traveler_id": string,"traveler_name": string,"traveler_note"?: string,"units"?: number,"updated_at"?: string
+                    "adults": number,"cancellation_reason"?: string | null,"cancelled_by"?: Database["public"]['Enums']["booking_actor"] | null,"children"?: number,"confirmed_total_minor"?: number | null,"contact_phone": string,"created_at"?: string,"currency"?: string,"ends_on"?: string | null,"estimated_total_minor"?: number | null,"experience_id": string,"experience_title": string,"id"?: string,"idempotency_key": string,"party_size"?: never,"pickup_note"?: string,"provider_id": string,"provider_note"?: string | null,"reference": string,"request_expires_at": string,"slot_id"?: string | null,"slot_start_time"?: string | null,"slot_starts_on": string,"status"?: Database["public"]['Enums']["booking_status"],"traveler_id"?: string | null,"traveler_name": string,"traveler_note"?: string,"units"?: number,"updated_at"?: string
                   }
                   Update: {
-                    "adults"?: number,"cancellation_reason"?: string | null,"cancelled_by"?: Database["public"]['Enums']["booking_actor"] | null,"children"?: number,"confirmed_total_minor"?: number | null,"contact_phone"?: string,"created_at"?: string,"currency"?: string,"ends_on"?: string | null,"estimated_total_minor"?: number | null,"experience_id"?: string,"experience_title"?: string,"id"?: string,"idempotency_key"?: string,"party_size"?: never,"pickup_note"?: string,"provider_id"?: string,"provider_note"?: string | null,"reference"?: string,"request_expires_at"?: string,"slot_id"?: string | null,"slot_start_time"?: string | null,"slot_starts_on"?: string,"status"?: Database["public"]['Enums']["booking_status"],"traveler_id"?: string,"traveler_name"?: string,"traveler_note"?: string,"units"?: number,"updated_at"?: string
+                    "adults"?: number,"cancellation_reason"?: string | null,"cancelled_by"?: Database["public"]['Enums']["booking_actor"] | null,"children"?: number,"confirmed_total_minor"?: number | null,"contact_phone"?: string,"created_at"?: string,"currency"?: string,"ends_on"?: string | null,"estimated_total_minor"?: number | null,"experience_id"?: string,"experience_title"?: string,"id"?: string,"idempotency_key"?: string,"party_size"?: never,"pickup_note"?: string,"provider_id"?: string,"provider_note"?: string | null,"reference"?: string,"request_expires_at"?: string,"slot_id"?: string | null,"slot_start_time"?: string | null,"slot_starts_on"?: string,"status"?: Database["public"]['Enums']["booking_status"],"traveler_id"?: string | null,"traveler_name"?: string,"traveler_note"?: string,"units"?: number,"updated_at"?: string
                   }
                   Relationships: [
                     {
@@ -235,14 +235,14 @@ isOneToOne: false
                   ]
                 },"profiles": {
                   Row: {
-                    "account_type": Database["public"]['Enums']["account_type"] | null,"created_at": string,"display_name": string,"id": string,"updated_at": string
+                    "account_type": Database["public"]['Enums']["account_type"] | null,"bookings_seen_at": string,"created_at": string,"display_name": string,"id": string,"updated_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "account_type"?: Database["public"]['Enums']["account_type"] | null,"created_at"?: string,"display_name": string,"id": string,"updated_at"?: string
+                    "account_type"?: Database["public"]['Enums']["account_type"] | null,"bookings_seen_at"?: string,"created_at"?: string,"display_name": string,"id": string,"updated_at"?: string
                   }
                   Update: {
-                    "account_type"?: Database["public"]['Enums']["account_type"] | null,"created_at"?: string,"display_name"?: string,"id"?: string,"updated_at"?: string
+                    "account_type"?: Database["public"]['Enums']["account_type"] | null,"bookings_seen_at"?: string,"created_at"?: string,"display_name"?: string,"id"?: string,"updated_at"?: string
                   }
                   Relationships: [
                     
@@ -364,8 +364,24 @@ isOneToOne: false
 "create_provider_application":
 { Args: { "p_contact_email": string,"p_contact_phone": string,"p_description": string,"p_display_name": string,"p_district": string,"p_legal_name": string,"p_slug": string }; Returns: string
                            },
+"delete_my_account":
+{ Args: Record<PropertyKey, never>; Returns: undefined
+                           },
 "finish_itinerary_generation":
 { Args: { "p_error_code": string,"p_generation_id": number,"p_input_tokens": number,"p_latency_ms": number,"p_model": string,"p_outcome": Database["public"]['Enums']["itinerary_generation_outcome"],"p_output_tokens": number,"p_prompt_version": string }; Returns: undefined
+                           },
+"mark_bookings_seen":
+{ Args: Record<PropertyKey, never>; Returns: undefined
+                           },
+"my_booking_updates":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "booking_id": string
+            }[]
+                           },
+"partner_booking_alerts":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "expiring_soon": number,"needs_response": number
+            }[]
                            },
 "record_auth_failure":
 { Args: { "p_kind": string }; Returns: undefined

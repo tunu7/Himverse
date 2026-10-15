@@ -21,7 +21,8 @@ const STYLES = {
   },
   vertical: {
     base: "flex items-center rounded-xl px-3 py-2 text-sm font-medium transition-colors duration-200",
-    admin: ["bg-white/10 text-white", "text-white/60 hover:bg-white/5 hover:text-white"],
+    // The sidebar sits on the page background, not the dark admin bar.
+    admin: ["bg-fg text-canvas", "text-muted hover:bg-surface-muted hover:text-fg"],
     partner: ["bg-surface-muted text-fg", "text-muted hover:bg-surface-muted/60 hover:text-fg"],
   },
 } as const;

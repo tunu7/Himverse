@@ -18,12 +18,19 @@ const COLUMNS = [
       { href: "/provider", label: "Partner portal" },
     ],
   },
+  {
+    title: "Legal",
+    links: [
+      { href: "/privacy", label: "Privacy policy" },
+      { href: "/terms", label: "Terms of use" },
+    ],
+  },
 ] as const;
 
 export function SiteFooter() {
   return (
     <footer className="mt-auto border-t border-line">
-      <div className="mx-auto grid w-full max-w-6xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-[2fr_1fr_1fr]">
+      <div className="mx-auto grid w-full max-w-6xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-[2fr_1fr_1fr_1fr]">
         <div className="flex max-w-sm flex-col gap-4">
           <Link href="/" className="group self-start text-fg">
             <BrandLogo />

@@ -147,6 +147,17 @@ export function SignUpForm({
       <button type="submit" disabled={pending} className={`${buttonClass} w-full py-3`}>
         <PendingLabel pending={pending} busy="Creating account…" idle="Create account" />
       </button>
+      <p className="text-xs text-subtle">
+        By creating an account you agree to the{" "}
+        <Link href="/terms" className="underline underline-offset-4 hover:text-fg">
+          terms of use
+        </Link>{" "}
+        and{" "}
+        <Link href="/privacy" className="underline underline-offset-4 hover:text-fg">
+          privacy policy
+        </Link>
+        .
+      </p>
       <p className="text-sm text-muted">
         Already have an account?{" "}
         <Link

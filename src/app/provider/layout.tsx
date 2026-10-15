@@ -1,3 +1,6 @@
+import { Suspense } from "react";
+
+import { PartnerAlertBar } from "@/features/bookings/components/partner-alert-bar";
 import { PortalShell } from "@/features/portal/components/portal-shell";
 
 const PARTNER_LINKS = [
@@ -12,6 +15,9 @@ const PARTNER_LINKS = [
 export default function ProviderLayout({ children }: LayoutProps<"/provider">) {
   return (
     <PortalShell area="partner" links={PARTNER_LINKS}>
+      <Suspense fallback={null}>
+        <PartnerAlertBar />
+      </Suspense>
       {children}
     </PortalShell>
   );

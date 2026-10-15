@@ -33,22 +33,25 @@ through `pg_cron`, idempotent requests, no overbooking, audited history. 2026-10
 partner accept-bookings switch, "Book whole trip". No payments. Open questions:
 [BOOKING_POLICY](BOOKING_POLICY.md).
 
-## Phase 5 — Production readiness (in progress)
+## Phase 5 — Production readiness (in progress; "launch readiness" work 2026-10-15)
 
 Done: Workstream A (security hardening, health check, rate limits, AI kill switch), separate traveller
-site / partner portal / admin console, Vercel and Supabase production. Remaining
+site / partner portal / admin console, Vercel and Supabase production; 2026-10-15: automated WCAG 2.1 AA
+checks and fixes, self-serve account deletion and in-app booking alerts (ADR-0009), privacy and terms
+pages, dependency and secret audit, production page-weight baseline. Remaining
 ([RELEASE_CHECKLIST](../operations/RELEASE_CHECKLIST.md)): staging Supabase project for previews, error
 tracking and alerting, custom SMTP, CAPTCHA, accessibility audit, slow-network performance, remove sample
 content before launch.
 
-## Phase 6 — Accounts and partner listings _(planned, owner decisions 2026-10-15)_
+## Phase 6 — Accounts and partner listings ✅ (2026-10-15)
 
 1. One role per account (traveller, partner or admin), fixed at creation and enforced in the database —
-   [ADR-0007](../decisions/ADR-0007-ONE-ACCOUNT-TYPE-PER-ACCOUNT.md); database migration in progress.
+   [ADR-0007](../decisions/ADR-0007-ONE-ACCOUNT-TYPE-PER-ACCOUNT.md).
 2. Auth: password reset and change, resend confirmation email, TOTP 2-step sign-in required for admins
    and partners.
 3. Partner listing types beyond experiences: guides (date + group), accommodation (nights + rooms),
-   transport (date + route/vehicle); bookable and usable by AI itineraries. Needs a data-model ADR.
+   transport (date + route/vehicle); bookable and usable by AI itineraries
+   ([ADR-0008](../decisions/ADR-0008-LISTING-TYPES.md)).
 
 ## Post-MVP
 

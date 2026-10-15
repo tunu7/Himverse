@@ -29,6 +29,7 @@ immutable once accepted — to change a decision, write a new ADR that supersede
 | [0006](ADR-0006-SWITCHABLE-AI-PROVIDER-OLLAMA.md) | Switchable AI provider, with Ollama for free local models            | Accepted                                         |
 | [0007](ADR-0007-ONE-ACCOUNT-TYPE-PER-ACCOUNT.md)  | One account type per account (traveller, partner or admin)           | Accepted                                         |
 | [0008](ADR-0008-LISTING-TYPES.md)                 | Partner listing types (experiences, guides, stays, transport)        | Accepted                                         |
+| [0009](ADR-0009-ACCOUNT-DELETION-AND-ALERTS.md)   | Self-serve account deletion and in-app booking alerts                | Accepted                                         |
 
 ## Template
 
