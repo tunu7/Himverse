@@ -19,7 +19,7 @@ const ids = {
 };
 
 const asUser = (userId: string, sql: string, params: unknown[] = []) =>
-  runAsUser(pool, userId, sql, params);
+  runAsUser(pool, userId, sql, params, userId === ids.owner ? "aal2" : "aal1");
 
 async function newSlot(capacity: number): Promise<string> {
   const { rows } = await pool.query<{ id: string }>(
@@ -36,8 +36,10 @@ const request = (slotId: string, key: string, adults = 1) =>
 beforeAll(async () => {
   const users = [ids.owner, ...ids.travelers];
   await pool.query(
-    `insert into auth.users (id, email, aud, role)
-     select u, 'concurrency-' || $2 || '-' || ordinality || '@example.test', 'authenticated', 'authenticated'
+    // One account type each (ADR-0007): the first user runs the business, the rest travel.
+    `insert into auth.users (id, email, aud, role, raw_user_meta_data)
+     select u, 'concurrency-' || $2 || '-' || ordinality || '@example.test', 'authenticated', 'authenticated',
+       jsonb_build_object('account_type', case when ordinality = 1 then 'partner' else 'traveller' end)
      from unnest($1::uuid[]) with ordinality as t(u, ordinality)`,
     [users, run],
   );

@@ -29,14 +29,24 @@ export function createLocalPool(max = 20): Pool {
   return new Pool({ connectionString: raw, max });
 }
 
-/** Runs `sql` in its own connection and transaction as an authenticated user. */
-export async function runAsUser(pool: Pool, userId: string, sql: string, params: unknown[] = []) {
+/**
+ * Runs `sql` in its own connection and transaction as an authenticated user.
+ * Partners and admins act only after two-step login (ADR-0007), so their
+ * sessions pass `aal: "aal2"`.
+ */
+export async function runAsUser(
+  pool: Pool,
+  userId: string,
+  sql: string,
+  params: unknown[] = [],
+  aal: "aal1" | "aal2" = "aal1",
+) {
   const client = await pool.connect();
   try {
     await client.query("begin");
     await client.query("set local role authenticated");
     await client.query("select set_config('request.jwt.claims', $1, true)", [
-      JSON.stringify({ sub: userId, role: "authenticated" }),
+      JSON.stringify({ sub: userId, role: "authenticated", aal }),
     ]);
     const result = await client.query(sql, params);
     await client.query("commit");

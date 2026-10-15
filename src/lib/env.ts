@@ -178,6 +178,15 @@ export function parseAiEnv(source: Record<string, unknown>): AiEnv {
 
 let cachedPublicEnv: PublicEnv | undefined;
 
+/**
+ * The optional support address, on its own: static pages show it, and the
+ * build prerenders them without the other environment variables.
+ */
+export function getSupportEmail(): string | undefined {
+  const parsed = z.email().safeParse(process.env.NEXT_PUBLIC_SUPPORT_EMAIL);
+  return parsed.success ? parsed.data : undefined;
+}
+
 /** Safe to call from client and server code. */
 export function getPublicEnv(): PublicEnv {
   cachedPublicEnv ??= parsePublicEnv({

@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { PageShell } from "@/components/page-shell";
-import { getPublicEnv } from "@/lib/env";
+import { getSupportEmail } from "@/lib/env";
 
 export const LEGAL_UPDATED = "15 October 2026";
 
@@ -15,7 +15,7 @@ export function LegalPage({
   summary: string;
   children: React.ReactNode;
 }) {
-  const support = getPublicEnv().NEXT_PUBLIC_SUPPORT_EMAIL;
+  const support = getSupportEmail();
   return (
     <PageShell title={title} description={`Last updated ${LEGAL_UPDATED}. ${summary}`}>
       <article className="flex max-w-3xl flex-col gap-6 leading-7 text-fg-soft [&_h2]:mt-2 [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:text-fg [&_li]:mt-1 [&_ul]:list-disc [&_ul]:pl-5">
