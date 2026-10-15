@@ -12,7 +12,10 @@ import {
 import { PendingLabel } from "@/components/ui";
 import type { PublicDestination } from "@/server/catalog/catalog";
 
+import type { ListingType, PriceUnit } from "@/lib/listing-options";
+
 import { saveBusinessDetails, saveBusinessProfile, saveListing } from "../actions";
+import { ListingTypeFields } from "./listing-type-fields";
 import { EXPERIENCE_CATEGORIES } from "../schemas";
 
 function TextField({
@@ -147,6 +150,12 @@ export function BusinessDetailsForm({
 
 export type ListingFormValues = {
   id: string;
+  listingType: ListingType;
+  priceUnit: PriceUnit;
+  dailyCapacity: number | null;
+  maxGuests: number | null;
+  languages: string[];
+  routeToDestinationId: string | null;
   title: string;
   slug: string;
   summary: string;
@@ -214,18 +223,9 @@ export function ListingEditForm({
             ))}
           </select>
         </label>
+
         <TextField
-          label="Duration (minutes)"
-          name="durationMinutes"
-          type="number"
-          min={15}
-          max={43200}
-          defaultValue={listing.durationMinutes}
-          required
-          errors={errors("durationMinutes")}
-        />
-        <TextField
-          label="Price from, per person (₹, optional)"
+          label="Price from (₹, optional)"
           name="priceFromRupees"
           type="number"
           min={0}
@@ -235,6 +235,19 @@ export function ListingEditForm({
           errors={errors("priceFromRupees")}
         />
       </div>
+      <ListingTypeFields
+        listingType={listing.listingType}
+        defaults={{
+          priceUnit: listing.priceUnit,
+          dailyCapacity: listing.dailyCapacity,
+          maxGuests: listing.maxGuests,
+          languages: listing.languages,
+          routeToDestinationId: listing.routeToDestinationId,
+          durationMinutes: listing.durationMinutes,
+        }}
+        destinations={destinations}
+        errors={errors}
+      />
       <label className="flex flex-col gap-1">
         <span className="text-sm font-medium">Short summary</span>
         <textarea

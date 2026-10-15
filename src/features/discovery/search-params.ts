@@ -111,9 +111,10 @@ function toQueryString(entries: Record<string, string | number | undefined>): st
 export function experiencesHref(
   filters: ExperienceFilters,
   overrides: Partial<ExperienceFilters> = {},
+  basePath = "/experiences",
 ): string {
   const f = { ...filters, ...overrides };
-  return `/experiences${toQueryString({
+  return `${basePath}${toQueryString({
     q: f.q,
     district: f.district,
     category: f.category,

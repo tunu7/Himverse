@@ -106,6 +106,39 @@ export async function requestBookingOnDate(
   return { bookingId: row.booking_id, reference: row.booking_reference, replayed: row.replayed };
 }
 
+export type ListingBookingRequestInput = BookingRequestInput & {
+  experienceId: string;
+  startsOn: string;
+  /** Last service day (a stay's last night). */
+  endsOn: string;
+  units: number;
+  pickupNote: string;
+};
+
+/** Requests a guide, stay or transport listing for a date range (ADR-0008). */
+export async function requestListingBooking(
+  input: ListingBookingRequestInput,
+): Promise<{ bookingId: string; reference: string; replayed: boolean }> {
+  await requireUser();
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase.rpc("request_listing_booking", {
+    p_experience_id: input.experienceId,
+    p_starts_on: input.startsOn,
+    p_ends_on: input.endsOn,
+    p_units: input.units,
+    p_adults: input.adults,
+    p_children: input.children,
+    p_contact_phone: input.contactPhone,
+    p_note: input.note,
+    p_pickup_note: input.pickupNote,
+    p_idempotency_key: input.idempotencyKey,
+  });
+  if (error) throw bookingError(error, "Could not request this booking.");
+  const row = data[0];
+  if (!row) throw new AppError("INTERNAL", "Could not request this booking.");
+  return { bookingId: row.booking_id, reference: row.booking_reference, replayed: row.replayed };
+}
+
 export type TripBookingItemResult = {
   itemId: string;
   /** Present when a request exists (new or replayed). */
@@ -185,6 +218,10 @@ export type BookingSummary = {
   experienceId: string;
   slotStartsOn: string;
   slotStartTime: string | null;
+  /** Last service day for multi-day guides, stays (last night) and day hire. */
+  endsOn: string | null;
+  /** Rooms, vehicles or guides. */
+  units: number;
   partySize: number;
   estimatedTotalMinor: number | null;
   confirmedTotalMinor: number | null;
@@ -193,7 +230,7 @@ export type BookingSummary = {
 };
 
 const SUMMARY_COLUMNS =
-  "id, reference, status, experience_title, experience_id, slot_starts_on, slot_start_time, party_size, estimated_total_minor, confirmed_total_minor, request_expires_at, created_at";
+  "id, reference, status, experience_title, experience_id, slot_starts_on, slot_start_time, ends_on, units, party_size, estimated_total_minor, confirmed_total_minor, request_expires_at, created_at";
 
 type SummaryRow = {
   id: string;
@@ -203,6 +240,8 @@ type SummaryRow = {
   experience_id: string;
   slot_starts_on: string;
   slot_start_time: string | null;
+  ends_on: string | null;
+  units: number;
   // Generated column (adults + children, both NOT NULL); typed nullable by the generator.
   party_size: number | null;
   estimated_total_minor: number | null;
@@ -220,6 +259,8 @@ function toSummary(row: SummaryRow): BookingSummary {
     experienceId: row.experience_id,
     slotStartsOn: row.slot_starts_on,
     slotStartTime: row.slot_start_time,
+    endsOn: row.ends_on,
+    units: row.units,
     partySize: row.party_size ?? 0,
     estimatedTotalMinor: row.estimated_total_minor,
     confirmedTotalMinor: row.confirmed_total_minor,
@@ -291,6 +332,7 @@ export async function listProviderBookings(): Promise<ProviderBooking[]> {
 }
 
 export type BookingDetail = BookingSummary & {
+  pickupNote: string;
   adults: number;
   children: number;
   contactPhone: string;
@@ -316,7 +358,7 @@ export async function getBooking(id: string): Promise<BookingDetail | null> {
   const { data, error } = await supabase
     .from("bookings")
     .select(
-      `${SUMMARY_COLUMNS}, traveler_id, adults, children, contact_phone, traveler_note, provider_note, cancellation_reason, cancelled_by`,
+      `${SUMMARY_COLUMNS}, traveler_id, adults, children, contact_phone, traveler_note, pickup_note, provider_note, cancellation_reason, cancelled_by`,
     )
     .eq("id", id)
     .maybeSingle();
@@ -330,6 +372,7 @@ export async function getBooking(id: string): Promise<BookingDetail | null> {
   if (eventsError) throw toAppError(eventsError, "Could not load this booking.");
   return {
     ...toSummary(data),
+    pickupNote: data.pickup_note,
     adults: data.adults,
     children: data.children,
     contactPhone: data.contact_phone,

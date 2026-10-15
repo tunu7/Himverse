@@ -8,7 +8,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { requireUser } from "@/server/auth/session";
 import type { ProviderStatus } from "@/server/providers/status";
 
-import type { ExperienceStatus } from "./providers";
+import type { ExperienceStatus, ListingTypeFields } from "./providers";
 
 // The partner portal's data (ADR-0007): everything is read and written as the
 // signed-in partner, so RLS limits it to their own business.
@@ -193,7 +193,7 @@ export async function getPartnerOverview(providerId: string, now: Date): Promise
   };
 }
 
-export type MyListing = {
+export type MyListing = ListingTypeFields & {
   id: string;
   providerId: string;
   slug: string;
@@ -217,7 +217,7 @@ export async function getMyListing(id: string): Promise<MyListing | null> {
   const { data, error } = await supabase
     .from("experiences")
     .select(
-      "id, provider_id, slug, title, summary, description, category, duration_minutes, price_from_minor, destination_id, status, accepts_bookings, moderation_locked, provider:providers!inner(provider_members!inner(user_id))",
+      "id, provider_id, slug, title, summary, description, category, duration_minutes, price_from_minor, destination_id, status, accepts_bookings, moderation_locked, listing_type, price_unit, daily_capacity, max_guests, languages, route_to_destination_id, provider:providers!inner(provider_members!inner(user_id))",
     )
     .eq("id", id)
     .eq("provider.provider_members.user_id", user.id)
@@ -238,10 +238,16 @@ export async function getMyListing(id: string): Promise<MyListing | null> {
     status: data.status,
     acceptsBookings: data.accepts_bookings,
     moderationLocked: data.moderation_locked,
+    listingType: data.listing_type,
+    priceUnit: data.price_unit,
+    dailyCapacity: data.daily_capacity,
+    maxGuests: data.max_guests,
+    languages: data.languages,
+    routeToDestinationId: data.route_to_destination_id,
   };
 }
 
-export type ListingInput = {
+export type ListingInput = Omit<ListingTypeFields, "listingType"> & {
   title: string;
   slug: string;
   summary: string;
@@ -267,10 +273,22 @@ export async function updateListing(id: string, input: ListingInput): Promise<vo
       duration_minutes: input.durationMinutes,
       price_from_minor: input.priceFromMinor,
       destination_id: input.destinationId,
+      price_unit: input.priceUnit,
+      daily_capacity: input.dailyCapacity,
+      max_guests: input.maxGuests,
+      languages: input.languages,
+      route_to_destination_id: input.routeToDestinationId,
     })
     .eq("id", id)
     .select("id");
   if (error) {
+    if (error.code === "23514") {
+      throw new AppError(
+        "VALIDATION_FAILED",
+        "These details don't fit this listing type. Check the price unit, capacity and route.",
+        { cause: error },
+      );
+    }
     if (error.code === "23505") {
       throw new AppError("VALIDATION_FAILED", "Please check the highlighted fields.", {
         cause: error,

@@ -68,6 +68,8 @@ const validInputs = {
     title: "Ziro walk",
     category: "culture",
     durationMinutes: "120",
+    listingType: "experience",
+    priceUnit: "per_person",
   }),
   changeExperienceStatus: form({ experienceId: UUID, status: "published" }),
   changeExperienceAcceptsBookings: form({ experienceId: UUID, acceptsBookings: "false" }),

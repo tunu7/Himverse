@@ -11,6 +11,7 @@ import {
   cancelBooking,
   createSlot,
   requestBookingOnDate,
+  requestListingBooking,
   requestItineraryBookings,
   respondToBooking,
   type TripBookingItemResult,
@@ -22,6 +23,7 @@ import {
   addSlotSchema,
   cancelSchema,
   requestBookingSchema,
+  listingBookingSchema,
   respondSchema,
   slotStatusSchema,
   tripBookingSchema,
@@ -57,6 +59,45 @@ export async function requestBookingAction(
     return toLoggedFailure("bookings.request_failed", error);
   }
   redirect(`/bookings/${bookingId}`);
+}
+
+/** Guide, stay or transport request: a date range and a quantity (ADR-0008). */
+export async function requestListingBookingAction(
+  _prev: BookingActionResult,
+  formData: FormData,
+): Promise<BookingActionResult> {
+  let bookingId: string;
+  try {
+    const input = parseInput(listingBookingSchema, formData);
+    await requireAccount(["traveller"]);
+    const tooSoon = input.startsOn <= todayInTripZone(new Date());
+    const tooFar = input.startsOn > istDate(new Date(), MAX_BOOKING_DAYS_AHEAD);
+    if (tooSoon || tooFar) {
+      throw new AppError("VALIDATION_FAILED", "Please check the highlighted fields.", {
+        fieldErrors: {
+          startsOn: [
+            tooSoon
+              ? "Choose a date from tomorrow onwards."
+              : "Choose a date within the next two years.",
+          ],
+        },
+      });
+    }
+    // A stay's check-out is the morning after its last night.
+    const endsOn = input.checkOut
+      ? istDateMinusOne(input.checkOut)
+      : (input.endsOn ?? input.startsOn);
+    ({ bookingId } = await requestListingBooking({ ...input, endsOn }));
+  } catch (error) {
+    return toLoggedFailure("bookings.listing_request_failed", error);
+  }
+  redirect(`/bookings/${bookingId}`);
+}
+
+function istDateMinusOne(isoDate: string): string {
+  const d = new Date(`${isoDate}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() - 1);
+  return d.toISOString().slice(0, 10);
 }
 
 export type TripBookingActionResult = ActionResult<{ items: TripBookingItemResult[] }> | null;

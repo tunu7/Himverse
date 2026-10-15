@@ -66,6 +66,8 @@ describe("searchExperiences", () => {
       ["search_vector", "river rafting", { type: "websearch", config: "english" }],
     ]);
     expect(methods(calls, "eq")).toEqual([
+      // One listing type per search page (ADR-0008).
+      ["listing_type", "experience"],
       ["destination.district", "East Siang"],
       ["category", "adventure"],
     ]);
@@ -88,7 +90,8 @@ describe("searchExperiences", () => {
     await searchExperiences({ sort: "newest", page: 1 });
     const [[columns, options]] = methods(state.calls[0]!, "select") as [[string, unknown]];
     expect(columns).not.toContain("*");
-    expect(columns).toContain("destinations!inner");
+    // The listing's own destination (transport also links a route destination).
+    expect(columns).toContain("destinations!experiences_destination_id_fkey!inner");
     expect(columns).toContain("providers!inner");
     expect(options).toEqual({ count: "exact" });
     expect(methods(state.calls[0]!, "textSearch")).toEqual([]);

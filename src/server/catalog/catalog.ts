@@ -11,6 +11,7 @@ import {
   PAGE_SIZE,
   pageCountFor,
 } from "@/lib/catalog-options";
+import type { ListingType, PriceUnit } from "@/lib/listing-options";
 
 // Every read here uses the anonymous, cookie-less client: RLS alone decides
 // visibility (published experience + verified provider + published
@@ -24,6 +25,8 @@ export type ExperienceSummary = {
   slug: string;
   title: string;
   summary: string;
+  listingType: ListingType;
+  priceUnit: PriceUnit;
   category: ExperienceCategory;
   durationMinutes: number;
   priceFromMinor: number | null;
@@ -34,6 +37,12 @@ export type ExperienceSummary = {
 
 export type ExperienceDetail = ExperienceSummary & {
   description: string;
+  /** Guides, rooms or vehicles available per day (not for experiences). */
+  dailyCapacity: number | null;
+  /** Group size per guide, guests per room, or seats per vehicle. */
+  maxGuests: number | null;
+  languages: string[];
+  routeTo: { slug: string; name: string } | null;
   /** Provider-controlled: whether travellers can request this experience. */
   acceptsBookings: boolean;
   provider: { displayName: string; district: string | null };
@@ -65,13 +74,15 @@ export type Page<T> = {
 };
 
 const EXPERIENCE_SUMMARY_COLUMNS =
-  "id, slug, title, summary, category, duration_minutes, price_from_minor, currency, destination:destinations!inner(slug, name, district), provider:providers!inner(display_name)";
+  "id, slug, title, summary, listing_type, price_unit, category, duration_minutes, price_from_minor, currency, destination:destinations!experiences_destination_id_fkey!inner(slug, name, district), provider:providers!inner(display_name)";
 
 type ExperienceSummaryRow = {
   id: string;
   slug: string;
   title: string;
   summary: string;
+  listing_type: ListingType;
+  price_unit: PriceUnit;
   category: ExperienceCategory;
   duration_minutes: number;
   price_from_minor: number | null;
@@ -86,6 +97,8 @@ function toExperienceSummary(row: ExperienceSummaryRow): ExperienceSummary {
     slug: row.slug,
     title: row.title,
     summary: row.summary,
+    listingType: row.listing_type,
+    priceUnit: row.price_unit,
     category: row.category,
     durationMinutes: row.duration_minutes,
     priceFromMinor: row.price_from_minor,
@@ -103,14 +116,18 @@ function rangeFor(page: number): [number, number] {
 // PostgREST answers PGRST103 when the requested range starts past the last row.
 const RANGE_NOT_SATISFIABLE = "PGRST103";
 
-/** Searches public experiences with validated filters (see search-options.ts). */
+/** Searches public listings of one type with validated filters (see search-options.ts). */
 export async function searchExperiences(
   filters: ExperienceFilters,
+  listingType: ListingType = "experience",
 ): Promise<Page<ExperienceSummary>> {
   const supabase = createSupabasePublicClient();
 
   const build = () => {
-    let query = supabase.from("experiences").select(EXPERIENCE_SUMMARY_COLUMNS, { count: "exact" });
+    let query = supabase
+      .from("experiences")
+      .select(EXPERIENCE_SUMMARY_COLUMNS, { count: "exact" })
+      .eq("listing_type", listingType);
     if (filters.q) {
       // Bound parameter (websearch_to_tsquery); never PostgREST filter syntax.
       query = query.textSearch("search_vector", filters.q, {
@@ -192,7 +209,7 @@ export async function getPublicExperience(slug: string): Promise<ExperienceDetai
   const { data, error } = await supabase
     .from("experiences")
     .select(
-      "id, slug, title, summary, description, category, duration_minutes, price_from_minor, currency, accepts_bookings, destination:destinations!inner(slug, name, district), provider:providers!inner(display_name, district)",
+      "id, slug, title, summary, description, category, duration_minutes, price_from_minor, currency, accepts_bookings, listing_type, price_unit, daily_capacity, max_guests, languages, destination:destinations!experiences_destination_id_fkey!inner(slug, name, district), route_to:destinations!experiences_route_to_destination_id_fkey(slug, name), provider:providers!inner(display_name, district)",
     )
     .eq("slug", slug)
     .maybeSingle();
@@ -206,6 +223,10 @@ export async function getPublicExperience(slug: string): Promise<ExperienceDetai
     ...toExperienceSummary(data),
     description: data.description,
     acceptsBookings: data.accepts_bookings,
+    dailyCapacity: data.daily_capacity,
+    maxGuests: data.max_guests,
+    languages: data.languages,
+    routeTo: data.route_to ? { slug: data.route_to.slug, name: data.route_to.name } : null,
     provider: { displayName: data.provider.display_name, district: data.provider.district },
   };
 }

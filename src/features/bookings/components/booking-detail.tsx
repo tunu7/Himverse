@@ -8,7 +8,7 @@ import {
   slotStartsAt,
   travelerCanCancel,
 } from "@/lib/booking-options";
-import { formatPriceFrom, formatSlot } from "@/lib/format";
+import { formatPriceFrom, formatBookingDates } from "@/lib/format";
 import { getBooking } from "@/server/bookings/repository";
 
 import { CancelBookingForm, RespondForm } from "./booking-forms";
@@ -61,7 +61,9 @@ export async function BookingDetail({
       <dl className="grid gap-4 rounded-2xl border border-line bg-surface p-5 sm:grid-cols-2">
         <div>
           <dt className="text-xs font-medium tracking-wide text-subtle uppercase">Date</dt>
-          <dd className="font-medium">{formatSlot(booking.slotStartsOn, booking.slotStartTime)}</dd>
+          <dd className="font-medium">
+            {formatBookingDates(booking.slotStartsOn, booking.slotStartTime, booking.endsOn)}
+          </dd>
         </div>
         <div>
           <dt className="text-xs font-medium tracking-wide text-subtle uppercase">Party</dt>
@@ -70,6 +72,7 @@ export async function BookingDetail({
             {booking.children > 0
               ? `, ${booking.children} ${booking.children === 1 ? "child" : "children"}`
               : ""}
+            {booking.units > 1 ? ` · quantity ${booking.units}` : ""}
           </dd>
         </div>
         <div>
@@ -103,6 +106,7 @@ export async function BookingDetail({
         ) : null}
       </dl>
 
+      {booking.pickupNote ? <p className="text-sm">Pickup: {booking.pickupNote}</p> : null}
       {booking.travelerNote ? (
         <p className="text-sm">Traveller&apos;s message: {booking.travelerNote}</p>
       ) : null}

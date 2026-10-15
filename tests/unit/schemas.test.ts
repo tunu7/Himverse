@@ -94,7 +94,43 @@ describe("newExperienceSchema", () => {
     title: "Ziro walk",
     category: "culture",
     durationMinutes: "120",
+    listingType: "experience",
+    priceUnit: "per_person",
   };
+
+  it("enforces each listing type's fields (ADR-0008)", () => {
+    const stay = {
+      ...base,
+      listingType: "stay",
+      priceUnit: "per_room_night",
+      durationMinutes: "1440",
+    };
+    expect(newExperienceSchema.safeParse(stay).success).toBe(false); // rooms and guests required
+    expect(
+      newExperienceSchema.safeParse({ ...stay, dailyCapacity: "3", maxGuests: "2" }).success,
+    ).toBe(true);
+    expect(
+      newExperienceSchema.safeParse({
+        ...stay,
+        priceUnit: "per_person",
+        dailyCapacity: "3",
+        maxGuests: "2",
+      }).success,
+    ).toBe(false);
+    expect(newExperienceSchema.safeParse({ ...base, routeToDestinationId: UUID }).success).toBe(
+      false,
+    ); // only transport has a route
+    const guide = newExperienceSchema.parse({
+      ...base,
+      listingType: "guide",
+      priceUnit: "per_person_day",
+      dailyCapacity: "1",
+      maxGuests: "8",
+      languages: " English , Hindi,, Apatani ",
+    });
+    expect(guide.languages).toEqual(["English", "Hindi", "Apatani"]);
+    expect(newExperienceSchema.safeParse({ ...base, languages: "<script>" }).success).toBe(false);
+  });
 
   it("converts whole rupees to paise and treats blank as no price", () => {
     expect(newExperienceSchema.parse({ ...base, priceFromRupees: "1500" }).priceFromRupees).toBe(

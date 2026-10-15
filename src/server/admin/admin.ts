@@ -291,7 +291,7 @@ export async function listExperiencesForModeration(filter: {
   let query = supabase
     .from("experiences")
     .select(
-      "id, slug, title, status, moderation_locked, updated_at, provider:providers!inner(display_name, status), destination:destinations!inner(name)",
+      "id, slug, title, status, moderation_locked, updated_at, provider:providers!inner(display_name, status), destination:destinations!experiences_destination_id_fkey!inner(name)",
     );
   if (filter.status) query = query.eq("status", filter.status);
   // Bound parameter (websearch_to_tsquery), never PostgREST filter syntax.

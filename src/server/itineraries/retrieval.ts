@@ -15,7 +15,7 @@ export const MAX_CANDIDATE_EXPERIENCES = 40;
 export const MAX_CANDIDATE_DESTINATIONS = 10;
 
 const COLUMNS =
-  "id, slug, title, summary, category, duration_minutes, price_from_minor, destination_id, destination:destinations!inner(id, slug, name, district)";
+  "id, slug, title, summary, category, duration_minutes, price_from_minor, destination_id, destination:destinations!experiences_destination_id_fkey!inner(id, slug, name, district)";
 
 export async function retrieveCandidates(prefs: TripPreferences): Promise<Candidates> {
   const first = await query(prefs, prefs.interests);
@@ -50,6 +50,8 @@ async function query(prefs: TripPreferences, categories: TripPreferences["intere
     .from("experiences")
     .select(COLUMNS)
     .eq("accepts_bookings", true)
+    // Day plans use experiences; stays and transport join in Phase 3b (ADR-0008).
+    .eq("listing_type", "experience")
     // Must fit inside the trip.
     .lte("duration_minutes", prefs.durationDays * 1440);
   if (prefs.destinationSlug) {

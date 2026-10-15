@@ -10,6 +10,7 @@ vi.mock("next/navigation", () => ({ redirect: (url: string) => redirect(url) }))
 const repo = {
   requestBookingOnDate: vi.fn(),
   requestItineraryBookings: vi.fn(),
+  requestListingBooking: vi.fn(),
   respondToBooking: vi.fn(),
   cancelBooking: vi.fn(),
   createSlot: vi.fn(),
@@ -18,6 +19,7 @@ const repo = {
 vi.mock("@/server/bookings/repository", () => ({
   requestBookingOnDate: (...a: unknown[]) => repo.requestBookingOnDate(...a),
   requestItineraryBookings: (...a: unknown[]) => repo.requestItineraryBookings(...a),
+  requestListingBooking: (...a: unknown[]) => repo.requestListingBooking(...a),
   respondToBooking: (...a: unknown[]) => repo.respondToBooking(...a),
   cancelBooking: (...a: unknown[]) => repo.cancelBooking(...a),
   createSlot: (...a: unknown[]) => repo.createSlot(...a),
@@ -191,6 +193,58 @@ describe("requestBookingAction", () => {
       ok: false,
       error: { code: "CONFLICT", message: "You already have an active booking for this date." },
     });
+  });
+});
+
+describe("requestListingBookingAction (stays, guides, transport)", () => {
+  const checkIn = istDate(new Date(), 10);
+  const checkOut = istDate(new Date(), 12);
+  const base = {
+    experienceId: ID,
+    startsOn: checkIn,
+    units: "1",
+    adults: "2",
+    children: "0",
+    contactPhone: "+91 98765 43210",
+    idempotencyKey: KEY,
+  };
+
+  it("turns a stay's check-out into its last night and redirects to the booking", async () => {
+    repo.requestListingBooking.mockResolvedValue({
+      bookingId: ID,
+      reference: "HV-ABCDEF",
+      replayed: false,
+    });
+    await actions.requestListingBookingAction(null, form({ ...base, checkOut }));
+    expect(requireAccount).toHaveBeenCalledWith(["traveller"]);
+    expect(repo.requestListingBooking).toHaveBeenCalledWith(
+      expect.objectContaining({ startsOn: checkIn, endsOn: istDate(new Date(), 11), units: 1 }),
+    );
+    expect(redirect).toHaveBeenCalledWith(`/bookings/${ID}`);
+  });
+
+  it("uses the start date as the last day for single-day requests", async () => {
+    repo.requestListingBooking.mockResolvedValue({
+      bookingId: ID,
+      reference: "HV-ABCDEF",
+      replayed: false,
+    });
+    await actions.requestListingBookingAction(null, form(base));
+    expect(repo.requestListingBooking).toHaveBeenCalledWith(
+      expect.objectContaining({ startsOn: checkIn, endsOn: checkIn }),
+    );
+  });
+
+  it.each([
+    [{ checkOut: checkIn }, "checkOut"],
+    [{ endsOn: istDate(new Date(), 5) }, "endsOn"],
+    [{ startsOn: istDate(new Date()) }, "startsOn"],
+    [{ units: "0" }, "units"],
+  ])("rejects %j before calling the database", async (patch, field) => {
+    const result = await actions.requestListingBookingAction(null, form({ ...base, ...patch }));
+    expect(result).toMatchObject({ ok: false, error: { code: "VALIDATION_FAILED" } });
+    if (result && !result.ok) expect(Object.keys(result.error.fieldErrors ?? {})).toContain(field);
+    expect(repo.requestListingBooking).not.toHaveBeenCalled();
   });
 });
 

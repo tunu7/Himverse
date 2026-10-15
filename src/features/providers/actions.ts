@@ -81,6 +81,12 @@ export async function addExperience(
       category: input.category,
       durationMinutes: input.durationMinutes,
       priceFromMinor: input.priceFromRupees,
+      listingType: input.listingType,
+      priceUnit: input.priceUnit,
+      dailyCapacity: input.dailyCapacity,
+      maxGuests: input.maxGuests,
+      languages: input.languages,
+      routeToDestinationId: input.routeToDestinationId,
     });
     refresh();
     return ok({ done: true });
@@ -165,6 +171,11 @@ export async function saveListing(
       destinationId: input.destinationId,
       durationMinutes: input.durationMinutes,
       priceFromMinor: input.priceFromRupees,
+      priceUnit: input.priceUnit,
+      dailyCapacity: input.dailyCapacity,
+      maxGuests: input.maxGuests,
+      languages: input.languages,
+      routeToDestinationId: input.routeToDestinationId,
     });
     refresh();
     return ok({ done: true });

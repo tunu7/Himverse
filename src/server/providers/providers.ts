@@ -5,6 +5,7 @@ import { toAppError } from "@/lib/supabase/errors";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { requireAdmin, requireUser } from "@/server/auth/session";
 import type { ExperienceCategory } from "@/lib/catalog-options";
+import type { ListingType, PriceUnit } from "@/lib/listing-options";
 import {
   canPublishExperience,
   isValidReview,
@@ -26,6 +27,7 @@ export type ProviderExperience = {
   destinationName: string | null; // null when the destination is unpublished
   moderationLocked: boolean;
   acceptsBookings: boolean;
+  listingType: ListingType;
 };
 
 export type MyProvider = {
@@ -46,7 +48,7 @@ export async function listMyProviders(): Promise<MyProvider[]> {
   const { data, error } = await supabase
     .from("provider_members")
     .select(
-      "provider:providers(id, slug, display_name, district, status, experiences(id, title, status, category, duration_minutes, price_from_minor, moderation_locked, accepts_bookings, destination:destinations(name)))",
+      "provider:providers(id, slug, display_name, district, status, experiences(id, title, status, category, duration_minutes, price_from_minor, moderation_locked, accepts_bookings, listing_type, destination:destinations!experiences_destination_id_fkey(name)))",
     )
     .eq("user_id", user.id);
   if (error) {
@@ -88,6 +90,7 @@ export async function listMyProviders(): Promise<MyProvider[]> {
       destinationName: e.destination?.name ?? null,
       moderationLocked: e.moderation_locked,
       acceptsBookings: e.accepts_bookings,
+      listingType: e.listing_type,
     })),
   }));
 }
@@ -210,7 +213,16 @@ export async function reviewProvider(
   return data;
 }
 
-export type NewExperienceInput = {
+export type ListingTypeFields = {
+  listingType: ListingType;
+  priceUnit: PriceUnit;
+  dailyCapacity: number | null;
+  maxGuests: number | null;
+  languages: string[];
+  routeToDestinationId: string | null;
+};
+
+export type NewExperienceInput = ListingTypeFields & {
   providerId: string;
   destinationId: string;
   slug: string;
@@ -236,6 +248,12 @@ export async function createExperience(input: NewExperienceInput): Promise<strin
       category: input.category,
       duration_minutes: input.durationMinutes,
       price_from_minor: input.priceFromMinor,
+      listing_type: input.listingType,
+      price_unit: input.priceUnit,
+      daily_capacity: input.dailyCapacity,
+      max_guests: input.maxGuests,
+      languages: input.languages,
+      route_to_destination_id: input.routeToDestinationId,
       status: "draft",
     })
     .select("id")
@@ -257,7 +275,7 @@ export async function setExperienceStatus(
     const { data: row, error: rowError } = await supabase
       .from("experiences")
       .select(
-        "moderation_locked, provider:providers(status), destination:destinations(is_published)",
+        "moderation_locked, provider:providers(status), destination:destinations!experiences_destination_id_fkey(is_published)",
       )
       .eq("id", experienceId)
       .maybeSingle();

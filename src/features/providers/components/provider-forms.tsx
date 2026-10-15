@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 
 import {
   buttonClass,
@@ -19,7 +19,10 @@ import {
   changeExperienceStatus,
   submitForReview,
 } from "../actions";
+import { LISTING_TYPE_LABELS, LISTING_TYPES, type ListingType } from "@/lib/listing-options";
+
 import { EXPERIENCE_CATEGORIES } from "../schemas";
+import { ListingTypeFields } from "./listing-type-fields";
 import { PendingLabel } from "@/components/ui";
 
 function Field({
@@ -121,6 +124,7 @@ export function NewExperienceForm({
   destinations: readonly PublicDestination[];
 }) {
   const [state, action, pending] = useActionState(addExperience, null);
+  const [listingType, setListingType] = useState<ListingType>("experience");
   const errors = (field: string) => fieldErrorsOf(state, field);
   if (destinations.length === 0) {
     return <p className="text-sm text-muted">No destinations are published yet.</p>;
@@ -128,6 +132,21 @@ export function NewExperienceForm({
   return (
     <form action={action} className="flex max-w-xl flex-col gap-4" noValidate>
       <input type="hidden" name="providerId" value={providerId} />
+      <label className="flex flex-col gap-1">
+        <span className="text-sm font-medium">What are you listing?</span>
+        <select
+          value={listingType}
+          onChange={(e) => setListingType(e.target.value as ListingType)}
+          className={inputClass}
+        >
+          {LISTING_TYPES.map((t) => (
+            <option key={t} value={t}>
+              {LISTING_TYPE_LABELS[t].one}
+              {t === "stay" ? " (one room type)" : t === "transport" ? " (vehicle hire)" : ""}
+            </option>
+          ))}
+        </select>
+      </label>
       <Field label="Title" name="title" required maxLength={140} errors={errors("title")} />
       <Field
         label="Short web address"
@@ -160,14 +179,11 @@ export function NewExperienceForm({
           ))}
         </select>
       </label>
-      <Field
-        label="Duration (minutes)"
-        name="durationMinutes"
-        type="number"
-        min={15}
-        max={43200}
-        required
-        errors={errors("durationMinutes")}
+      <ListingTypeFields
+        key={listingType}
+        listingType={listingType}
+        destinations={destinations}
+        errors={errors}
       />
       <Field
         label="Indicative price from (₹, optional)"

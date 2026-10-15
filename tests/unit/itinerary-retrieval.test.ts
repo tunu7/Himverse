@@ -73,6 +73,7 @@ describe("retrieveCandidates", () => {
     // Only experiences whose provider accepts bookings, so every plan is bookable.
     expect(by(calls, "eq")).toEqual([
       ["accepts_bookings", true],
+      ["listing_type", "experience"],
       ["destination.district", "Tawang"],
     ]);
     expect(by(calls, "in")).toEqual([["category", ["culture"]]]);
@@ -87,6 +88,7 @@ describe("retrieveCandidates", () => {
     await retrieveCandidates(prefs({ destinationSlug: "ziro", district: "Tawang" }));
     expect(by(state.calls[0]!, "eq")).toEqual([
       ["accepts_bookings", true],
+      ["listing_type", "experience"],
       ["destination.slug", "ziro"],
     ]);
   });

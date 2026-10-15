@@ -9,7 +9,7 @@ import { EmptyState } from "@/components/ui";
 import { TravellerTabs } from "@/features/account/components/traveller-tabs";
 import { BookingStatusBadge } from "@/features/bookings/components/booking-status";
 import { effectiveStatus, istDate } from "@/lib/booking-options";
-import { formatSlot } from "@/lib/format";
+import { formatBookingDates } from "@/lib/format";
 import { requireAccountForPage } from "@/server/auth/session";
 import { listMyBookings } from "@/server/bookings/repository";
 
@@ -87,7 +87,7 @@ async function BookingList({ searchParams }: PageProps<"/bookings">) {
                 {b.experienceTitle}
               </Link>
               <p className="text-sm text-muted">
-                {formatSlot(b.slotStartsOn, b.slotStartTime)} · {b.partySize}{" "}
+                {formatBookingDates(b.slotStartsOn, b.slotStartTime, b.endsOn)} · {b.partySize}{" "}
                 {b.partySize === 1 ? "person" : "people"} · {b.reference}
               </p>
             </div>

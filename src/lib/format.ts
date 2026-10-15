@@ -40,3 +40,17 @@ export function formatSlot(startsOn: string, startTime: string | null): string {
   }).format(new Date(`${startsOn}T00:00:00Z`));
   return startTime ? `${date}, ${startTime.slice(0, 5)}` : date;
 }
+
+/** A booking's dates: one date (and time) or an inclusive range of service days. */
+export function formatBookingDates(
+  startsOn: string,
+  startTime: string | null,
+  endsOn: string | null,
+): string {
+  if (!endsOn || endsOn === startsOn) return formatSlot(startsOn, startTime);
+  const days =
+    Math.round(
+      (Date.parse(`${endsOn}T00:00:00Z`) - Date.parse(`${startsOn}T00:00:00Z`)) / 86_400_000,
+    ) + 1;
+  return `${formatSlot(startsOn, null)} → ${formatSlot(endsOn, null)} (${days} days)`;
+}

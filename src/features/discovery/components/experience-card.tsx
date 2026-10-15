@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { formatCategory, formatDuration, formatPriceFrom } from "@/lib/format";
+import { LISTING_TYPE_LABELS, PRICE_UNIT_LABELS } from "@/lib/listing-options";
 import type { ExperienceSummary } from "@/server/catalog/catalog";
 
 import { CategoryBand } from "./category-visual";
@@ -36,10 +37,16 @@ export function ExperienceCard({ experience }: { experience: ExperienceSummary }
           <p className="text-xs text-subtle">by {experience.provider.displayName}</p>
           <p className="mt-auto flex items-center justify-between gap-2 border-t border-line pt-4 text-sm">
             <span className="rounded-full bg-surface-muted px-2.5 py-1 text-xs text-fg-soft">
-              {formatDuration(experience.durationMinutes)}
+              {experience.listingType === "experience"
+                ? formatDuration(experience.durationMinutes)
+                : LISTING_TYPE_LABELS[experience.listingType].one}
             </span>
             <span className="flex items-center gap-2 font-semibold text-fg">
-              {price ? `from ${price}` : "Price on request"}
+              {price
+                ? experience.listingType === "experience"
+                  ? `from ${price}`
+                  : `from ${price} ${PRICE_UNIT_LABELS[experience.priceUnit]}`
+                : "Price on request"}
               <span
                 aria-hidden="true"
                 className="flex size-7 items-center justify-center rounded-full bg-fg text-canvas transition duration-300 group-hover:translate-x-0.5 group-hover:bg-accent group-hover:text-on-accent"

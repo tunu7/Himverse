@@ -76,39 +76,54 @@ async function EditListing({ params }: PageProps<"/provider/listings/[id]">) {
               destinationId: listing.destinationId,
               durationMinutes: listing.durationMinutes,
               priceFromMinor: listing.priceFromMinor,
+              listingType: listing.listingType,
+              priceUnit: listing.priceUnit,
+              dailyCapacity: listing.dailyCapacity,
+              maxGuests: listing.maxGuests,
+              languages: listing.languages,
+              routeToDestinationId: listing.routeToDestinationId,
             }}
             destinations={destinations}
           />
         </Panel>
-        <Panel title="Dates with limited seats">
-          <p className="text-sm text-muted">
-            {listing.acceptsBookings
-              ? "Travellers can request any future date. Publish a date here only to cap the seats on it."
-              : "Booking requests are off for this listing."}
-          </p>
-          <div data-testid="slot-manager" className="flex flex-col gap-3">
-            {slots.length === 0 ? (
-              <EmptyState title="No dates published" />
-            ) : (
-              <ul className="flex flex-col gap-2 text-sm">
-                {slots.map((s) => (
-                  <li key={s.id} className="flex flex-wrap items-center justify-between gap-2">
-                    <span>
-                      {formatSlot(s.startsOn, s.startTime)} · {s.capacity - s.seatsLeft}/
-                      {s.capacity} confirmed · {s.status}
-                    </span>
-                    <SlotStatusButton slotId={s.id} status={s.status} />
-                  </li>
-                ))}
-              </ul>
-            )}
-            {verified ? (
-              <AddSlotForm experienceId={listing.id} minDate={todayInTripZone(new Date())} />
-            ) : (
-              <p className="text-xs text-subtle">Dates can be added once you&apos;re verified.</p>
-            )}
-          </div>
-        </Panel>
+        {listing.listingType === "experience" ? (
+          <Panel title="Dates with limited seats">
+            <p className="text-sm text-muted">
+              {listing.acceptsBookings
+                ? "Travellers can request any future date. Publish a date here only to cap the seats on it."
+                : "Booking requests are off for this listing."}
+            </p>
+            <div data-testid="slot-manager" className="flex flex-col gap-3">
+              {slots.length === 0 ? (
+                <EmptyState title="No dates published" />
+              ) : (
+                <ul className="flex flex-col gap-2 text-sm">
+                  {slots.map((s) => (
+                    <li key={s.id} className="flex flex-wrap items-center justify-between gap-2">
+                      <span>
+                        {formatSlot(s.startsOn, s.startTime)} · {s.capacity - s.seatsLeft}/
+                        {s.capacity} confirmed · {s.status}
+                      </span>
+                      <SlotStatusButton slotId={s.id} status={s.status} />
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {verified ? (
+                <AddSlotForm experienceId={listing.id} minDate={todayInTripZone(new Date())} />
+              ) : (
+                <p className="text-xs text-subtle">Dates can be added once you&apos;re verified.</p>
+              )}
+            </div>
+          </Panel>
+        ) : (
+          <Panel title="Availability">
+            <p className="text-sm text-muted">
+              Travellers request dates; each day can take up to the capacity set in the details.
+              Confirming a request checks capacity for every day it covers.
+            </p>
+          </Panel>
+        )}
       </div>
     </div>
   );

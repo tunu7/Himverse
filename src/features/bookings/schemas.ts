@@ -75,3 +75,40 @@ export const slotStatusSchema = z.strictObject({
   slotId: z.uuid(),
   status: z.enum(["open", "closed"]),
 });
+
+/**
+ * A guide, stay or transport request. Stays send check-out (the morning
+ * after the last night); others send their last service day. The database
+ * re-checks everything against the listing's type, capacity and price unit.
+ */
+export const listingBookingSchema = z
+  .strictObject({
+    experienceId: z.uuid(),
+    startsOn: isoDate,
+    endsOn: isoDate.optional(),
+    checkOut: isoDate.optional(),
+    units: z.coerce.number().int().min(1, "At least 1.").max(50),
+    adults: z.coerce.number().int().min(1, "At least one adult.").max(MAX_PARTY_SIZE),
+    children: z.coerce
+      .number()
+      .int()
+      .min(0)
+      .max(MAX_PARTY_SIZE - 1)
+      .default(0),
+    contactPhone: phone,
+    note: z.string().trim().max(500).default(""),
+    pickupNote: z.string().trim().max(200).default(""),
+    idempotencyKey: z.uuid(),
+  })
+  .refine((b) => b.adults + b.children <= MAX_PARTY_SIZE, {
+    path: ["children"],
+    message: `At most ${MAX_PARTY_SIZE} people per booking.`,
+  })
+  .refine((b) => !b.checkOut || b.checkOut > b.startsOn, {
+    path: ["checkOut"],
+    message: "Check-out must be after check-in.",
+  })
+  .refine((b) => !b.endsOn || b.endsOn >= b.startsOn, {
+    path: ["endsOn"],
+    message: "The end date can't be before the start date.",
+  });

@@ -44,13 +44,16 @@ function Select({
 export function ExperienceFiltersForm({
   filters,
   districts,
+  basePath = "/experiences",
 }: {
   filters: ExperienceFilters;
   districts: readonly string[];
+  /** The listing type's browse page (experiences, stays, guides, transport). */
+  basePath?: string;
 }) {
   return (
     <form
-      action="/experiences"
+      action={basePath}
       method="get"
       role="search"
       aria-label="Search and filter experiences"
@@ -106,7 +109,7 @@ export function ExperienceFiltersForm({
           Apply
         </button>
         <Link
-          href="/experiences"
+          href={basePath}
           className="py-2 text-sm font-medium text-accent underline-offset-4 hover:underline"
         >
           Reset

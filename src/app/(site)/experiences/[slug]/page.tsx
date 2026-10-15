@@ -7,6 +7,7 @@ import { LoadingBlock, PageMain } from "@/components/page-shell";
 import { ExperienceBooking } from "@/features/bookings/components/experience-booking";
 import { CategoryBand } from "@/features/discovery/components/category-visual";
 import { formatCategory, formatDuration, formatPriceFrom } from "@/lib/format";
+import { CAPACITY_LABELS, LISTING_TYPE_LABELS, PRICE_UNIT_LABELS } from "@/lib/listing-options";
 import { getPublicExperience } from "@/server/catalog/catalog";
 
 export async function generateMetadata({
@@ -24,6 +25,8 @@ async function ExperienceDetail({ params }: PageProps<"/experiences/[slug]">) {
     notFound();
   }
   const price = formatPriceFrom(experience.priceFromMinor);
+  const type = experience.listingType;
+  const typeLabel = LISTING_TYPE_LABELS[type];
 
   return (
     <article className="flex flex-col gap-8">
@@ -31,10 +34,10 @@ async function ExperienceDetail({ params }: PageProps<"/experiences/[slug]">) {
       <header className="flex flex-col gap-3">
         <p className="text-sm text-muted">
           <Link
-            href="/experiences"
+            href={typeLabel.path}
             className="font-medium text-fg-soft transition-colors hover:text-accent"
           >
-            Experiences
+            {typeLabel.many}
           </Link>{" "}
           / {formatCategory(experience.category)}
         </p>
@@ -51,12 +54,45 @@ async function ExperienceDetail({ params }: PageProps<"/experiences/[slug]">) {
           <dt className="text-xs font-medium tracking-wide text-subtle uppercase">
             Indicative price
           </dt>
-          <dd className="font-medium">{price ? `From ${price}` : "Price on request"}</dd>
+          <dd className="font-medium" data-testid="listing-price">
+            {price
+              ? `From ${price} ${PRICE_UNIT_LABELS[experience.priceUnit]}`
+              : "Price on request"}
+          </dd>
         </div>
-        <div className="flex flex-col gap-1 bg-surface p-5">
-          <dt className="text-xs font-medium tracking-wide text-subtle uppercase">Duration</dt>
-          <dd className="font-medium">{formatDuration(experience.durationMinutes)}</dd>
-        </div>
+        {type === "experience" ? (
+          <div className="flex flex-col gap-1 bg-surface p-5">
+            <dt className="text-xs font-medium tracking-wide text-subtle uppercase">Duration</dt>
+            <dd className="font-medium">{formatDuration(experience.durationMinutes)}</dd>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-1 bg-surface p-5">
+            <dt className="text-xs font-medium tracking-wide text-subtle uppercase">
+              {CAPACITY_LABELS[type].perUnit}
+            </dt>
+            <dd className="font-medium">
+              Up to {experience.maxGuests} · {experience.dailyCapacity}{" "}
+              {experience.dailyCapacity === 1
+                ? CAPACITY_LABELS[type].unitOne
+                : `${CAPACITY_LABELS[type].unitOne}s`}{" "}
+              available
+            </dd>
+          </div>
+        )}
+        {type === "transport" && experience.routeTo ? (
+          <div className="flex flex-col gap-1 bg-surface p-5">
+            <dt className="text-xs font-medium tracking-wide text-subtle uppercase">Route</dt>
+            <dd className="font-medium">
+              {experience.destination.name} → {experience.routeTo.name}
+            </dd>
+          </div>
+        ) : null}
+        {type === "guide" && experience.languages.length > 0 ? (
+          <div className="flex flex-col gap-1 bg-surface p-5">
+            <dt className="text-xs font-medium tracking-wide text-subtle uppercase">Languages</dt>
+            <dd className="font-medium">{experience.languages.join(", ")}</dd>
+          </div>
+        ) : null}
         <div className="flex flex-col gap-1 bg-surface p-5">
           <dt className="text-xs font-medium tracking-wide text-subtle uppercase">Location</dt>
           <dd className="font-medium">
@@ -106,6 +142,12 @@ async function ExperienceDetail({ params }: PageProps<"/experiences/[slug]">) {
             experienceSlug={experience.slug}
             priceFromMinor={experience.priceFromMinor}
             acceptsBookings={experience.acceptsBookings}
+            listing={{
+              type: experience.listingType,
+              priceUnit: experience.priceUnit,
+              dailyCapacity: experience.dailyCapacity,
+              maxGuests: experience.maxGuests,
+            }}
           />
         </Suspense>
       </section>

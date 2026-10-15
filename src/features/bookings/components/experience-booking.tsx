@@ -6,7 +6,10 @@ import { formatSlot } from "@/lib/format";
 import { getCurrentAccount } from "@/server/auth/session";
 import { listOpenSlots } from "@/server/bookings/repository";
 
+import type { ListingType, PriceUnit } from "@/lib/listing-options";
+
 import { BookingRequestForm } from "./booking-forms";
+import { ListingBookingForm } from "./listing-booking-form";
 
 /**
  * "Request to book" for an experience page. Rendered at request time. Any
@@ -18,11 +21,19 @@ export async function ExperienceBooking({
   experienceSlug,
   priceFromMinor,
   acceptsBookings,
+  listing,
 }: {
   experienceId: string;
   experienceSlug: string;
   priceFromMinor: number | null;
   acceptsBookings: boolean;
+  /** Type details; guides, stays and transport book a date range and a quantity. */
+  listing: {
+    type: ListingType;
+    priceUnit: PriceUnit;
+    dailyCapacity: number | null;
+    maxGuests: number | null;
+  };
 }) {
   await connection();
   if (!acceptsBookings) {
@@ -82,6 +93,22 @@ export async function ExperienceBooking({
           : " for any date"}
         .
       </p>
+    );
+  }
+  if (listing.type !== "experience" && listing.dailyCapacity && listing.maxGuests) {
+    return (
+      <ListingBookingForm
+        // One key per rendered form; resubmitting this form reuses it.
+        idempotencyKey={crypto.randomUUID()}
+        experienceId={experienceId}
+        listingType={listing.type}
+        priceUnit={listing.priceUnit}
+        priceFromMinor={priceFromMinor}
+        dailyCapacity={listing.dailyCapacity}
+        maxGuests={listing.maxGuests}
+        minDate={istDate(new Date(), 1)}
+        maxDate={istDate(new Date(), MAX_BOOKING_DAYS_AHEAD)}
+      />
     );
   }
   return (

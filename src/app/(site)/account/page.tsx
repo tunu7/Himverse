@@ -8,7 +8,7 @@ import { LoadingBlock, PageShell } from "@/components/page-shell";
 import { TravellerTabs } from "@/features/account/components/traveller-tabs";
 import { BookingStatusBadge } from "@/features/bookings/components/booking-status";
 import { effectiveStatus, istDate } from "@/lib/booking-options";
-import { formatSlot } from "@/lib/format";
+import { formatBookingDates } from "@/lib/format";
 import { requireAccountForPage } from "@/server/auth/session";
 import { listMyBookings } from "@/server/bookings/repository";
 import { listMyItineraries } from "@/server/itineraries/repository";
@@ -81,8 +81,8 @@ async function Overview() {
                   {next.experienceTitle}
                 </Link>
                 <p className="text-sm text-muted">
-                  {formatSlot(next.slotStartsOn, next.slotStartTime)} · {next.partySize}{" "}
-                  {next.partySize === 1 ? "person" : "people"} · {next.reference}
+                  {formatBookingDates(next.slotStartsOn, next.slotStartTime, next.endsOn)} ·{" "}
+                  {next.partySize} {next.partySize === 1 ? "person" : "people"} · {next.reference}
                 </p>
               </div>
               <BookingStatusBadge

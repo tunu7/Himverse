@@ -6,7 +6,7 @@ import { FilterTabs } from "@/components/dashboard";
 import { LoadingBlock, PageShell } from "@/components/page-shell";
 import { BookingStatusBadge } from "@/features/bookings/components/booking-status";
 import { effectiveStatus, type BookingStatus } from "@/lib/booking-options";
-import { formatSlot } from "@/lib/format";
+import { formatBookingDates } from "@/lib/format";
 import { requireAccountForPage } from "@/server/auth/session";
 import { listProviderBookings, type ProviderBooking } from "@/server/bookings/repository";
 
@@ -44,8 +44,8 @@ function Group({
                   {b.experienceTitle}
                 </Link>
                 <p className="text-sm text-muted">
-                  {formatSlot(b.slotStartsOn, b.slotStartTime)} · {b.travelerName} · {b.partySize}{" "}
-                  {b.partySize === 1 ? "person" : "people"} · {b.reference}
+                  {formatBookingDates(b.slotStartsOn, b.slotStartTime, b.endsOn)} · {b.travelerName}{" "}
+                  · {b.partySize} {b.partySize === 1 ? "person" : "people"} · {b.reference}
                 </p>
               </div>
               <BookingStatusBadge

@@ -9,6 +9,7 @@ import {
   ExperienceStatusForm,
   NewExperienceForm,
 } from "@/features/providers/components/provider-forms";
+import { ListingTypeBadge } from "@/features/providers/components/listing-type-fields";
 import { formatDuration, formatPriceFrom } from "@/lib/format";
 import { requireAccountForPage } from "@/server/auth/session";
 import { listPublishedDestinations } from "@/server/catalog/catalog";
@@ -66,6 +67,7 @@ async function Listings() {
                       >
                         {e.title}
                       </Link>
+                      <ListingTypeBadge listingType={e.listingType} />
                       <span
                         className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_STYLES[e.status]}`}
                       >
