@@ -14,7 +14,16 @@ import {
 } from "@/server/providers/providers";
 
 import {
+  updateBusinessDetails,
+  updateBusinessProfile,
+  updateListing,
+} from "@/server/providers/partner";
+
+import {
   acceptsBookingsSchema,
+  businessDetailsSchema,
+  businessProfileSchema,
+  listingSchema,
   experienceStatusSchema,
   newExperienceSchema,
   providerApplicationSchema,
@@ -107,5 +116,59 @@ export async function changeExperienceAcceptsBookings(
     return ok({ done: true });
   } catch (error) {
     return toLoggedFailure("providers.change_accepts_bookings_failed", error);
+  }
+}
+
+export async function saveBusinessProfile(
+  _prev: ProviderActionResult,
+  formData: FormData,
+): Promise<ProviderActionResult> {
+  try {
+    const input = parseInput(businessProfileSchema, formData);
+    await requireAccount(["partner"]);
+    await updateBusinessProfile(input.providerId, input);
+    refresh();
+    return ok({ done: true });
+  } catch (error) {
+    return toLoggedFailure("providers.save_profile_failed", error);
+  }
+}
+
+export async function saveBusinessDetails(
+  _prev: ProviderActionResult,
+  formData: FormData,
+): Promise<ProviderActionResult> {
+  try {
+    const input = parseInput(businessDetailsSchema, formData);
+    await requireAccount(["partner"]);
+    await updateBusinessDetails(input.providerId, input);
+    refresh();
+    return ok({ done: true });
+  } catch (error) {
+    return toLoggedFailure("providers.save_details_failed", error);
+  }
+}
+
+export async function saveListing(
+  _prev: ProviderActionResult,
+  formData: FormData,
+): Promise<ProviderActionResult> {
+  try {
+    const input = parseInput(listingSchema, formData);
+    await requireAccount(["partner"]);
+    await updateListing(input.experienceId, {
+      title: input.title,
+      slug: input.slug,
+      summary: input.summary,
+      description: input.description,
+      category: input.category,
+      destinationId: input.destinationId,
+      durationMinutes: input.durationMinutes,
+      priceFromMinor: input.priceFromRupees,
+    });
+    refresh();
+    return ok({ done: true });
+  } catch (error) {
+    return toLoggedFailure("providers.save_listing_failed", error);
   }
 }

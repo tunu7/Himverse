@@ -3,6 +3,7 @@ import { Suspense } from "react";
 
 import { buttonClass } from "@/components/form-feedback";
 import { LoadingBlock, PageShell } from "@/components/page-shell";
+import { TravellerTabs } from "@/features/account/components/traveller-tabs";
 import { EmptyState } from "@/components/ui";
 import { requireAccountForPage } from "@/server/auth/session";
 import { listMyItineraries } from "@/server/itineraries/repository";
@@ -47,7 +48,8 @@ async function ItineraryList() {
 
 export default function ItinerariesPage() {
   return (
-    <PageShell title="Your trips" width="narrow">
+    <PageShell title="Your trips">
+      <TravellerTabs active="trips" />
       <Suspense fallback={<LoadingBlock label="Loading your trips…" variant="list" />}>
         <ItineraryList />
       </Suspense>

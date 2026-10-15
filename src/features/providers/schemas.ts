@@ -55,3 +55,38 @@ export const acceptsBookingsSchema = z.strictObject({
   experienceId: z.uuid(),
   acceptsBookings: z.enum(["true", "false"]).transform((v) => v === "true"),
 });
+
+export const businessProfileSchema = z.strictObject({
+  providerId: z.uuid(),
+  displayName: z.string().trim().min(2, "Enter your business name.").max(120),
+  description: z.string().trim().max(4000).default(""),
+  district: z.string().trim().max(80).default(""),
+});
+
+export const businessDetailsSchema = z.strictObject({
+  providerId: z.uuid(),
+  legalName: z.string().trim().min(2, "Enter the registered legal name.").max(200),
+  contactEmail: z.email("Enter a valid email address.").max(254),
+  contactPhone: z
+    .string()
+    .trim()
+    .max(20)
+    .regex(/^(\+?[0-9][0-9 ()-]{6,19})?$/, "Enter a valid phone number.")
+    .default(""),
+});
+
+export const listingSchema = z.strictObject({
+  experienceId: z.uuid(),
+  title: z.string().trim().min(3, "Enter a title.").max(140),
+  slug: slug(80),
+  summary: z.string().trim().max(500).default(""),
+  description: z.string().trim().max(8000).default(""),
+  category: z.enum(EXPERIENCE_CATEGORIES),
+  destinationId: z.uuid("Choose a destination."),
+  durationMinutes: z.coerce.number().int().min(15, "At least 15 minutes.").max(43200),
+  priceFromRupees: z
+    .union([z.literal(""), z.coerce.number().int().min(0).max(10_000_000)])
+    .transform((v) => (v === "" ? null : v * 100))
+    .optional()
+    .transform((v) => v ?? null),
+});

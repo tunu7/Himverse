@@ -335,7 +335,12 @@ isOneToOne: false
             [_ in never]: never
           }
           Functions: {
-            "ai_generations_today":
+            "admin_list_users":
+{ Args: { "p_account_type"?: Database["public"]['Enums']["account_type"],"p_limit"?: number,"p_offset"?: number,"p_query"?: string }; Returns: {
+              "account_type": Database["public"]['Enums']["account_type"],"business_names": string,"created_at": string,"display_name": string,"email": string,"email_confirmed": boolean,"id": string,"last_sign_in_at": string,"total_count": number,"two_step": boolean
+            }[]
+                           },
+"ai_generations_today":
 { Args: Record<PropertyKey, never>; Returns: number
                            },
 "auth_attempt_allowed":

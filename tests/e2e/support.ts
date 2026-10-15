@@ -117,7 +117,7 @@ export async function signIn(page: Page, email: string, as: AccountKind = "trave
 
 /** Signed-in user's id, read from their area's account page (as the admin runbook does). */
 export async function currentUserId(page: Page, as: AccountKind = "traveller"): Promise<string> {
-  await page.goto(as === "partner" ? "/provider/account" : "/account");
+  await page.goto(as === "partner" ? "/provider/account" : "/account/settings");
   const id =
     (await page.getByTestId("account-id").filter({ visible: true }).textContent())?.trim() ?? "";
   expect(id).toMatch(UUID);

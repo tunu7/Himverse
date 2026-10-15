@@ -63,7 +63,7 @@ test("admin console: hidden from non-admins; overview, destinations and moderati
   }
 
   // Grant admin the runbook way (by Account ID, as the database owner).
-  await page.goto("/account");
+  await page.goto("/account/settings");
   adminId = (await page.getByTestId("account-id").filter({ visible: true }).textContent())?.trim();
   expect(adminId).toMatch(UUID);
   localSql(

@@ -75,6 +75,13 @@ async function Overview() {
             attention={o.bookingsAwaitingReply > 0}
           />
           <Stat
+            label="Overdue requests"
+            value={o.bookingsOverdue}
+            hint="Past the reply deadline; expire automatically within 15 min"
+            href="/admin/bookings?status=requested"
+            attention={o.bookingsOverdue > 0}
+          />
+          <Stat
             label="AI trip plans today"
             value={`${o.aiGenerationsToday} / ${aiCap}`}
             hint={
@@ -112,6 +119,27 @@ async function Overview() {
             label="Published destinations"
             value={`${o.destinationsPublished} / ${o.destinationsTotal}`}
             href="/admin/destinations"
+          />
+        </div>
+      </section>
+
+      <section aria-labelledby="accounts" className="flex flex-col gap-4">
+        <h2 id="accounts" className="text-lg font-semibold text-fg">
+          Accounts
+        </h2>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <Stat
+            label="Travellers"
+            value={o.accounts.traveller}
+            href="/admin/users?type=traveller"
+          />
+          <Stat label="Partners" value={o.accounts.partner} href="/admin/users?type=partner" />
+          <Stat label="Admins" value={o.accounts.admin} href="/admin/users?type=admin" />
+          <Stat
+            label="Not set up yet"
+            value={o.accounts.untyped}
+            hint="Haven't chosen traveller or partner"
+            href="/admin/users"
           />
         </div>
       </section>

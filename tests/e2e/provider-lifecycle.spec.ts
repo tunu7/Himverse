@@ -67,7 +67,8 @@ test.afterAll(() => {
 });
 
 test("provider lifecycle: verify, publish, suspend", async ({ page }) => {
-  test.setTimeout(120_000);
+  // Two sign-ups with two-step setup, a review, publishing and a suspension.
+  test.setTimeout(240_000);
 
   // Provider applies and submits for review.
   await signUp(page, providerEmail, "Lifecycle Provider", "partner");
@@ -88,7 +89,7 @@ test("provider lifecycle: verify, publish, suspend", async ({ page }) => {
   await expect(page.getByText("This page could not be found.")).toBeVisible();
 
   // Runbook: grant by the Account ID shown on /account.
-  await page.goto("/account");
+  await page.goto("/account/settings");
   adminId = (await page.getByTestId("account-id").filter({ visible: true }).textContent())?.trim();
   expect(adminId).toMatch(UUID);
   const granted = localSql(
@@ -115,13 +116,19 @@ test("provider lifecycle: verify, publish, suspend", async ({ page }) => {
   await expect(page.getByTestId("provider-status").filter({ visible: true })).toContainText(
     "Verified",
   );
-  await page.getByText("Add an experience").click();
+  // Listings live on their own page; the add form starts open when there are none.
+  await page.goto("/provider/listings");
   await page.getByLabel("Title").fill(experienceTitle);
   await page.getByLabel("Short web address").fill(`lifecycle-walk-${run}`);
   await page.getByLabel("Destination").selectOption({ label: "Ziro Valley (Lower Subansiri)" });
   await page.getByLabel("Duration (minutes)").fill("120");
   await page.getByRole("button", { name: "Save as draft" }).click();
-  const row = page.getByRole("listitem").filter({ hasText: experienceTitle });
+  // The new draft appears in the list (the add form folds away once there's a listing).
+  const row = page
+    .getByTestId("listing-row")
+    .filter({ visible: true })
+    .filter({ hasText: experienceTitle });
+  await expect(row).toContainText("draft");
   await row.getByRole("button", { name: "Publish", exact: true }).click();
   await expect(row).toContainText("published");
   await visitExploreAnonymously(page);
@@ -146,9 +153,10 @@ test("provider lifecycle: verify, publish, suspend", async ({ page }) => {
     "Suspended",
   );
   await expect(page.getByText("Reviewer note: Verification documents expired")).toBeVisible();
+  await page.goto("/provider/listings");
   await expect(
     page
-      .getByRole("listitem")
+      .getByTestId("listing-row")
       .filter({ hasText: experienceTitle })
       .getByRole("button", { name: "Publish", exact: true }),
   ).toHaveCount(0);

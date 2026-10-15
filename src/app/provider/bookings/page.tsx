@@ -2,6 +2,7 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { Suspense } from "react";
 
+import { FilterTabs } from "@/components/dashboard";
 import { LoadingBlock, PageShell } from "@/components/page-shell";
 import { BookingStatusBadge } from "@/features/bookings/components/booking-status";
 import { effectiveStatus, type BookingStatus } from "@/lib/booking-options";
@@ -24,7 +25,9 @@ function Group({
         {title} ({bookings.length})
       </h2>
       {bookings.length === 0 ? (
-        <p className="text-sm text-muted">None.</p>
+        <p className="rounded-2xl border border-dashed border-line-strong p-6 text-sm text-muted">
+          Nothing here right now.
+        </p>
       ) : (
         <ul className="flex flex-col gap-2">
           {bookings.map((b) => (
@@ -58,34 +61,54 @@ function Group({
   );
 }
 
-async function ProviderBookings() {
+const VIEWS = {
+  "needs-response": { label: "Needs response", title: "Awaiting your response" },
+  upcoming: { label: "Upcoming", title: "Confirmed and upcoming" },
+  past: { label: "Past and closed", title: "Past and closed" },
+  all: { label: "All", title: "All requests" },
+} as const;
+type View = keyof typeof VIEWS;
+
+async function ProviderBookings({ searchParams }: PageProps<"/provider/bookings">) {
   await requireAccountForPage("/provider/bookings", ["partner"]);
   await connection();
+  const raw = (await searchParams).view;
+  const view: View = typeof raw === "string" && raw in VIEWS ? (raw as View) : "needs-response";
   const now = new Date();
   const bookings = await listProviderBookings();
   const by = (...statuses: BookingStatus[]) =>
     bookings.filter((b) => statuses.includes(effectiveStatus(b.status, b.requestExpiresAt, now)));
+  const groups: Record<View, ProviderBooking[]> = {
+    "needs-response": by("requested"),
+    upcoming: by("confirmed"),
+    past: by("completed", "declined", "cancelled", "expired"),
+    all: bookings,
+  };
   return (
-    <div className="flex flex-col gap-8">
-      <Group title="Awaiting your response" bookings={by("requested")} now={now} />
-      <Group title="Confirmed" bookings={by("confirmed")} now={now} />
-      <Group
-        title="Past and closed"
-        bookings={by("completed", "declined", "cancelled", "expired")}
-        now={now}
+    <div className="flex flex-col gap-6">
+      <FilterTabs
+        label="Booking views"
+        active={view}
+        hrefFor={(key) => `/provider/bookings?view=${key}`}
+        tabs={(Object.keys(VIEWS) as View[]).map((key) => ({
+          key,
+          label: VIEWS[key].label,
+          count: groups[key].length,
+        }))}
       />
+      <Group title={VIEWS[view].title} bookings={groups[view]} now={now} />
     </div>
   );
 }
 
-export default function ProviderBookingsPage() {
+export default function ProviderBookingsPage(props: PageProps<"/provider/bookings">) {
   return (
     <PageShell
       title="Booking requests"
       description="Confirm or decline requests within 48 hours. Travellers see your reply and the final price."
     >
       <Suspense fallback={<LoadingBlock label="Loading bookings…" variant="list" />}>
-        <ProviderBookings />
+        <ProviderBookings {...props} />
       </Suspense>
     </PageShell>
   );

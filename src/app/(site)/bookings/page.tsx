@@ -3,19 +3,59 @@ import { connection } from "next/server";
 import { Suspense } from "react";
 
 import { buttonClass } from "@/components/form-feedback";
+import { FilterTabs } from "@/components/dashboard";
 import { LoadingBlock, PageShell } from "@/components/page-shell";
 import { EmptyState } from "@/components/ui";
+import { TravellerTabs } from "@/features/account/components/traveller-tabs";
 import { BookingStatusBadge } from "@/features/bookings/components/booking-status";
+import { effectiveStatus, istDate } from "@/lib/booking-options";
 import { formatSlot } from "@/lib/format";
 import { requireAccountForPage } from "@/server/auth/session";
 import { listMyBookings } from "@/server/bookings/repository";
 
-async function BookingList() {
+const VIEWS = {
+  all: "All",
+  upcoming: "Upcoming",
+  awaiting: "Awaiting reply",
+  past: "Past",
+  cancelled: "Cancelled and declined",
+} as const;
+type View = keyof typeof VIEWS;
+
+async function BookingList({ searchParams }: PageProps<"/bookings">) {
   await requireAccountForPage("/bookings", ["traveller"]);
   await connection();
+  const raw = (await searchParams).view;
+  const view: View = typeof raw === "string" && raw in VIEWS ? (raw as View) : "all";
   const now = new Date();
-  const bookings = await listMyBookings();
-  if (bookings.length === 0) {
+  const today = istDate(now);
+  const all = (await listMyBookings()).map((b) => ({
+    ...b,
+    effective: effectiveStatus(b.status, b.requestExpiresAt, now),
+  }));
+  const groups: Record<View, typeof all> = {
+    all,
+    upcoming: all.filter((b) => b.effective === "confirmed" && b.slotStartsOn >= today),
+    awaiting: all.filter((b) => b.effective === "requested"),
+    past: all.filter(
+      (b) => b.effective === "completed" || (b.effective === "confirmed" && b.slotStartsOn < today),
+    ),
+    cancelled: all.filter((b) => ["cancelled", "declined", "expired"].includes(b.effective)),
+  };
+  const bookings = groups[view];
+  const tabs = (
+    <FilterTabs
+      label="Booking views"
+      active={view}
+      hrefFor={(key) => (key === "all" ? "/bookings" : `/bookings?view=${key}`)}
+      tabs={(Object.keys(VIEWS) as View[]).map((key) => ({
+        key,
+        label: VIEWS[key],
+        count: groups[key].length,
+      }))}
+    />
+  );
+  if (all.length === 0) {
     return (
       <EmptyState title="You haven't requested any bookings yet.">
         <p>Find an experience you like, pick a date and send the provider a request.</p>
@@ -26,36 +66,45 @@ async function BookingList() {
     );
   }
   return (
-    <ul className="flex flex-col gap-3">
-      {bookings.map((b) => (
-        <li
-          key={b.id}
-          className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-line bg-surface p-5"
-        >
-          <div>
-            <Link
-              href={`/bookings/${b.id}`}
-              className="font-semibold text-fg underline-offset-4 hover:text-accent hover:underline"
-            >
-              {b.experienceTitle}
-            </Link>
-            <p className="text-sm text-muted">
-              {formatSlot(b.slotStartsOn, b.slotStartTime)} · {b.partySize}{" "}
-              {b.partySize === 1 ? "person" : "people"} · {b.reference}
-            </p>
-          </div>
-          <BookingStatusBadge status={b.status} requestExpiresAt={b.requestExpiresAt} now={now} />
-        </li>
-      ))}
-    </ul>
+    <div className="flex flex-col gap-4">
+      {tabs}
+      {bookings.length === 0 ? (
+        <p className="rounded-2xl border border-dashed border-line-strong p-6 text-sm text-muted">
+          No bookings in this view.
+        </p>
+      ) : null}
+      <ul className="flex flex-col gap-3">
+        {bookings.map((b) => (
+          <li
+            key={b.id}
+            className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-line bg-surface p-5"
+          >
+            <div>
+              <Link
+                href={`/bookings/${b.id}`}
+                className="font-semibold text-fg underline-offset-4 hover:text-accent hover:underline"
+              >
+                {b.experienceTitle}
+              </Link>
+              <p className="text-sm text-muted">
+                {formatSlot(b.slotStartsOn, b.slotStartTime)} · {b.partySize}{" "}
+                {b.partySize === 1 ? "person" : "people"} · {b.reference}
+              </p>
+            </div>
+            <BookingStatusBadge status={b.status} requestExpiresAt={b.requestExpiresAt} now={now} />
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
-export default function BookingsPage() {
+export default function BookingsPage(props: PageProps<"/bookings">) {
   return (
-    <PageShell title="Your bookings" width="narrow">
+    <PageShell title="Your bookings">
+      <TravellerTabs active="bookings" />
       <Suspense fallback={<LoadingBlock label="Loading your bookings…" variant="list" />}>
-        <BookingList />
+        <BookingList {...props} />
       </Suspense>
     </PageShell>
   );

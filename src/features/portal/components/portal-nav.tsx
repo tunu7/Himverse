@@ -6,32 +6,45 @@ import { usePathname } from "next/navigation";
 export type PortalLink = { href: string; label: string; exact?: boolean };
 
 /** Section tabs; `pathname` (when known) highlights the current one. */
+type NavProps = {
+  links: readonly PortalLink[];
+  tone: "admin" | "partner";
+  /** Sidebar on large screens, scrolling tabs on small ones. */
+  orientation: "vertical" | "horizontal";
+};
+
+const STYLES = {
+  horizontal: {
+    base: "shrink-0 border-b-2 px-1 py-3 text-sm font-medium transition-colors duration-200",
+    admin: ["border-emerald-300 text-white", "border-transparent text-white/50 hover:text-white"],
+    partner: ["border-fg text-fg", "border-transparent text-muted hover:text-fg"],
+  },
+  vertical: {
+    base: "flex items-center rounded-xl px-3 py-2 text-sm font-medium transition-colors duration-200",
+    admin: ["bg-white/10 text-white", "text-white/60 hover:bg-white/5 hover:text-white"],
+    partner: ["bg-surface-muted text-fg", "text-muted hover:bg-surface-muted/60 hover:text-fg"],
+  },
+} as const;
+
+/** Section links; `pathname` (when known) highlights the current one. */
 export function PortalNavItems({
   links,
   pathname,
   tone,
-}: {
-  links: readonly PortalLink[];
-  pathname: string | null;
-  tone: "admin" | "partner";
-}) {
+  orientation,
+}: NavProps & { pathname: string | null }) {
+  const style = STYLES[orientation];
+  const [activeClass, idleClass] = style[tone];
   return links.map(({ href, label, exact }) => {
     const active =
       pathname !== null &&
       (exact ? pathname === href : pathname === href || pathname.startsWith(`${href}/`));
-    const activeClass = tone === "admin" ? "border-emerald-300 text-white" : "border-fg text-fg";
-    const idleClass =
-      tone === "admin"
-        ? "border-transparent text-white/50 hover:text-white"
-        : "border-transparent text-muted hover:text-fg";
     return (
       <Link
         key={href}
         href={href}
         aria-current={active ? "page" : undefined}
-        className={`shrink-0 border-b-2 px-1 py-3 text-sm font-medium transition-colors duration-200 ${
-          active ? activeClass : idleClass
-        }`}
+        className={`${style.base} ${active ? activeClass : idleClass}`}
       >
         {label}
       </Link>
@@ -40,6 +53,6 @@ export function PortalNavItems({
 }
 
 /** Reads the URL, so it renders inside <Suspense> (Cache Components). */
-export function PortalNav(props: { links: readonly PortalLink[]; tone: "admin" | "partner" }) {
+export function PortalNav(props: NavProps) {
   return <PortalNavItems {...props} pathname={usePathname()} />;
 }

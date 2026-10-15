@@ -12,9 +12,10 @@ type MenuLink = { href: string; label: string; tone?: "accent" };
 /** Each account type sees only its own area (ADR-0007). */
 const MENU: Record<AccountType | "untyped", readonly MenuLink[]> = {
   traveller: [
-    { href: "/account", label: "My account" },
+    { href: "/account", label: "Dashboard" },
     { href: "/itineraries", label: "My trips" },
     { href: "/bookings", label: "My bookings" },
+    { href: "/account/settings", label: "Settings" },
   ],
   partner: [
     { href: "/provider", label: "Partner portal", tone: "accent" },

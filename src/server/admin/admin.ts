@@ -30,7 +30,9 @@ export type AdminOverview = {
   bookingsAwaitingReply: number;
   bookingsLast7Days: number;
   bookingsConfirmedUpcoming: number;
+  bookingsOverdue: number;
   aiGenerationsToday: number;
+  accounts: { traveller: number; partner: number; admin: number; untyped: number };
 };
 
 export async function getAdminOverview(now: Date): Promise<AdminOverview> {
@@ -58,6 +60,11 @@ export async function getAdminOverview(now: Date): Promise<AdminOverview> {
     bookingsLast7Days,
     bookingsConfirmedUpcoming,
     ai,
+    bookingsOverdue,
+    travellers,
+    partners,
+    admins,
+    untyped,
   ] = await Promise.all([
     count(supabase.from("providers").select("id", head).eq("status", "pending_review")),
     count(supabase.from("providers").select("id", head).eq("status", "verified")),
@@ -75,6 +82,18 @@ export async function getAdminOverview(now: Date): Promise<AdminOverview> {
         .gte("slot_starts_on", today),
     ),
     supabase.rpc("ai_generations_today"),
+    // Requests past their deadline that the sweep hasn't expired yet.
+    count(
+      supabase
+        .from("bookings")
+        .select("id", head)
+        .eq("status", "requested")
+        .lt("request_expires_at", now.toISOString()),
+    ),
+    count(supabase.from("profiles").select("id", head).eq("account_type", "traveller")),
+    count(supabase.from("profiles").select("id", head).eq("account_type", "partner")),
+    count(supabase.from("profiles").select("id", head).eq("account_type", "admin")),
+    count(supabase.from("profiles").select("id", head).is("account_type", null)),
   ]);
   if (ai.error) throw toAppError(ai.error, "Could not load the overview.");
 
@@ -88,7 +107,9 @@ export async function getAdminOverview(now: Date): Promise<AdminOverview> {
     bookingsAwaitingReply,
     bookingsLast7Days,
     bookingsConfirmedUpcoming,
+    bookingsOverdue,
     aiGenerationsToday: ai.data,
+    accounts: { traveller: travellers, partner: partners, admin: admins, untyped },
   };
 }
 
@@ -368,4 +389,55 @@ export async function listAllBookings(filter: {
     requestExpiresAt: b.request_expires_at,
     createdAt: b.created_at,
   }));
+}
+
+// ---------------------------------------------------------------------------
+// Accounts (read-only)
+// ---------------------------------------------------------------------------
+
+export type AccountType = Database["public"]["Enums"]["account_type"];
+
+export type AdminUser = {
+  id: string;
+  email: string;
+  displayName: string;
+  accountType: AccountType | null;
+  createdAt: string;
+  lastSignInAt: string | null;
+  emailConfirmed: boolean;
+  twoStep: boolean;
+  businessNames: string | null;
+};
+
+export const ADMIN_USERS_PAGE_SIZE = 25;
+
+/** Accounts, newest first, searchable by email or name (admin_list_users, aal2 admins only). */
+export async function listUsersForAdmin(filter: {
+  query: string;
+  accountType: AccountType | null;
+  page: number;
+}): Promise<{ users: AdminUser[]; total: number }> {
+  await requireAdmin();
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase.rpc("admin_list_users", {
+    p_query: filter.query || undefined,
+    p_account_type: filter.accountType ?? undefined,
+    p_limit: ADMIN_USERS_PAGE_SIZE,
+    p_offset: (filter.page - 1) * ADMIN_USERS_PAGE_SIZE,
+  });
+  if (error) throw toAppError(error, "Could not load accounts.");
+  return {
+    total: data[0]?.total_count ?? 0,
+    users: data.map((u) => ({
+      id: u.id,
+      email: u.email,
+      displayName: u.display_name,
+      accountType: u.account_type,
+      createdAt: u.created_at,
+      lastSignInAt: u.last_sign_in_at,
+      emailConfirmed: u.email_confirmed,
+      twoStep: u.two_step,
+      businessNames: u.business_names,
+    })),
+  };
 }

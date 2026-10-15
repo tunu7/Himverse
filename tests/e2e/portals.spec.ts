@@ -27,6 +27,7 @@ test("traveller sign-up lands on the account page inside the traveller site", as
   await header.getByText("Account", { exact: true }).click();
   await expect(header.getByRole("link", { name: "My trips" })).toBeVisible();
   await expect(header.getByRole("link", { name: /partner/i })).toHaveCount(0);
+  await page.goto("/account/settings");
   await expect(page.getByTestId("account-type").filter({ visible: true })).toHaveText(
     "Traveller account",
   );

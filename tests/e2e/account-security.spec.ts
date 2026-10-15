@@ -95,7 +95,7 @@ test("the reset page refuses sessions that didn't come from a reset link", async
 test("change password from account settings checks the current one", async ({ page }) => {
   const email = uniqueEmail("changer");
   await signUp(page, email, "Changer");
-  await page.goto("/account");
+  await page.goto("/account/settings");
   await page.getByLabel("Current password").fill("not-my-password");
   await page.getByLabel("New password", { exact: true }).fill(NEW_PASSWORD);
   await page.getByLabel("Repeat new password").fill(NEW_PASSWORD);

@@ -41,7 +41,7 @@ export function PortalShell({
   return (
     <div className="flex min-h-full flex-1 flex-col bg-canvas">
       <header className={`sticky top-0 z-40 border-b ${style.bar}`}>
-        <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center gap-x-4 gap-y-2 px-4 pt-3 sm:px-6">
+        <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center gap-x-4 gap-y-2 px-4 pt-3 sm:px-6 lg:pb-3">
           <Link href={links[0]?.href ?? "/"} className="group flex items-center gap-2.5">
             <BrandLogo
               className={
@@ -76,18 +76,38 @@ export function PortalShell({
             </form>
           </div>
         </div>
+        {/* Small screens: scrolling tabs under the bar. */}
         <nav
           aria-label={style.label}
-          className="mx-auto flex w-full max-w-6xl gap-6 overflow-x-auto px-4 sm:px-6"
+          className="mx-auto flex w-full max-w-6xl gap-6 overflow-x-auto px-4 sm:px-6 lg:hidden"
         >
-          <Suspense fallback={<PortalNavItems links={links} pathname={null} tone={area} />}>
-            <PortalNav links={links} tone={area} />
+          <Suspense
+            fallback={
+              <PortalNavItems links={links} pathname={null} tone={area} orientation="horizontal" />
+            }
+          >
+            <PortalNav links={links} tone={area} orientation="horizontal" />
           </Suspense>
         </nav>
+        <div className="h-3 lg:hidden" aria-hidden="true" />
       </header>
-      {children}
+      <div className="mx-auto flex w-full max-w-7xl flex-1 lg:gap-6 lg:px-6">
+        {/* Large screens: a sidebar. */}
+        <aside className="hidden w-56 shrink-0 py-10 lg:block">
+          <nav aria-label={style.label} className="sticky top-24 flex flex-col gap-1">
+            <Suspense
+              fallback={
+                <PortalNavItems links={links} pathname={null} tone={area} orientation="vertical" />
+              }
+            >
+              <PortalNav links={links} tone={area} orientation="vertical" />
+            </Suspense>
+          </nav>
+        </aside>
+        <div className="flex min-w-0 flex-1 flex-col">{children}</div>
+      </div>
       <footer className="border-t border-line">
-        <p className="mx-auto w-full max-w-6xl px-4 py-6 text-xs text-subtle sm:px-6">
+        <p className="mx-auto w-full max-w-7xl px-4 py-6 text-xs text-subtle sm:px-6">
           Himverse.AI · {style.label}
         </p>
       </footer>

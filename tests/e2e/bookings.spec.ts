@@ -164,11 +164,13 @@ test("providers add and close dates; closed dates can't be requested", async ({
     timeZone: "UTC",
   }).format(new Date(`${date}T00:00:00Z`));
 
-  await page.goto("/provider");
-  const manager = page
-    .getByTestId("slot-manager")
-    .filter({ visible: true })
-    .filter({ hasText: "Pasighat riverside picnic (sample)" });
+  const [picnic] = localSql(
+    "select id from public.experiences where slug = 'demo-pasighat-picnic'",
+  ) as Array<{ id: string }>;
+  expect(picnic?.id).toMatch(UUID);
+  // Dates are managed on the listing's own page in the partner portal.
+  await page.goto(`/provider/listings/${picnic!.id}`);
+  const manager = page.getByTestId("slot-manager").filter({ visible: true });
   await manager.getByLabel("Date").fill(date);
   await manager.getByLabel("Seats").fill("3");
   await manager.getByRole("button", { name: "Add date" }).click();
@@ -179,11 +181,10 @@ test("providers add and close dates; closed dates can't be requested", async ({
   const published = traveller.getByTestId("published-dates").filter({ visible: true });
   await expect(published.getByText(label)).toHaveCount(1);
 
-  await page.goto("/provider");
+  await page.goto(`/provider/listings/${picnic!.id}`);
   const row = page
     .getByTestId("slot-manager")
     .filter({ visible: true })
-    .filter({ hasText: "Pasighat riverside picnic (sample)" })
     .getByRole("listitem")
     .filter({ hasText: label });
   await row.getByRole("button", { name: "Close date" }).click();
@@ -227,12 +228,11 @@ test("providers can stop and resume booking requests for an experience", async (
   await signUp(page, uniqueEmail("toggler"), "Toggler", "partner");
   addMember(owner!.provider_id, await currentUserId(page, "partner"));
 
-  await page.goto("/provider");
+  await page.goto("/provider/listings");
   const row = page
-    .getByRole("listitem")
+    .getByTestId("listing-row")
     .filter({ visible: true })
-    .filter({ hasText: "Sangti" })
-    .filter({ has: page.getByTestId("booking-requests-state") });
+    .filter({ hasText: "Sangti" });
   await row.getByRole("button", { name: "Stop booking requests" }).click();
   await expect(row.getByTestId("booking-requests-state")).toHaveText(/Not accepting/);
 
@@ -241,7 +241,7 @@ test("providers can stop and resume booking requests for an experience", async (
   await expect(page.getByLabel("Date")).toHaveCount(0);
 
   // Restore: the local seed is shared across runs.
-  await page.goto("/provider");
+  await page.goto("/provider/listings");
   await row.getByRole("button", { name: "Accept booking requests" }).click();
   await expect(row.getByTestId("booking-requests-state")).toHaveText(/Accepting/);
 });

@@ -18,7 +18,7 @@ select tables_are('public', array[
 select functions_are('public', array[
   'create_provider_application', 'submit_provider_application', 'review_provider',
   'save_itinerary_version', 'begin_itinerary_generation', 'finish_itinerary_generation',
-  'auth_attempt_allowed', 'choose_account_type', 'record_auth_failure', 'request_booking', 'request_booking_on_date', 'request_itinerary_bookings', 'respond_to_booking', 'cancel_booking', 'ai_generations_today'
+  'admin_list_users', 'auth_attempt_allowed', 'choose_account_type', 'record_auth_failure', 'request_booking', 'request_booking_on_date', 'request_itinerary_bookings', 'respond_to_booking', 'cancel_booking', 'ai_generations_today'
 ], 'public (RPC-exposed) functions are exactly the reviewed set');
 
 select is_empty(
@@ -150,6 +150,7 @@ select results_eq(
        ('private', 'provider_accepts_detail_changes(p_provider_id uuid)', 'authenticated'),
        ('private', 'today_ist()', 'anon'),
        ('private', 'today_ist()', 'authenticated'),
+       ('public', 'admin_list_users(p_query text, p_account_type account_type, p_limit integer, p_offset integer)', 'authenticated'),
        ('public', 'ai_generations_today()', 'authenticated'),
        ('public', 'auth_attempt_allowed(p_kind text)', 'authenticated'),
        ('public', 'begin_itinerary_generation(p_itinerary_id uuid, p_global_daily_limit integer)', 'authenticated'),
