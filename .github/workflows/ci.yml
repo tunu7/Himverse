@@ -47,8 +47,9 @@ jobs:
       - run: npm run build
       # Local, throwaway Supabase stack (Docker is preinstalled on GitHub runners).
       # Applies supabase/migrations and supabase/seed.sql. No remote project or secrets.
+      # Mailpit stays on: the password-reset E2E reads the reset email from it.
       - name: Start local Supabase
-        run: npx supabase start -x realtime,storage-api,imgproxy,mailpit,postgres-meta,studio,edge-runtime,logflare,vector,supavisor
+        run: npx supabase start -x realtime,storage-api,imgproxy,postgres-meta,studio,edge-runtime,logflare,vector,supavisor
       - name: Database and RLS tests (pgTAP)
         run: npm run db:test
       - name: Integration tests (parallel connections, e.g. booking concurrency)
