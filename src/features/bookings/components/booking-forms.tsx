@@ -118,8 +118,8 @@ export function BookingRequestForm({
       </label>
       <p className="text-sm text-muted">
         {price ? `Indicative price from ${price} per person. ` : "Price on request. "}
-        The provider confirms the final price. Nothing is charged, and your booking isn&apos;t
-        confirmed until the provider confirms it.
+        The provider confirms the final price. Nothing is charged now (any deposit is paid after
+        confirmation), and your booking isn&apos;t confirmed until the provider confirms it.
       </p>
       <FormAlert state={state} />
       <button type="submit" disabled={pending} className={`${buttonClass} self-start`}>

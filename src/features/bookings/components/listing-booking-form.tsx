@@ -184,7 +184,8 @@ export function ListingBookingForm({
           : priceFromMinor === null
             ? "Price on request. "
             : ""}
-        The partner confirms availability and the final price. Nothing is charged.
+        The partner confirms availability and the final price. Nothing is charged now; if a deposit
+        is needed, you pay it after the partner confirms.
       </p>
       <FormAlert state={state} />
       <button type="submit" disabled={pending} className={`${buttonClass} self-start`}>

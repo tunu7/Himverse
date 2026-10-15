@@ -33,3 +33,20 @@ export const moderateExperienceSchema = z.strictObject({
   experienceId: z.uuid(),
   action: z.enum(["publish", "unpublish", "archive"]),
 });
+
+export const depositsSwitchSchema = z.strictObject({
+  required: z.enum(["true", "false"]).transform((v) => v === "true"),
+});
+
+/** Rupees with up to two decimals, as paise. */
+export const payoutSchema = z.strictObject({
+  providerId: z.uuid(),
+  amountRupees: z
+    .string()
+    .trim()
+    .regex(/^\d{1,8}(\.\d{1,2})?$/, "Enter an amount in rupees, e.g. 1500 or 1500.50.")
+    .transform((v) => Math.round(Number(v) * 100))
+    .refine((v) => v > 0, "Enter an amount above zero."),
+  reference: z.string().trim().min(1, "Enter the bank transfer reference.").max(100),
+  note: z.string().trim().max(300).default(""),
+});

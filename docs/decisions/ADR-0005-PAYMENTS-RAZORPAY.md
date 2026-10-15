@@ -1,7 +1,10 @@
-# ADR-0005: Payments with Razorpay (design only)
+# ADR-0005: Payments with Razorpay (deposits)
 
-- Status: **Proposed** (no code, SDK or keys; implementation is Phase 5 Workstream C, sandbox only)
-- Date: 2026-10-13
+- Status: **Accepted** 2026-10-15 (owner decisions below). Test Mode only until the go-live gate passes.
+- Date: 2026-10-13 (proposed); 2026-10-15 (accepted, implemented)
+- Implementation: migration `20261015141524_payments`, `src/server/payments/`, `/api/webhooks/razorpay`,
+  `/api/cron/payments`, `/admin/payments`; pgTAP `payments.test.sql`, unit `payments.test.ts`, E2E
+  `payments.spec.ts` (fake Razorpay API). Runbook: [PAYMENTS](../operations/PAYMENTS.md).
 
 ## Context
 
@@ -15,6 +18,48 @@ sandbox before any code is merged.
 Business questions still open (BOOKING_POLICY 1–2): deposit vs full prepayment, refund schedule per
 cancellation timing, and whether Himverse.AI collects as a marketplace (Razorpay Route / payouts to
 providers, with the regulatory implications) or each provider collects directly.
+
+## Owner decisions (2026-10-15)
+
+- **Himverse collects** on one Razorpay account. Partners are paid out manually by bank transfer and the
+  payouts are recorded (`partner_payouts`); no Razorpay Route.
+- **A 50% deposit** online after the partner confirms (rounded up to the paisa); the rest is paid to the
+  partner on the day.
+- **Deadline:** within 24 hours of confirmation, or by the start if sooner; unpaid bookings are cancelled
+  by the system (pg_cron) and their date freed.
+- **Refunds of a paid deposit:** traveller cancels 7+ days before the start → full; 7 days to 24 hours →
+  50%; partner or system cancellation → full. A payment that arrives for a cancelled or already-paid
+  booking is refunded in full.
+- **Admin switch:** deposits are required only after an admin turns them on (`platform_settings`), which
+  needs the Razorpay keys on the deployment.
+- **Payouts (engineering default, confirm with the owner):** a deposit is _held_ while its booking can
+  still be refunded (confirmed, upcoming) and becomes _payable_ once the booking is completed, or
+  cancelled with its refund decided. Payouts are limited to payable money, so Himverse never pays a
+  partner a deposit it may still have to refund.
+
+## Security review (2026-10-15) — fixes
+
+- **Refunds are sent once:** each refund is claimed atomically (`claim_refunds`, `for update skip
+locked`, 5-minute lease) before sending, and Razorpay's `X-Refund-Idempotency` header (our refund
+  id) makes a retry after a timeout return the same refund. A second Razorpay refund id or a different
+  amount for one of ours is flagged, never merged.
+- **Webhooks aren't lost:** an event whose processing failed (no result) is processed again on
+  Razorpay's retry. The daily job also asks Razorpay about refunds still pending after an hour.
+- **A failed attempt doesn't close an order** (Checkout can retry on it), so reconciliation still sees
+  it.
+- **Orders are recorded only by the server** (`attach_deposit_order` is service-role only, checked
+  against the signed-in traveller), so a traveller can't flood reconciliation with invented orders.
+- **Grace period:** a checkout started in the 15 minutes before the deadline gets 30 more minutes;
+  Checkout also closes itself at the deadline.
+- **Payouts** have a unique bank reference per partner, and failed refunds (still owed to the
+  traveller) are subtracted from what a partner is owed. Refunds made by hand in the Razorpay Dashboard
+  are recorded from their webhook.
+- **A second payment on an already-paid order** (Razorpay shouldn't allow it) is logged
+  (`payments.extra_payment`) for a manual refund.
+- **The API address** is pinned to `https://api.razorpay.com` on Vercel.
+- **Known limit:** if pg_cron stopped for a day, the completion sweep could mark an unpaid booking
+  completed. Both jobs run every 15 minutes in the same scheduler; the go-live gate checks
+  `cron.job_run_details`.
 
 ## Decision
 
@@ -43,11 +88,16 @@ providers, with the regulatory implications) or each provider collects directly.
    `env.server.ts`; `RAZORPAY_KEY_ID` may be public. Test keys only on staging; live keys only in
    production after the go-live gate below.
 8. **Webhook handler:** a Route Handler at `/api/webhooks/razorpay` (no session). Because no user is
-   acting, it calls one narrowly scoped database function with a dedicated credential. This is the
-   first system path; it needs its own review and pgTAP tests, and must not use a general secret-key
-   client.
-9. **CSP:** Razorpay Checkout loads a script and a frame. Extend `script-src`, `frame-src` and
-   `connect-src` only for Razorpay's documented origins, on the payment page if possible.
+   acting, it uses the Supabase secret key through `src/server/payments/system-db.ts`, which exposes only
+   the payment functions granted to `service_role` (no table access). Implemented as the first system
+   path, with its own pgTAP and unit tests.
+   - Orders: a new order per checkout attempt (Razorpay's rule), reusing an unpaid one from the last 30
+     minutes; the receipt `<booking reference>-<attempt>` is Razorpay's duplicate guard.
+   - Refunds: the refund row's id is the Razorpay `receipt`, so a retried refund can't be created twice.
+9. **CSP:** only on `/bookings/:id` (the traveller's booking page): `script-src` and `frame-src`
+   `checkout.razorpay.com`/`api.razorpay.com`, `connect-src` `api.razorpay.com` and
+   `lumberjack.razorpay.com`, `Cross-Origin-Opener-Policy: same-origin-allow-popups` (bank/UPI popups)
+   and `payment=(self)`. Razorpay publishes no official origin list; the go-live gate checks the console.
 
 ## Go-live gate for live keys
 

@@ -108,6 +108,17 @@ async function BookingList({ searchParams }: PageProps<"/bookings">) {
                   Updated
                 </span>
               ) : null}
+              {b.effective === "confirmed" &&
+              b.deposit &&
+              !b.deposit.paidAt &&
+              new Date(b.deposit.dueAt) > now ? (
+                <span
+                  data-testid="deposit-due"
+                  className="ml-2 rounded-full bg-warning-soft px-2 py-0.5 text-xs font-medium text-warning-soft-fg"
+                >
+                  Deposit due
+                </span>
+              ) : null}
               <p className="text-sm text-muted">
                 {formatBookingDates(b.slotStartsOn, b.slotStartTime, b.endsOn, b.listingType)} ·{" "}
                 {b.partySize} {b.partySize === 1 ? "person" : "people"} · {b.reference}

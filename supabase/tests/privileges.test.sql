@@ -12,14 +12,18 @@ select tables_are('public', array[
   'profiles', 'user_roles', 'providers', 'provider_members', 'provider_private_details',
   'provider_status_events', 'destinations', 'experiences',
   'itineraries', 'itinerary_versions', 'itinerary_items', 'itinerary_generations',
-  'availability_slots', 'bookings', 'booking_events'
+  'availability_slots', 'bookings', 'booking_events',
+  'platform_settings', 'payments', 'refunds', 'payment_events', 'partner_payouts'
 ], 'public tables are exactly the reviewed set');
 
 select functions_are('public', array[
   'create_provider_application', 'submit_provider_application', 'review_provider',
   'save_itinerary_version', 'begin_itinerary_generation', 'finish_itinerary_generation',
   'admin_list_users', 'auth_attempt_allowed', 'choose_account_type', 'record_auth_failure', 'request_booking', 'request_booking_on_date', 'request_itinerary_bookings', 'request_listing_booking', 'respond_to_booking', 'cancel_booking', 'ai_generations_today', 'delete_my_account',
-  'my_booking_updates', 'mark_bookings_seen', 'partner_booking_alerts'
+  'my_booking_updates', 'mark_bookings_seen', 'partner_booking_alerts',
+  'set_deposits_required', 'deposit_checkout', 'attach_deposit_order', 'record_razorpay_payment',
+  'record_razorpay_refund', 'claim_refunds', 'refunds_to_check', 'payments_to_reconcile', 'log_payment_event', 'finish_payment_event',
+  'partner_payment_summary', 'admin_partner_balances', 'record_partner_payout'
 ], 'public (RPC-exposed) functions are exactly the reviewed set');
 
 select is_empty(
@@ -154,6 +158,7 @@ select results_eq(
        ('private', 'valid_languages(p_languages text[])', 'anon'),
        ('private', 'valid_languages(p_languages text[])', 'authenticated'),
        ('public', 'admin_list_users(p_query text, p_account_type account_type, p_limit integer, p_offset integer)', 'authenticated'),
+       ('public', 'admin_partner_balances()', 'authenticated'),
        ('public', 'ai_generations_today()', 'authenticated'),
        ('public', 'auth_attempt_allowed(p_kind text)', 'authenticated'),
        ('public', 'begin_itinerary_generation(p_itinerary_id uuid, p_global_daily_limit integer)', 'authenticated'),
@@ -161,11 +166,14 @@ select results_eq(
        ('public', 'choose_account_type(p_type account_type)', 'authenticated'),
        ('public', 'create_provider_application(p_slug text, p_display_name text, p_description text, p_district text, p_legal_name text, p_contact_email text, p_contact_phone text)', 'authenticated'),
        ('public', 'delete_my_account()', 'authenticated'),
+       ('public', 'deposit_checkout(p_booking_id uuid)', 'authenticated'),
        ('public', 'finish_itinerary_generation(p_generation_id bigint, p_outcome itinerary_generation_outcome, p_error_code text, p_model text, p_prompt_version text, p_latency_ms integer, p_input_tokens integer, p_output_tokens integer)', 'authenticated'),
        ('public', 'mark_bookings_seen()', 'authenticated'),
        ('public', 'my_booking_updates()', 'authenticated'),
        ('public', 'partner_booking_alerts()', 'authenticated'),
+       ('public', 'partner_payment_summary(p_provider_id uuid)', 'authenticated'),
        ('public', 'record_auth_failure(p_kind text)', 'authenticated'),
+       ('public', 'record_partner_payout(p_provider_id uuid, p_amount_minor bigint, p_reference text, p_note text)', 'authenticated'),
        ('public', 'request_booking_on_date(p_experience_id uuid, p_date date, p_adults integer, p_children integer, p_contact_phone text, p_note text, p_idempotency_key uuid)', 'authenticated'),
        ('public', 'request_booking(p_slot_id uuid, p_adults integer, p_children integer, p_contact_phone text, p_note text, p_idempotency_key uuid)', 'authenticated'),
        ('public', 'request_itinerary_bookings(p_version_id uuid, p_contact_phone text, p_note text, p_idempotency_key uuid)', 'authenticated'),
@@ -173,6 +181,7 @@ select results_eq(
        ('public', 'respond_to_booking(p_booking_id uuid, p_decision booking_status, p_final_total_minor bigint, p_note text)', 'authenticated'),
        ('public', 'review_provider(p_provider_id uuid, p_decision provider_status, p_note text)', 'authenticated'),
        ('public', 'save_itinerary_version(p_generation_id bigint, p_itinerary_id uuid, p_title text, p_kind itinerary_version_kind, p_preferences jsonb, p_plan jsonb, p_schema_version text, p_prompt_version text, p_model text, p_travelers integer, p_warnings jsonb, p_items jsonb)', 'authenticated'),
+       ('public', 'set_deposits_required(p_required boolean)', 'authenticated'),
        ('public', 'submit_provider_application(p_provider_id uuid)', 'authenticated') $$,
   'API roles can execute exactly the reviewed functions');
 
@@ -191,7 +200,7 @@ select results_eq(
        ('availability_slots', 'authenticated', 'SELECT', 'capacity,created_at,experience_id,id,seats_confirmed,start_time,starts_on,status,updated_at'),
        ('availability_slots', 'authenticated', 'UPDATE', 'capacity,status'),
        ('booking_events', 'authenticated', 'SELECT', 'actor_role,booking_id,created_at,from_status,id,note,to_status'),
-       ('bookings', 'authenticated', 'SELECT', 'adults,cancellation_reason,cancelled_by,children,confirmed_total_minor,contact_phone,created_at,currency,ends_on,estimated_total_minor,experience_id,experience_title,id,idempotency_key,party_size,pickup_note,provider_id,provider_note,reference,request_expires_at,slot_id,slot_start_time,slot_starts_on,status,traveler_id,traveler_name,traveler_note,units,updated_at'),
+       ('bookings', 'authenticated', 'SELECT', 'adults,cancellation_reason,cancelled_by,children,confirmed_total_minor,contact_phone,created_at,currency,deposit_minor,deposit_paid_at,ends_on,estimated_total_minor,experience_id,experience_title,id,idempotency_key,party_size,payment_due_at,pickup_note,provider_id,provider_note,reference,request_expires_at,slot_id,slot_start_time,slot_starts_on,status,traveler_id,traveler_name,traveler_note,units,updated_at'),
        ('destinations', 'anon', 'SELECT', 'created_at,description,district,id,is_published,name,search_vector,slug,summary,updated_at'),
        ('destinations', 'authenticated', 'INSERT', 'description,district,is_published,name,slug,summary'),
        ('destinations', 'authenticated', 'SELECT', 'created_at,description,district,id,is_published,name,search_vector,slug,summary,updated_at'),
@@ -205,6 +214,11 @@ select results_eq(
        ('itinerary_generations', 'authenticated', 'SELECT', 'created_at,error_code,id,input_tokens,itinerary_id,latency_ms,model,outcome,output_tokens,prompt_version,user_id'),
        ('itinerary_items', 'authenticated', 'SELECT', 'day_number,destination_id,destination_name_snapshot,duration_snapshot_minutes,experience_id,experience_title_snapshot,id,item_kind,position,price_snapshot_minor,rationale,time_of_day,units,version_id'),
        ('itinerary_versions', 'authenticated', 'SELECT', 'created_at,currency,estimated_total_minor,id,itinerary_id,kind,model,plan,preferences,prompt_version,schema_version,travelers,unpriced_item_count,version_number,warnings'),
+       ('partner_payouts', 'authenticated', 'SELECT', 'amount_minor,created_at,id,note,provider_id,reference'),
+       ('payment_events', 'authenticated', 'SELECT', 'event_id,event_type,id,received_at,result,summary'),
+       ('payments', 'authenticated', 'SELECT', 'amount_minor,booking_id,captured_at,created_at,currency,id,provider_id,refunded_minor,status'),
+       ('platform_settings', 'anon', 'SELECT', 'deposits_required'),
+       ('platform_settings', 'authenticated', 'SELECT', 'deposits_required'),
        ('profiles', 'authenticated', 'SELECT', 'account_type,bookings_seen_at,created_at,display_name,id,updated_at'),
        ('profiles', 'authenticated', 'UPDATE', 'display_name'),
        ('provider_members', 'authenticated', 'SELECT', 'created_at,member_role,provider_id,user_id'),
@@ -214,6 +228,7 @@ select results_eq(
        ('providers', 'anon', 'SELECT', 'created_at,description,display_name,district,id,slug,status,updated_at,verified_at'),
        ('providers', 'authenticated', 'SELECT', 'created_at,description,display_name,district,id,slug,status,updated_at,verified_at'),
        ('providers', 'authenticated', 'UPDATE', 'description,display_name,district'),
+       ('refunds', 'authenticated', 'SELECT', 'amount_minor,booking_id,created_at,id,payment_id,processed_at,reason,status'),
        ('user_roles', 'authenticated', 'SELECT', 'granted_at,granted_by,role,user_id') $$,
   'API roles hold exactly the reviewed column privileges');
 

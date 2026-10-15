@@ -12,6 +12,7 @@ const ADMIN_LINKS = [
   { href: "/admin/destinations", label: "Destinations" },
   { href: "/admin/experiences", label: "Experiences" },
   { href: "/admin/bookings", label: "Bookings" },
+  { href: "/admin/payments", label: "Payments" },
   { href: "/admin/users", label: "Users" },
   { href: "/admin/account", label: "Account" },
 ] as const;

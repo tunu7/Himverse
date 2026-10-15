@@ -30,7 +30,8 @@ Remaining: evaluation set ([AI_EVALUATION](../ai/AI_EVALUATION.md)), streaming p
 
 ADR-0004: request → partner confirm/decline with a final price, cancellation, 48 h expiry and completion
 through `pg_cron`, idempotent requests, no overbooking, audited history. 2026-10-15: any-date requests,
-partner accept-bookings switch, "Book whole trip". No payments. Open questions:
+partner accept-bookings switch, "Book whole trip". 2026-10-15: online 50% deposits with Razorpay
+(ADR-0005; Test Mode until the go-live gate). Open questions:
 [BOOKING_POLICY](BOOKING_POLICY.md).
 
 ## Phase 5 — Production readiness (in progress; "launch readiness" work 2026-10-15)
@@ -55,6 +56,6 @@ content before launch.
 
 ## Post-MVP
 
-Online payments (ADR-0005, proposed) · reviews and ratings · email/SMS notifications · expansion across
+Live payments (after the ADR-0005 go-live gate), commissions and automatic payouts · reviews and ratings · email/SMS notifications · expansion across
 Northeast India, then the wider Himalayan region · multi-language support · partner payouts · richer
 offline support.

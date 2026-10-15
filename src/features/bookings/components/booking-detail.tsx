@@ -14,6 +14,7 @@ import { getBooking } from "@/server/bookings/repository";
 
 import { CancelBookingForm, RespondForm } from "./booking-forms";
 import { BookingStatusBadge } from "./booking-status";
+import { DepositPanel } from "./deposit-panel";
 
 /**
  * A booking as seen from one area: the traveller's own booking, or a request
@@ -132,7 +133,7 @@ export async function BookingDetail({
           Cancelled by the {booking.cancelledBy}: {booking.cancellationReason}
         </p>
       ) : null}
-      <p className="text-xs text-subtle">No payment is taken through Himverse.AI.</p>
+      <DepositPanel booking={booking} now={now} />
 
       {booking.isTraveler &&
       travelerCanCancel(booking.status, startsAt, booking.requestExpiresAt, now) ? (

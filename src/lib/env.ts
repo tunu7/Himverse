@@ -142,7 +142,54 @@ function defaultTimeout(env: {
     : DEFAULT_MODEL_TIMEOUT_MS.ollamaRemote;
 }
 
+// Online deposits with Razorpay (ADR-0005). All optional: without keys, payments
+// are off and deposits can't be required. Live keys (rzp_live_) are refused until
+// the ADR-0005 go-live gate is passed and RAZORPAY_ALLOW_LIVE=true is set.
+const paymentsEnvSchema = z
+  .object({
+    RAZORPAY_KEY_ID: z
+      .string()
+      .regex(/^rzp_(test|live)_[A-Za-z0-9]{8,32}$/)
+      .optional(),
+    RAZORPAY_KEY_SECRET: z.string().min(8).max(200).optional(),
+    RAZORPAY_WEBHOOK_SECRET: z.string().min(8).max(200).optional(),
+    // Tests point this at a local fake; production uses Razorpay's API.
+    RAZORPAY_API_BASE: z.url().default("https://api.razorpay.com"),
+    RAZORPAY_ALLOW_LIVE: z.enum(["true", "false"]).default("false"),
+    VERCEL_ENV: z.string().optional(),
+    // Shared secret for the scheduled payments job (Vercel Cron sends it as a bearer token).
+    CRON_SECRET: z.string().min(16).max(200).optional(),
+  })
+  .superRefine((env, ctx) => {
+    const set = [env.RAZORPAY_KEY_ID, env.RAZORPAY_KEY_SECRET, env.RAZORPAY_WEBHOOK_SECRET].filter(
+      Boolean,
+    );
+    if (set.length !== 0 && set.length !== 3) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["RAZORPAY_KEY_ID"],
+        message: "Set the Razorpay key id, key secret and webhook secret together.",
+      });
+    }
+    // Keys are sent to this address: on Vercel it must be Razorpay itself.
+    if (env.VERCEL_ENV && env.RAZORPAY_API_BASE !== "https://api.razorpay.com") {
+      ctx.addIssue({
+        code: "custom",
+        path: ["RAZORPAY_API_BASE"],
+        message: "Only https://api.razorpay.com is allowed on Vercel.",
+      });
+    }
+    if (env.RAZORPAY_KEY_ID?.startsWith("rzp_live_") && env.RAZORPAY_ALLOW_LIVE !== "true") {
+      ctx.addIssue({
+        code: "custom",
+        path: ["RAZORPAY_KEY_ID"],
+        message: "Live keys need RAZORPAY_ALLOW_LIVE=true (after the ADR-0005 go-live gate).",
+      });
+    }
+  });
+
 export type PublicEnv = z.infer<typeof publicEnvSchema>;
+export type PaymentsEnv = z.output<typeof paymentsEnvSchema>;
 export type AiEnv = z.output<typeof aiEnvSchema>;
 export type ServerEnv = z.infer<typeof serverEnvSchema>;
 
@@ -174,6 +221,10 @@ export function parseServerEnv(source: Record<string, unknown>): ServerEnv {
 
 export function parseAiEnv(source: Record<string, unknown>): AiEnv {
   return parse(aiEnvSchema, source);
+}
+
+export function parsePaymentsEnv(source: Record<string, unknown>): PaymentsEnv {
+  return parse(paymentsEnvSchema, source);
 }
 
 let cachedPublicEnv: PublicEnv | undefined;

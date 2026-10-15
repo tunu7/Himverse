@@ -11,6 +11,7 @@ import {
 } from "@/features/providers/components/provider-forms";
 import { formatPriceFrom } from "@/lib/format";
 import { requireAccountForPage } from "@/server/auth/session";
+import { getPartnerPaymentSummary } from "@/server/payments/admin";
 import { getMyBusiness, getPartnerOverview } from "@/server/providers/partner";
 import { canSubmitForReview, PROVIDER_STATUS_LABELS } from "@/server/providers/status";
 
@@ -61,7 +62,10 @@ async function Overview() {
   if (!business) return <Apply />;
 
   const now = new Date();
-  const overview = await getPartnerOverview(business.id, now);
+  const [overview, payments] = await Promise.all([
+    getPartnerOverview(business.id, now),
+    getPartnerPaymentSummary(business.id),
+  ]);
   const verified = business.status === "verified";
 
   return (
@@ -100,7 +104,7 @@ async function Overview() {
         <StatCard
           label="Confirmed this month"
           value={formatPriceFrom(overview.revenueThisMonthMinor) ?? "₹0"}
-          hint="Totals you confirmed; no payment is taken"
+          hint="Totals you confirmed"
         />
         <StatCard
           label="Live listings"
@@ -109,6 +113,25 @@ async function Overview() {
           href="/provider/listings"
         />
       </StatGrid>
+
+      {payments.collectedMinor > 0 || payments.paidOutMinor > 0 ? (
+        <Panel title="Online deposits">
+          <p className="text-sm text-fg-soft" data-testid="partner-deposits">
+            Collected by Himverse: {formatPriceFrom(payments.collectedMinor) ?? "₹0"} · refunded to
+            travellers:{" "}
+            {formatPriceFrom(payments.refundedMinor + payments.pendingRefundsMinor) ?? "₹0"} · paid
+            out to you: {formatPriceFrom(payments.paidOutMinor) ?? "₹0"} · held until trips are
+            completed or settled: {formatPriceFrom(payments.heldMinor) ?? "₹0"} ·{" "}
+            <span className="font-semibold text-fg">
+              still to pay you: {formatPriceFrom(payments.owedMinor) ?? "₹0"}
+            </span>
+          </p>
+          <p className="text-xs text-subtle">
+            Himverse pays deposits out to your bank account; travellers pay the rest to you on the
+            day.
+          </p>
+        </Panel>
+      ) : null}
 
       <div className="grid gap-6 lg:grid-cols-[1fr_20rem]">
         <Panel title="Getting set up">

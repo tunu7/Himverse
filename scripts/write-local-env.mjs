@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // Writes .env.local for the LOCAL Supabase stack (`npx supabase start`).
-// Only public values are written; the secret key is deliberately omitted
-// because no Phase 1 code path needs it. Values are never printed.
+// Public values plus the local stack's secret key, which the payments system
+// path (ADR-0005) needs. The local key is a throwaway per local stack, never a
+// hosted project's key. Values are never printed.
 //
 // Usage: node scripts/write-local-env.mjs [--force]
 import { execFileSync } from "node:child_process";
@@ -26,6 +27,12 @@ const status = Object.fromEntries(
     .map((match) => [match[1], match[2]]),
 );
 
+const secretKey = status.SECRET_KEY || status.SERVICE_ROLE_KEY;
+if (!/^https?:\/\/(127\.0\.0\.1|localhost):/.test(status.API_URL ?? "")) {
+  console.error("Refusing: `supabase status` doesn't point at a local stack.");
+  process.exit(1);
+}
+
 for (const key of ["API_URL", "PUBLISHABLE_KEY"]) {
   if (!status[key]) {
     console.error(`Missing ${key} in \`supabase status\` output. Is the local stack running?`);
@@ -41,6 +48,7 @@ writeFileSync(
     `NEXT_PUBLIC_SITE_URL=http://localhost:${port}`,
     `NEXT_PUBLIC_SUPABASE_URL=${status.API_URL}`,
     `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=${status.PUBLISHABLE_KEY}`,
+    ...(secretKey ? [`SUPABASE_SECRET_KEY=${secretKey}`] : []),
     "",
   ].join("\n"),
   { mode: 0o600 },

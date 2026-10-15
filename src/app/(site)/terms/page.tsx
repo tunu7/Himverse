@@ -32,7 +32,20 @@ export default function TermsPage() {
           </li>
           <li>
             Prices shown are indicative &ldquo;from&rdquo; prices. The partner confirms the final
-            price. Nothing is charged through Himverse.AI; payment is arranged with the partner.
+            price. Nothing is charged when you send a request.
+          </li>
+          <li>
+            <strong>Deposits:</strong> when Himverse.AI requires online deposits, a confirmed
+            booking shows a 50% deposit, paid securely through Razorpay within 24 hours of the
+            partner confirming (or before the start, if sooner). Unpaid bookings are cancelled
+            automatically. You pay the rest to the partner on the day. Himverse.AI collects deposits
+            and passes them on to the partner.
+          </li>
+          <li>
+            <strong>Refunds of a paid deposit:</strong> in full if you cancel 7 or more days before
+            the start; 50% if you cancel between 7 days and 24 hours before; in full if the partner
+            or Himverse.AI cancels. Refunds go back to the original payment method and usually take
+            5–7 working days.
           </li>
           <li>
             You can cancel a request at any time, and a confirmed booking up to 24 hours before it

@@ -1,6 +1,13 @@
 import "server-only";
 
-import { type AiEnv, parseAiEnv, parseServerEnv, type ServerEnv } from "./env";
+import {
+  type AiEnv,
+  parseAiEnv,
+  parsePaymentsEnv,
+  parseServerEnv,
+  type PaymentsEnv,
+  type ServerEnv,
+} from "./env";
 
 let cachedServerEnv: ServerEnv | undefined;
 
@@ -33,4 +40,20 @@ export function getAiEnv(): AiEnv {
     AI_DAILY_GENERATION_LIMIT: process.env.AI_DAILY_GENERATION_LIMIT || undefined,
   });
   return cachedAiEnv;
+}
+
+let cachedPaymentsEnv: PaymentsEnv | undefined;
+
+/** Razorpay keys and the cron secret (server-only; ADR-0005). */
+export function getPaymentsEnv(): PaymentsEnv {
+  cachedPaymentsEnv ??= parsePaymentsEnv({
+    RAZORPAY_KEY_ID: process.env.RAZORPAY_KEY_ID || undefined,
+    RAZORPAY_KEY_SECRET: process.env.RAZORPAY_KEY_SECRET || undefined,
+    RAZORPAY_WEBHOOK_SECRET: process.env.RAZORPAY_WEBHOOK_SECRET || undefined,
+    RAZORPAY_API_BASE: process.env.RAZORPAY_API_BASE || undefined,
+    RAZORPAY_ALLOW_LIVE: process.env.RAZORPAY_ALLOW_LIVE || undefined,
+    CRON_SECRET: process.env.CRON_SECRET || undefined,
+    VERCEL_ENV: process.env.VERCEL_ENV || undefined,
+  });
+  return cachedPaymentsEnv;
 }

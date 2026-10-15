@@ -65,14 +65,14 @@ isOneToOne: false
                   ]
                 },"bookings": {
                   Row: {
-                    "adults": number,"cancellation_reason": string | null,"cancelled_by": Database["public"]['Enums']["booking_actor"] | null,"children": number,"confirmed_total_minor": number | null,"contact_phone": string,"created_at": string,"currency": string,"ends_on": string | null,"estimated_total_minor": number | null,"experience_id": string,"experience_title": string,"id": string,"idempotency_key": string,"party_size": number | null,"pickup_note": string,"provider_id": string,"provider_note": string | null,"reference": string,"request_expires_at": string,"slot_id": string | null,"slot_start_time": string | null,"slot_starts_on": string,"status": Database["public"]['Enums']["booking_status"],"traveler_id": string | null,"traveler_name": string,"traveler_note": string,"units": number,"updated_at": string
+                    "adults": number,"cancellation_reason": string | null,"cancelled_by": Database["public"]['Enums']["booking_actor"] | null,"children": number,"confirmed_total_minor": number | null,"contact_phone": string,"created_at": string,"currency": string,"deposit_minor": number | null,"deposit_paid_at": string | null,"ends_on": string | null,"estimated_total_minor": number | null,"experience_id": string,"experience_title": string,"id": string,"idempotency_key": string,"party_size": number | null,"payment_due_at": string | null,"pickup_note": string,"provider_id": string,"provider_note": string | null,"reference": string,"request_expires_at": string,"slot_id": string | null,"slot_start_time": string | null,"slot_starts_on": string,"status": Database["public"]['Enums']["booking_status"],"traveler_id": string | null,"traveler_name": string,"traveler_note": string,"units": number,"updated_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "adults": number,"cancellation_reason"?: string | null,"cancelled_by"?: Database["public"]['Enums']["booking_actor"] | null,"children"?: number,"confirmed_total_minor"?: number | null,"contact_phone": string,"created_at"?: string,"currency"?: string,"ends_on"?: string | null,"estimated_total_minor"?: number | null,"experience_id": string,"experience_title": string,"id"?: string,"idempotency_key": string,"party_size"?: never,"pickup_note"?: string,"provider_id": string,"provider_note"?: string | null,"reference": string,"request_expires_at": string,"slot_id"?: string | null,"slot_start_time"?: string | null,"slot_starts_on": string,"status"?: Database["public"]['Enums']["booking_status"],"traveler_id"?: string | null,"traveler_name": string,"traveler_note"?: string,"units"?: number,"updated_at"?: string
+                    "adults": number,"cancellation_reason"?: string | null,"cancelled_by"?: Database["public"]['Enums']["booking_actor"] | null,"children"?: number,"confirmed_total_minor"?: number | null,"contact_phone": string,"created_at"?: string,"currency"?: string,"deposit_minor"?: number | null,"deposit_paid_at"?: string | null,"ends_on"?: string | null,"estimated_total_minor"?: number | null,"experience_id": string,"experience_title": string,"id"?: string,"idempotency_key": string,"party_size"?: never,"payment_due_at"?: string | null,"pickup_note"?: string,"provider_id": string,"provider_note"?: string | null,"reference": string,"request_expires_at": string,"slot_id"?: string | null,"slot_start_time"?: string | null,"slot_starts_on": string,"status"?: Database["public"]['Enums']["booking_status"],"traveler_id"?: string | null,"traveler_name": string,"traveler_note"?: string,"units"?: number,"updated_at"?: string
                   }
                   Update: {
-                    "adults"?: number,"cancellation_reason"?: string | null,"cancelled_by"?: Database["public"]['Enums']["booking_actor"] | null,"children"?: number,"confirmed_total_minor"?: number | null,"contact_phone"?: string,"created_at"?: string,"currency"?: string,"ends_on"?: string | null,"estimated_total_minor"?: number | null,"experience_id"?: string,"experience_title"?: string,"id"?: string,"idempotency_key"?: string,"party_size"?: never,"pickup_note"?: string,"provider_id"?: string,"provider_note"?: string | null,"reference"?: string,"request_expires_at"?: string,"slot_id"?: string | null,"slot_start_time"?: string | null,"slot_starts_on"?: string,"status"?: Database["public"]['Enums']["booking_status"],"traveler_id"?: string | null,"traveler_name"?: string,"traveler_note"?: string,"units"?: number,"updated_at"?: string
+                    "adults"?: number,"cancellation_reason"?: string | null,"cancelled_by"?: Database["public"]['Enums']["booking_actor"] | null,"children"?: number,"confirmed_total_minor"?: number | null,"contact_phone"?: string,"created_at"?: string,"currency"?: string,"deposit_minor"?: number | null,"deposit_paid_at"?: string | null,"ends_on"?: string | null,"estimated_total_minor"?: number | null,"experience_id"?: string,"experience_title"?: string,"id"?: string,"idempotency_key"?: string,"party_size"?: never,"payment_due_at"?: string | null,"pickup_note"?: string,"provider_id"?: string,"provider_note"?: string | null,"reference"?: string,"request_expires_at"?: string,"slot_id"?: string | null,"slot_start_time"?: string | null,"slot_starts_on"?: string,"status"?: Database["public"]['Enums']["booking_status"],"traveler_id"?: string | null,"traveler_name"?: string,"traveler_note"?: string,"units"?: number,"updated_at"?: string
                   }
                   Relationships: [
                     {
@@ -233,6 +233,80 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"partner_payouts": {
+                  Row: {
+                    "amount_minor": number,"created_at": string,"created_by": string | null,"id": string,"note": string,"provider_id": string,"reference": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "amount_minor": number,"created_at"?: string,"created_by"?: string | null,"id"?: string,"note"?: string,"provider_id": string,"reference": string
+                  }
+                  Update: {
+                    "amount_minor"?: number,"created_at"?: string,"created_by"?: string | null,"id"?: string,"note"?: string,"provider_id"?: string,"reference"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "partner_payouts_provider_id_fkey"
+      columns: ["provider_id"]
+isOneToOne: false
+      referencedRelation: "providers"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"payment_events": {
+                  Row: {
+                    "event_id": string,"event_type": string,"id": number,"received_at": string,"result": string | null,"summary": NonNullable<Json>
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "event_id": string,"event_type": string,"id"?: never,"received_at"?: string,"result"?: string | null,"summary"?: NonNullable<Json>
+                  }
+                  Update: {
+                    "event_id"?: string,"event_type"?: string,"id"?: never,"received_at"?: string,"result"?: string | null,"summary"?: NonNullable<Json>
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"payments": {
+                  Row: {
+                    "amount_minor": number,"booking_id": string,"captured_at": string | null,"created_at": string,"currency": string,"id": string,"provider_id": string,"razorpay_order_id": string,"razorpay_payment_id": string | null,"refunded_minor": number,"status": Database["public"]['Enums']["payment_status"]
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "amount_minor": number,"booking_id": string,"captured_at"?: string | null,"created_at"?: string,"currency"?: string,"id"?: string,"provider_id": string,"razorpay_order_id": string,"razorpay_payment_id"?: string | null,"refunded_minor"?: number,"status"?: Database["public"]['Enums']["payment_status"]
+                  }
+                  Update: {
+                    "amount_minor"?: number,"booking_id"?: string,"captured_at"?: string | null,"created_at"?: string,"currency"?: string,"id"?: string,"provider_id"?: string,"razorpay_order_id"?: string,"razorpay_payment_id"?: string | null,"refunded_minor"?: number,"status"?: Database["public"]['Enums']["payment_status"]
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "payments_booking_id_fkey"
+      columns: ["booking_id"]
+isOneToOne: false
+      referencedRelation: "bookings"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "payments_provider_id_fkey"
+      columns: ["provider_id"]
+isOneToOne: false
+      referencedRelation: "providers"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"platform_settings": {
+                  Row: {
+                    "deposits_required": boolean,"id": boolean,"updated_at": string,"updated_by": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "deposits_required"?: boolean,"id"?: boolean,"updated_at"?: string,"updated_by"?: string | null
+                  }
+                  Update: {
+                    "deposits_required"?: boolean,"id"?: boolean,"updated_at"?: string,"updated_by"?: string | null
+                  }
+                  Relationships: [
+                    
+                  ]
                 },"profiles": {
                   Row: {
                     "account_type": Database["public"]['Enums']["account_type"] | null,"bookings_seen_at": string,"created_at": string,"display_name": string,"id": string,"updated_at": string
@@ -321,6 +395,32 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
+                },"refunds": {
+                  Row: {
+                    "amount_minor": number,"attempts": number,"booking_id": string,"claimed_until": string | null,"created_at": string,"id": string,"last_error": string | null,"payment_id": string,"processed_at": string | null,"razorpay_refund_id": string | null,"reason": string,"status": Database["public"]['Enums']["refund_status"]
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "amount_minor": number,"attempts"?: number,"booking_id": string,"claimed_until"?: string | null,"created_at"?: string,"id"?: string,"last_error"?: string | null,"payment_id": string,"processed_at"?: string | null,"razorpay_refund_id"?: string | null,"reason": string,"status"?: Database["public"]['Enums']["refund_status"]
+                  }
+                  Update: {
+                    "amount_minor"?: number,"attempts"?: number,"booking_id"?: string,"claimed_until"?: string | null,"created_at"?: string,"id"?: string,"last_error"?: string | null,"payment_id"?: string,"processed_at"?: string | null,"razorpay_refund_id"?: string | null,"reason"?: string,"status"?: Database["public"]['Enums']["refund_status"]
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "refunds_booking_id_fkey"
+      columns: ["booking_id"]
+isOneToOne: false
+      referencedRelation: "bookings"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "refunds_payment_id_fkey"
+      columns: ["payment_id"]
+isOneToOne: true
+      referencedRelation: "payments"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"user_roles": {
                   Row: {
                     "granted_at": string,"granted_by": string | null,"role": Database["public"]['Enums']["app_role"],"user_id": string
@@ -346,8 +446,16 @@ isOneToOne: false
               "account_type": Database["public"]['Enums']["account_type"],"business_names": string,"created_at": string,"display_name": string,"email": string,"email_confirmed": boolean,"id": string,"last_sign_in_at": string,"total_count": number,"two_step": boolean
             }[]
                            },
+"admin_partner_balances":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "collected_minor": number,"display_name": string,"held_minor": number,"owed_minor": number,"paid_out_minor": number,"pending_refunds_minor": number,"provider_id": string,"refunded_minor": number
+            }[]
+                           },
 "ai_generations_today":
 { Args: Record<PropertyKey, never>; Returns: number
+                           },
+"attach_deposit_order":
+{ Args: { "p_amount_minor": number,"p_booking_id": string,"p_order_id": string,"p_traveler_id": string }; Returns: undefined
                            },
 "auth_attempt_allowed":
 { Args: { "p_kind": string }; Returns: boolean
@@ -361,14 +469,30 @@ isOneToOne: false
 "choose_account_type":
 { Args: { "p_type": Database["public"]['Enums']["account_type"] }; Returns: Database["public"]['Enums']["account_type"]
                            },
+"claim_refunds":
+{ Args: { "p_booking_id"?: string,"p_limit"?: number }; Returns: {
+              "amount_minor": number,"booking_reference": string,"razorpay_payment_id": string,"refund_id": string
+            }[]
+                           },
 "create_provider_application":
 { Args: { "p_contact_email": string,"p_contact_phone": string,"p_description": string,"p_display_name": string,"p_district": string,"p_legal_name": string,"p_slug": string }; Returns: string
                            },
 "delete_my_account":
 { Args: Record<PropertyKey, never>; Returns: undefined
                            },
+"deposit_checkout":
+{ Args: { "p_booking_id": string }; Returns: {
+              "amount_minor": number,"attempt": number,"booking_reference": string,"currency": string,"payment_due_at": string,"reusable_order_id": string
+            }[]
+                           },
 "finish_itinerary_generation":
 { Args: { "p_error_code": string,"p_generation_id": number,"p_input_tokens": number,"p_latency_ms": number,"p_model": string,"p_outcome": Database["public"]['Enums']["itinerary_generation_outcome"],"p_output_tokens": number,"p_prompt_version": string }; Returns: undefined
+                           },
+"finish_payment_event":
+{ Args: { "p_event_id": string,"p_result": string }; Returns: undefined
+                           },
+"log_payment_event":
+{ Args: { "p_event_id": string,"p_event_type": string,"p_summary": Json }; Returns: boolean
                            },
 "mark_bookings_seen":
 { Args: Record<PropertyKey, never>; Returns: undefined
@@ -383,8 +507,32 @@ isOneToOne: false
               "expiring_soon": number,"needs_response": number
             }[]
                            },
+"partner_payment_summary":
+{ Args: { "p_provider_id": string }; Returns: {
+              "collected_minor": number,"held_minor": number,"owed_minor": number,"paid_out_minor": number,"pending_refunds_minor": number,"refunded_minor": number
+            }[]
+                           },
+"payments_to_reconcile":
+{ Args: { "p_limit"?: number }; Returns: {
+              "razorpay_order_id": string
+            }[]
+                           },
 "record_auth_failure":
 { Args: { "p_kind": string }; Returns: undefined
+                           },
+"record_partner_payout":
+{ Args: { "p_amount_minor": number,"p_note": string,"p_provider_id": string,"p_reference": string }; Returns: string
+                           },
+"record_razorpay_payment":
+{ Args: { "p_amount_minor": number,"p_currency": string,"p_order_id": string,"p_payment_id": string,"p_status": string }; Returns: string
+                           },
+"record_razorpay_refund":
+{ Args: { "p_amount_minor"?: number,"p_error"?: string,"p_razorpay_payment_id"?: string,"p_razorpay_refund_id"?: string,"p_refund_uuid"?: string,"p_status": string }; Returns: string
+                           },
+"refunds_to_check":
+{ Args: { "p_limit"?: number }; Returns: {
+              "razorpay_refund_id": string,"refund_id": string
+            }[]
                            },
 "request_booking":
 { Args: { "p_adults": number,"p_children": number,"p_contact_phone": string,"p_idempotency_key": string,"p_note": string,"p_slot_id": string }; Returns: {
@@ -417,12 +565,15 @@ isOneToOne: false
               "estimated_total_minor": number,"itinerary_id": string,"unpriced_item_count": number,"version_id": string,"version_number": number
             }[]
                            },
+"set_deposits_required":
+{ Args: { "p_required": boolean }; Returns: boolean
+                           },
 "submit_provider_application":
 { Args: { "p_provider_id": string }; Returns: Database["public"]['Enums']["provider_status"]
                            }
           }
           Enums: {
-            "account_type": "traveller"|"partner"|"admin","app_role": "admin","availability_slot_status": "open"|"closed","booking_actor": "traveler"|"provider"|"system","booking_status": "requested"|"confirmed"|"declined"|"cancelled"|"expired"|"completed","experience_category": "culture"|"nature"|"adventure"|"trekking"|"wildlife"|"food_and_drink"|"festivals"|"wellness"|"other","experience_status": "draft"|"published"|"archived","itinerary_generation_outcome": "pending"|"succeeded"|"failed_validation"|"failed_upstream"|"failed_timeout"|"failed_save","itinerary_item_kind": "activity"|"stay"|"transport","itinerary_time_of_day": "morning"|"afternoon"|"evening"|"full_day","itinerary_version_kind": "generate"|"refine"|"regenerate","listing_type": "experience"|"guide"|"stay"|"transport","price_unit": "per_person"|"per_group_day"|"per_person_day"|"per_room_night"|"per_vehicle_trip"|"per_vehicle_day","provider_member_role": "owner","provider_status": "draft"|"pending_review"|"verified"|"rejected"|"suspended"
+            "account_type": "traveller"|"partner"|"admin","app_role": "admin","availability_slot_status": "open"|"closed","booking_actor": "traveler"|"provider"|"system","booking_status": "requested"|"confirmed"|"declined"|"cancelled"|"expired"|"completed","experience_category": "culture"|"nature"|"adventure"|"trekking"|"wildlife"|"food_and_drink"|"festivals"|"wellness"|"other","experience_status": "draft"|"published"|"archived","itinerary_generation_outcome": "pending"|"succeeded"|"failed_validation"|"failed_upstream"|"failed_timeout"|"failed_save","itinerary_item_kind": "activity"|"stay"|"transport","itinerary_time_of_day": "morning"|"afternoon"|"evening"|"full_day","itinerary_version_kind": "generate"|"refine"|"regenerate","listing_type": "experience"|"guide"|"stay"|"transport","payment_status": "created"|"captured"|"failed","price_unit": "per_person"|"per_group_day"|"per_person_day"|"per_room_night"|"per_vehicle_trip"|"per_vehicle_day","provider_member_role": "owner","provider_status": "draft"|"pending_review"|"verified"|"rejected"|"suspended","refund_status": "pending"|"processed"|"failed"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -542,7 +693,7 @@ export const Constants = {
           }
         },"public": {
           Enums: {
-            "account_type": ["traveller", "partner", "admin"],"app_role": ["admin"],"availability_slot_status": ["open", "closed"],"booking_actor": ["traveler", "provider", "system"],"booking_status": ["requested", "confirmed", "declined", "cancelled", "expired", "completed"],"experience_category": ["culture", "nature", "adventure", "trekking", "wildlife", "food_and_drink", "festivals", "wellness", "other"],"experience_status": ["draft", "published", "archived"],"itinerary_generation_outcome": ["pending", "succeeded", "failed_validation", "failed_upstream", "failed_timeout", "failed_save"],"itinerary_item_kind": ["activity", "stay", "transport"],"itinerary_time_of_day": ["morning", "afternoon", "evening", "full_day"],"itinerary_version_kind": ["generate", "refine", "regenerate"],"listing_type": ["experience", "guide", "stay", "transport"],"price_unit": ["per_person", "per_group_day", "per_person_day", "per_room_night", "per_vehicle_trip", "per_vehicle_day"],"provider_member_role": ["owner"],"provider_status": ["draft", "pending_review", "verified", "rejected", "suspended"]
+            "account_type": ["traveller", "partner", "admin"],"app_role": ["admin"],"availability_slot_status": ["open", "closed"],"booking_actor": ["traveler", "provider", "system"],"booking_status": ["requested", "confirmed", "declined", "cancelled", "expired", "completed"],"experience_category": ["culture", "nature", "adventure", "trekking", "wildlife", "food_and_drink", "festivals", "wellness", "other"],"experience_status": ["draft", "published", "archived"],"itinerary_generation_outcome": ["pending", "succeeded", "failed_validation", "failed_upstream", "failed_timeout", "failed_save"],"itinerary_item_kind": ["activity", "stay", "transport"],"itinerary_time_of_day": ["morning", "afternoon", "evening", "full_day"],"itinerary_version_kind": ["generate", "refine", "regenerate"],"listing_type": ["experience", "guide", "stay", "transport"],"payment_status": ["created", "captured", "failed"],"price_unit": ["per_person", "per_group_day", "per_person_day", "per_room_night", "per_vehicle_trip", "per_vehicle_day"],"provider_member_role": ["owner"],"provider_status": ["draft", "pending_review", "verified", "rejected", "suspended"],"refund_status": ["pending", "processed", "failed"]
           }
         }
 } as const

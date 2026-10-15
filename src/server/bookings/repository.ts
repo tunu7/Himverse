@@ -225,6 +225,8 @@ export type BookingSummary = {
   units: number;
   /** Null when the caller can no longer see the listing (archived or hidden). */
   listingType: ListingType | null;
+  /** The online deposit when one is required (ADR-0005): amount, deadline, when paid. */
+  deposit: { amountMinor: number; dueAt: string; paidAt: string | null } | null;
   partySize: number;
   estimatedTotalMinor: number | null;
   confirmedTotalMinor: number | null;
@@ -233,7 +235,7 @@ export type BookingSummary = {
 };
 
 const SUMMARY_COLUMNS =
-  "id, reference, status, experience_title, experience_id, slot_starts_on, slot_start_time, ends_on, units, party_size, estimated_total_minor, confirmed_total_minor, request_expires_at, created_at, listing:experiences!bookings_experience_id_fkey(listing_type)";
+  "id, reference, status, experience_title, experience_id, slot_starts_on, slot_start_time, ends_on, units, party_size, estimated_total_minor, confirmed_total_minor, request_expires_at, created_at, deposit_minor, payment_due_at, deposit_paid_at, listing:experiences!bookings_experience_id_fkey(listing_type)";
 
 type SummaryRow = {
   id: string;
@@ -246,6 +248,9 @@ type SummaryRow = {
   ends_on: string | null;
   units: number;
   listing: { listing_type: ListingType } | null;
+  deposit_minor: number | null;
+  payment_due_at: string | null;
+  deposit_paid_at: string | null;
   // Generated column (adults + children, both NOT NULL); typed nullable by the generator.
   party_size: number | null;
   estimated_total_minor: number | null;
@@ -266,6 +271,10 @@ function toSummary(row: SummaryRow): BookingSummary {
     endsOn: row.ends_on,
     units: row.units,
     listingType: row.listing?.listing_type ?? null,
+    deposit:
+      row.deposit_minor !== null && row.payment_due_at !== null
+        ? { amountMinor: row.deposit_minor, dueAt: row.payment_due_at, paidAt: row.deposit_paid_at }
+        : null,
     partySize: row.party_size ?? 0,
     estimatedTotalMinor: row.estimated_total_minor,
     confirmedTotalMinor: row.confirmed_total_minor,
@@ -347,6 +356,8 @@ export type BookingDetail = BookingSummary & {
   cancellationReason: string | null;
   cancelledBy: string | null;
   isTraveler: boolean;
+  /** A refund of the online deposit, when the booking was cancelled after paying. */
+  refund: { amountMinor: number; status: "pending" | "processed" | "failed" } | null;
   events: Array<{
     fromStatus: BookingStatus | null;
     toStatus: BookingStatus;
@@ -376,8 +387,17 @@ export async function getBooking(id: string): Promise<BookingDetail | null> {
     .eq("booking_id", id)
     .order("id");
   if (eventsError) throw toAppError(eventsError, "Could not load this booking.");
+  const { data: refund, error: refundError } = await supabase
+    .from("refunds")
+    .select("amount_minor, status")
+    .eq("booking_id", id)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (refundError) throw toAppError(refundError, "Could not load this booking.");
   return {
     ...toSummary(data),
+    refund: refund ? { amountMinor: refund.amount_minor, status: refund.status } : null,
     pickupNote: data.pickup_note,
     adults: data.adults,
     children: data.children,

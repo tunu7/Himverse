@@ -19,10 +19,19 @@ import {
   updateSlot,
 } from "@/server/bookings/repository";
 import { todayInTripZone } from "@/server/itineraries/preferences";
+import {
+  type CheckoutOutcome,
+  completeDepositCheckout,
+  type DepositCheckout,
+  startDepositCheckout,
+  submitPendingRefunds,
+} from "@/server/payments/payments";
 
 import {
   addSlotSchema,
   cancelSchema,
+  depositBookingSchema,
+  depositResultSchema,
   requestBookingSchema,
   listingBookingSchema,
   respondSchema,
@@ -147,6 +156,9 @@ export async function cancelBookingAction(
     const input = parseInput(cancelSchema, formData);
     await requireAccount(["traveller", "partner"]);
     await cancelBooking(input.bookingId, input.reason);
+    // A paid deposit is refunded by the database's rules; send this booking's
+    // refund now (the daily job retries anything that fails here).
+    await submitPendingRefunds(input.bookingId).catch(() => undefined);
     refresh();
     return ok({ done: true });
   } catch (error) {
@@ -203,5 +215,31 @@ export async function markBookingsSeenAction(): Promise<void> {
   } catch (error) {
     // An alert that stays a little longer is harmless; never surface this.
     toLoggedFailure("bookings.mark_seen_failed", error);
+  }
+}
+
+export type DepositCheckoutResult = ActionResult<DepositCheckout>;
+
+/** Creates (or resumes) the Razorpay order for the traveller's deposit. */
+export async function startDepositCheckoutAction(input: unknown): Promise<DepositCheckoutResult> {
+  try {
+    const { bookingId } = parseInput(depositBookingSchema, input as Record<string, unknown>);
+    return ok(await startDepositCheckout(bookingId)); // authenticates the traveller
+  } catch (error) {
+    return toLoggedFailure("payments.checkout_start_failed", error);
+  }
+}
+
+export type DepositResult = ActionResult<{ status: CheckoutOutcome }>;
+
+/** Checkout reported success: verify with Razorpay before showing it as paid. */
+export async function completeDepositCheckoutAction(input: unknown): Promise<DepositResult> {
+  try {
+    const result = parseInput(depositResultSchema, input as Record<string, unknown>);
+    const status = await completeDepositCheckout(result); // authenticates the traveller
+    refresh();
+    return ok({ status });
+  } catch (error) {
+    return toLoggedFailure("payments.checkout_complete_failed", error);
   }
 }

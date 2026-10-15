@@ -98,7 +98,8 @@ export function TripBookingForm({
       <p className="text-sm text-fg-soft">
         Sends {items.length} booking {items.length === 1 ? "request" : "requests"} for this
         trip&apos;s travellers: each experience and transport leg on its planned day, and each stay
-        for its nights. Partners confirm availability and the final price. Nothing is charged.
+        for its nights. Partners confirm availability and the final price. Nothing is charged now;
+        any deposits are paid after each partner confirms.
       </p>
       <ul className="flex flex-col gap-1 text-sm" data-testid="trip-booking-lines">
         {items.map((item) => (

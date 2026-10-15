@@ -18,7 +18,9 @@ building; anything not listed there needs the owner's approval. Status and next 
   automated a11y checks. Production is live on Vercel + Supabase with sample content; no staging yet.
 - **Remaining for launch:** [RELEASE_CHECKLIST](docs/operations/RELEASE_CHECKLIST.md) — Sentry, email
   notifications (needs a domain), CAPTCHA, staging, legal review, sample content removal.
-- **Not in MVP:** online payments (ADR-0005 proposed only), reviews, notifications, other regions.
+- **Payments:** 50% online deposits via Razorpay (ADR-0005), off until an admin turns them on; Test Mode
+  until the go-live gate ([PAYMENTS](docs/operations/PAYMENTS.md)).
+- **Not in MVP:** reviews, email notifications, other regions.
 
 ## Roles and terms
 

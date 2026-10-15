@@ -6,7 +6,7 @@ create extension if not exists pgtap with schema extensions;
 select plan(33);
 
 -- Isolate from local seed data; rolled back with everything else.
-truncate public.booking_events, public.bookings, public.availability_slots, public.itinerary_items, public.experiences, public.destinations, public.provider_status_events,
+truncate public.refunds, public.payments, public.partner_payouts, public.booking_events, public.bookings, public.availability_slots, public.itinerary_items, public.experiences, public.destinations, public.provider_status_events,
   public.provider_private_details, public.provider_members, public.providers;
 
 -- Fixtures (as postgres) ------------------------------------------------------

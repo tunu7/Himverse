@@ -112,3 +112,12 @@ export const listingBookingSchema = z
     path: ["endsOn"],
     message: "The end date can't be before the start date.",
   });
+
+export const depositBookingSchema = z.strictObject({ bookingId: z.uuid() });
+
+/** What Razorpay Checkout hands back on success; verified on the server. */
+export const depositResultSchema = z.strictObject({
+  orderId: z.string().regex(/^order_[A-Za-z0-9]{8,40}$/),
+  paymentId: z.string().regex(/^pay_[A-Za-z0-9]{8,40}$/),
+  signature: z.string().regex(/^[0-9a-f]{64}$/),
+});

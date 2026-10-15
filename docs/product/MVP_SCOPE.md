@@ -35,7 +35,7 @@ superseded in part by [ADR-0007](../decisions/ADR-0007-ONE-ACCOUNT-TYPE-PER-ACCO
 
 ## Out of scope for MVP
 
-- Online payment capture — no money moves through Himverse.AI until [ADR-0005](../decisions/ADR-0005-PAYMENTS-RAZORPAY.md) is accepted
+- Full online prepayment, automatic partner payouts (Razorpay Route) and commissions. _Added 2026-10-15 by the owner:_ online 50% deposits ([ADR-0005](../decisions/ADR-0005-PAYMENTS-RAZORPAY.md)), off until an admin turns them on
 - Reviews and ratings (planned next — see [ROADMAP](ROADMAP.md))
 - Regions beyond Arunachal Pradesh
 - Third-party inventory: flights, trains, public buses, hotel aggregators or channel managers.
