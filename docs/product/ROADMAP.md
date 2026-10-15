@@ -21,7 +21,7 @@ filters, sorting, pagination and shareable URLs; detail pages. Text-only: imager
 
 ## Phase 3 — Itinerary generation ✅
 
-ADR-0003 and ADR-0006: deterministic retrieval of bookable items, versioned prompt (`itinerary-v2`),
+ADR-0003 and ADR-0006: deterministic retrieval of bookable items, versioned prompt (`itinerary-v3`),
 validated structured output, grounding and budget checks, a save RPC that checks ownership and
 visibility, refine/regenerate/restore, rate limits. Production runs Ollama Cloud (`gpt-oss:120b`).
 Remaining: evaluation set ([AI_EVALUATION](../ai/AI_EVALUATION.md)), streaming progress.

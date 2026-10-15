@@ -15,18 +15,26 @@ export type ValidationResult =
 
 export type CostEstimate = { totalMinor: number; unpricedItemCount: number };
 
-/** Indicative minimum: per-person "from" prices x travellers (ADR-0003 assumption). */
+/**
+ * Indicative minimum from database "from" prices: each line is a price and how
+ * many times it applies (travellers for an activity, rooms for a stay night,
+ * vehicles for a transport leg). Mirrors save_itinerary_version.
+ */
 export function estimateCost(
-  prices: ReadonlyArray<number | null>,
-  travellers: number,
+  lines: ReadonlyArray<{ priceMinor: number | null; quantity: number }>,
 ): CostEstimate {
   let total = 0;
   let unpriced = 0;
-  for (const price of prices) {
-    if (price === null) unpriced += 1;
-    else total += price * travellers;
+  for (const line of lines) {
+    if (line.priceMinor === null) unpriced += 1;
+    else total += line.priceMinor * line.quantity;
   }
   return { totalMinor: total, unpricedItemCount: unpriced };
+}
+
+/** Rooms or vehicles needed for the whole group. */
+export function unitsFor(travellers: number, perUnit: number): number {
+  return Math.ceil(travellers / perUnit);
 }
 
 const MULTI_DAY_MINUTES = 1440;
@@ -54,7 +62,9 @@ export function validateDraft(
   // Days covered by a multi-day experience that started earlier: dayNumber -> base alias.
   const reserved = new Map<number, string>();
   const plannedDays: ResolvedPlan["days"] = [];
-  const prices: Array<number | null> = [];
+  const lines: Array<{ priceMinor: number | null; quantity: number }> = [];
+  const travellers = travelerCount(prefs);
+  let previousBaseId: string | null = null;
 
   for (const day of [...draft.days].sort((a, b) => a.day - b.day)) {
     const base = aliases.destinations.get(day.base);
@@ -110,7 +120,7 @@ export function validateDraft(
       } else {
         minutes += experience.durationMinutes;
       }
-      prices.push(experience.priceFromMinor);
+      lines.push({ priceMinor: experience.priceFromMinor, quantity: travellers });
       items.push({
         experienceId: experience.id,
         destinationId: experience.destinationId,
@@ -126,12 +136,71 @@ export function validateDraft(
     if (items.length === 0 && !reserved.has(day.day)) {
       warnings.push(`Day ${day.day} has no planned experiences (free day).`);
     }
+
+    // The night's stay: at the day's base, with enough rooms for everyone.
+    let stay: ResolvedPlan["days"][number]["stay"] = null;
+    if (day.stay) {
+      const candidate = aliases.stays.get(day.stay);
+      if (day.day >= n) {
+        errors.push(`Day ${day.day} is the last day: leave its stay empty.`);
+      } else if (!candidate) {
+        errors.push(`Day ${day.day}: stay ${day.stay} is not in the list.`);
+      } else if (candidate.destinationId !== base.id) {
+        errors.push(`Day ${day.day}: stay ${day.stay} is not at the day's base ${day.base}.`);
+      } else {
+        const rooms = unitsFor(travellers, candidate.maxGuests);
+        if (rooms > candidate.dailyCapacity) {
+          errors.push(
+            `Day ${day.day}: stay ${day.stay} doesn't have enough rooms for ${travellers}.`,
+          );
+        } else {
+          stay = { experienceId: candidate.id, units: rooms };
+          lines.push({ priceMinor: candidate.priceFromMinor, quantity: rooms });
+        }
+      }
+    }
+
+    // Transport: a route from the previous base to this one, or day hire here.
+    let transport: ResolvedPlan["days"][number]["transport"] = null;
+    if (day.transport) {
+      const candidate = aliases.transport.get(day.transport);
+      if (!candidate) {
+        errors.push(`Day ${day.day}: transport ${day.transport} is not in the list.`);
+      } else {
+        const fits = candidate.routeToDestinationId
+          ? candidate.routeToDestinationId === base.id &&
+            (previousBaseId === null || candidate.destinationId === previousBaseId)
+          : candidate.destinationId === base.id;
+        const vehicles = unitsFor(travellers, candidate.maxGuests);
+        if (!fits) {
+          errors.push(
+            `Day ${day.day}: transport ${day.transport} doesn't go from the previous base to ${day.base}.`,
+          );
+        } else if (vehicles > candidate.dailyCapacity) {
+          errors.push(
+            `Day ${day.day}: transport ${day.transport} doesn't have enough seats for ${travellers}.`,
+          );
+        } else {
+          transport = { experienceId: candidate.id, units: vehicles };
+          lines.push({ priceMinor: candidate.priceFromMinor, quantity: vehicles });
+        }
+      }
+    }
+    if (previousBaseId !== null && previousBaseId !== base.id && !transport) {
+      warnings.push(
+        `Day ${day.day}: arrange travel to ${base.name}; no transport is booked for it.`,
+      );
+    }
+    previousBaseId = base.id;
+
     plannedDays.push({
       dayNumber: day.day,
       date: dateOfDay(prefs, day.day),
       destinationId: base.id,
       note: (day.note ?? "").trim(),
       items,
+      stay,
+      transport,
     });
   }
 
@@ -139,15 +208,15 @@ export function validateDraft(
     errors.push("Include at least one experience from the list.");
   }
 
-  const estimate = estimateCost(prices, travelerCount(prefs));
+  const estimate = estimateCost(lines);
   if (prefs.budgetMaxMinor !== undefined && estimate.totalMinor > prefs.budgetMaxMinor) {
     errors.push(
-      `The planned experiences cost at least ₹${Math.ceil(estimate.totalMinor / 100)} for ${travelerCount(prefs)} travellers, over the ₹${Math.floor(prefs.budgetMaxMinor / 100)} budget. Choose cheaper or fewer experiences.`,
+      `The plan costs at least ₹${Math.ceil(estimate.totalMinor / 100)} for ${travelerCount(prefs)} travellers, over the ₹${Math.floor(prefs.budgetMaxMinor / 100)} budget. Choose cheaper or fewer experiences, stays or transport.`,
     );
   }
   if (estimate.unpricedItemCount > 0) {
     warnings.push(
-      `${estimate.unpricedItemCount} experience${estimate.unpricedItemCount === 1 ? " has" : "s have"} no listed price; the estimate excludes ${estimate.unpricedItemCount === 1 ? "it" : "them"}.`,
+      `${estimate.unpricedItemCount} item${estimate.unpricedItemCount === 1 ? " has" : "s have"} no listed price; the estimate excludes ${estimate.unpricedItemCount === 1 ? "it" : "them"}.`,
     );
   }
 

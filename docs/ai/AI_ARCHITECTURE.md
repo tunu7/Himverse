@@ -15,14 +15,14 @@ See [ITINERARY_GENERATION](ITINERARY_GENERATION.md) for the module map and check
 
 1. **Input schema:** validated trip preferences.
 2. **Retriever:** deterministic SQL filters over public, **bookable** catalogue data (`accepts_bookings`; region, interests, duration,
-   budget). Semantic search only via a future ADR.
-3. **Prompt builder:** versioned (`itinerary-v2`, which spells out the answer schema), stored with each version. Records appear as aliases;
+   budget), plus bookable stays and transport at the candidate destinations that fit the group. Semantic search only via a future ADR.
+3. **Prompt builder:** versioned (`itinerary-v3`, which spells out the answer schema), stored with each version. Records appear as aliases;
    traveller text is fenced as data.
 4. **Model client:** the `ItineraryModel` interface. One AI SDK 7 adapter serves the Vercel AI Gateway and
    Ollama (free local models), and there is a deterministic test mock. `AI_PROVIDER` and
    `AI_ITINERARY_MODEL` choose the backend and model (ADR-0006). The output schema sent to the model
    is narrowed to each request. Timeout, bounded retries, capped output.
-5. **Output validator:** Zod schema `itinerary.v1`.
+5. **Output validator:** Zod schema `itinerary.v2` (days with activities, an optional stay and an optional transport leg).
 6. **Grounding check:** aliases, dates, capacity, multi-day items and budget from database prices, plus
    the save RPC's visibility re-check.
 7. **Persistence:** immutable itinerary versions and items, separate from curated data. A generation log

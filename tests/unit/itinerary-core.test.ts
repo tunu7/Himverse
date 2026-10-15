@@ -13,7 +13,7 @@ import { buildAliases, buildPrompt, MAX_PROMPT_CHARS } from "@/server/itinerarie
 import { itineraryDraftSchema, type ItineraryDraft } from "@/server/itineraries/schemas";
 import { estimateCost, validateDraft } from "@/server/itineraries/validate";
 
-import { candidates, D1, D2, E, NOW, prefs } from "./itinerary-fixtures";
+import { candidates, D1, D2, E, NOW, prefs, S, withStaysAndTransport } from "./itinerary-fixtures";
 
 const aliases = buildAliases(candidates);
 const raw = {
@@ -359,8 +359,14 @@ describe("validateDraft", () => {
 });
 
 describe("estimateCost", () => {
-  it("multiplies per-person prices by travellers and counts unpriced items", () => {
-    expect(estimateCost([100, null, 50], 3)).toEqual({ totalMinor: 450, unpricedItemCount: 1 });
+  it("multiplies each price by its quantity and counts unpriced items", () => {
+    expect(
+      estimateCost([
+        { priceMinor: 100, quantity: 3 },
+        { priceMinor: null, quantity: 3 },
+        { priceMinor: 50, quantity: 2 },
+      ]),
+    ).toEqual({ totalMinor: 400, unpricedItemCount: 1 });
   });
 });
 
@@ -393,5 +399,127 @@ describe("mock model", () => {
       timeoutMs: 1,
     });
     expect(refined.draft).not.toEqual(first.draft);
+  });
+});
+
+describe("stays and transport", () => {
+  const listingAliases = buildAliases(withStaysAndTransport);
+  const draft = (days: ItineraryDraft["days"]): ItineraryDraft => ({
+    title: "T",
+    summary: "S",
+    cautions: [],
+    days,
+  });
+  const walk = { experience: "E1", timeOfDay: "morning" as const, rationale: "" };
+  const monastery = { experience: "E4", timeOfDay: "morning" as const, rationale: "" };
+
+  it("lists them by alias in the prompt, without ids or prices, only when there are some", () => {
+    const { prompt, system } = buildPrompt(prefs(), withStaysAndTransport, listingAliases);
+    expect(prompt).toContain('"alias":"S1"');
+    expect(prompt).toContain('"alias":"T1"');
+    for (const id of [S(1), S(3), D1]) expect(prompt + system).not.toContain(id);
+    expect(prompt).not.toMatch(/1200000|200000/);
+    expect(buildPrompt(prefs(), candidates, aliases).prompt).not.toMatch(/Stays:|Transport:/);
+  });
+
+  it("books rooms and vehicles for the whole group and prices them per unit", () => {
+    const result = validateDraft(
+      draft([
+        { day: 1, base: "D1", items: [walk], stay: "S1" },
+        { day: 2, base: "D2", items: [monastery], transport: "T1" },
+      ]),
+      prefs({ adults: 5 }),
+      listingAliases,
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    // 5 guests: 3 rooms of 2, 2 vehicles of 4 seats.
+    expect(result.plan.days[0]?.stay).toEqual({ experienceId: S(1), units: 3 });
+    expect(result.plan.days[1]?.transport).toEqual({ experienceId: S(3), units: 2 });
+    // Activities x 5 people + 3 rooms x 1 night + 2 vehicles.
+    expect(result.estimate.totalMinor).toBe(100_000 * 5 + 50_000 * 5 + 200_000 * 3 + 1_200_000 * 2);
+    expect(result.warnings.join(" ")).not.toMatch(/arrange travel/);
+  });
+
+  it("refuses a stay on the trip's last day", () => {
+    const result = validateDraft(
+      draft([{ day: 1, base: "D1", items: [walk], stay: "S1" }]),
+      prefs({ durationDays: 1 }),
+      listingAliases,
+    );
+    expect(!result.ok && result.errors.join(" ")).toMatch(/last day: leave its stay empty/);
+  });
+
+  it("allows day hire at the day's base", () => {
+    const result = validateDraft(
+      draft([{ day: 1, base: "D2", items: [monastery], transport: "T2" }]),
+      prefs({ durationDays: 1 }),
+      listingAliases,
+    );
+    expect(result.ok && result.plan.days[0]?.transport?.experienceId).toBe(S(4));
+  });
+
+  it.each([
+    ["an unknown stay", [{ day: 1, base: "D1", items: [walk], stay: "S9" }], /S9 is not in/],
+    [
+      "a stay at another destination",
+      [{ day: 1, base: "D1", items: [walk], stay: "S2" }],
+      /S2 is not at the day's base/,
+    ],
+    [
+      "a stay without enough rooms",
+      [{ day: 1, base: "D2", items: [monastery], stay: "S2" }],
+      /S2 doesn't have enough rooms/,
+    ],
+    [
+      "a route in the wrong direction",
+      [
+        { day: 1, base: "D2", items: [monastery] },
+        { day: 2, base: "D1", items: [walk], transport: "T1" },
+      ],
+      /T1 doesn't go from the previous base/,
+    ],
+    [
+      "day hire somewhere else",
+      [{ day: 1, base: "D1", items: [walk], transport: "T2" }],
+      /T2 doesn't go/,
+    ],
+  ])("refuses %s", (_label, days, error) => {
+    // One extra, empty day so no stay falls on the trip's last night.
+    const all = [...days, { day: days.length + 1, base: days.at(-1)!.base, items: [] }];
+    const result = validateDraft(
+      draft(all as ItineraryDraft["days"]),
+      prefs({ durationDays: all.length, adults: 4 }),
+      listingAliases,
+    );
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.errors.join(" ")).toMatch(error);
+  });
+
+  it("warns when the base changes and no transport is planned", () => {
+    const result = validateDraft(
+      draft([
+        { day: 1, base: "D1", items: [walk] },
+        { day: 2, base: "D2", items: [monastery] },
+      ]),
+      prefs(),
+      listingAliases,
+    );
+    expect(result.ok && result.warnings.join(" ")).toMatch(/arrange travel to Tawang/);
+  });
+
+  it("mock model plans a stay each night but the last, grounded in the lists", async () => {
+    const p = prefs({ durationDays: 2 });
+    const result = await createMockItineraryModel().generate({
+      ...buildPrompt(p, withStaysAndTransport, listingAliases),
+      maxOutputTokens: 1,
+      timeoutMs: 1,
+    });
+    const parsed = itineraryDraftSchema.parse(result.draft);
+    const validated = validateDraft(parsed, p, listingAliases);
+    expect(validated.ok).toBe(true);
+    if (!validated.ok) return;
+    expect(validated.plan.days[0]?.stay).not.toBeNull();
+    expect(validated.plan.days[1]?.stay).toBeNull();
   });
 });

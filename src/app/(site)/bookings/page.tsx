@@ -87,8 +87,8 @@ async function BookingList({ searchParams }: PageProps<"/bookings">) {
                 {b.experienceTitle}
               </Link>
               <p className="text-sm text-muted">
-                {formatBookingDates(b.slotStartsOn, b.slotStartTime, b.endsOn)} · {b.partySize}{" "}
-                {b.partySize === 1 ? "person" : "people"} · {b.reference}
+                {formatBookingDates(b.slotStartsOn, b.slotStartTime, b.endsOn, b.listingType)} ·{" "}
+                {b.partySize} {b.partySize === 1 ? "person" : "people"} · {b.reference}
               </p>
             </div>
             <BookingStatusBadge status={b.status} requestExpiresAt={b.requestExpiresAt} now={now} />

@@ -46,11 +46,19 @@ export function formatBookingDates(
   startsOn: string,
   startTime: string | null,
   endsOn: string | null,
+  listingType: string | null = null,
 ): string {
-  if (!endsOn || endsOn === startsOn) return formatSlot(startsOn, startTime);
   const days =
     Math.round(
-      (Date.parse(`${endsOn}T00:00:00Z`) - Date.parse(`${startsOn}T00:00:00Z`)) / 86_400_000,
+      (Date.parse(`${endsOn ?? startsOn}T00:00:00Z`) - Date.parse(`${startsOn}T00:00:00Z`)) /
+        86_400_000,
     ) + 1;
+  // A stay's ends_on is its last night: show check-in → check-out.
+  if (listingType === "stay") {
+    const checkOut = new Date(`${endsOn ?? startsOn}T00:00:00Z`);
+    checkOut.setUTCDate(checkOut.getUTCDate() + 1);
+    return `${formatSlot(startsOn, null)} → ${formatSlot(checkOut.toISOString().slice(0, 10), null)} (${days} ${days === 1 ? "night" : "nights"})`;
+  }
+  if (!endsOn || endsOn === startsOn) return formatSlot(startsOn, startTime);
   return `${formatSlot(startsOn, null)} → ${formatSlot(endsOn, null)} (${days} days)`;
 }

@@ -174,6 +174,24 @@ export function PreferencesForm({
           <input type="checkbox" name="limitedMobility" className="size-4 accent-[var(--accent)]" />
           Someone in the group has limited mobility
         </label>
+        <label className="flex items-center gap-2 text-sm text-fg-soft">
+          <input
+            type="checkbox"
+            name="includeStays"
+            defaultChecked
+            className="size-4 accent-[var(--accent)]"
+          />
+          Suggest places to stay from our partners
+        </label>
+        <label className="flex items-center gap-2 text-sm text-fg-soft">
+          <input
+            type="checkbox"
+            name="includeTransport"
+            defaultChecked
+            className="size-4 accent-[var(--accent)]"
+          />
+          Suggest private vehicles between places
+        </label>
         <label className="flex flex-col gap-1">
           <span className="text-sm font-medium">Anything else? (optional)</span>
           <textarea name="notes" rows={3} maxLength={MAX_NOTES_LENGTH} className={inputClass} />

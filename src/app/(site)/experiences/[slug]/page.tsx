@@ -7,7 +7,12 @@ import { LoadingBlock, PageMain } from "@/components/page-shell";
 import { ExperienceBooking } from "@/features/bookings/components/experience-booking";
 import { CategoryBand } from "@/features/discovery/components/category-visual";
 import { formatCategory, formatDuration, formatPriceFrom } from "@/lib/format";
-import { CAPACITY_LABELS, LISTING_TYPE_LABELS, PRICE_UNIT_LABELS } from "@/lib/listing-options";
+import {
+  CAPACITY_LABELS,
+  capacityText,
+  LISTING_TYPE_LABELS,
+  PRICE_UNIT_LABELS,
+} from "@/lib/listing-options";
 import { getPublicExperience } from "@/server/catalog/catalog";
 
 export async function generateMetadata({
@@ -71,11 +76,11 @@ async function ExperienceDetail({ params }: PageProps<"/experiences/[slug]">) {
               {CAPACITY_LABELS[type].perUnit}
             </dt>
             <dd className="font-medium">
-              Up to {experience.maxGuests} · {experience.dailyCapacity}{" "}
-              {experience.dailyCapacity === 1
-                ? CAPACITY_LABELS[type].unitOne
-                : `${CAPACITY_LABELS[type].unitOne}s`}{" "}
-              available
+              Up to {experience.maxGuests}
+              {/* Required for this type by the database; null only for experiences. */}
+              {experience.dailyCapacity !== null
+                ? ` · ${capacityText(type, experience.dailyCapacity)}`
+                : null}
             </dd>
           </div>
         )}

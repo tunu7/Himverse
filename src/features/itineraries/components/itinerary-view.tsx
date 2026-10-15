@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { formatDuration, formatPriceFrom } from "@/lib/format";
-import type { ItineraryView } from "@/server/itineraries/repository";
+import type { ItineraryItemView, ItineraryView } from "@/server/itineraries/repository";
 
 const TIME_LABELS = {
   morning: "Morning",
@@ -17,6 +17,49 @@ function formatDate(isoDate: string): string {
     month: "short",
     timeZone: "UTC",
   }).format(new Date(`${isoDate}T00:00:00Z`));
+}
+
+function plural(n: number, one: string): string {
+  return `${n} ${one}${n === 1 ? "" : "s"}`;
+}
+
+/** The day's transport or the night's stay: a listing booked by vehicles or rooms. */
+function ListingLine({
+  label,
+  item,
+  unitOne,
+  priceUnit,
+  testId,
+}: {
+  label: string;
+  item: ItineraryItemView;
+  unitOne: string;
+  priceUnit: string;
+  testId: string;
+}) {
+  const price = formatPriceFrom(item.priceFromMinor);
+  return (
+    <p data-testid={testId} className="text-sm">
+      <span className="font-medium">{label}: </span>
+      {item.stillAvailable && item.experienceSlug ? (
+        <Link
+          href={`/experiences/${item.experienceSlug}`}
+          className="font-medium text-accent underline-offset-4 hover:underline"
+        >
+          {item.title}
+        </Link>
+      ) : (
+        <>
+          {item.title} <span className="text-danger">(no longer available)</span>
+        </>
+      )}
+      <span className="text-muted">
+        {" "}
+        · {plural(item.units, unitOne)} ·{" "}
+        {price ? `from ${price} ${priceUnit}` : "price on request"}
+      </span>
+    </p>
+  );
 }
 
 export function ItineraryPlan({ itinerary }: { itinerary: ItineraryView }) {
@@ -50,7 +93,7 @@ export function ItineraryPlan({ itinerary }: { itinerary: ItineraryView }) {
         </div>
         <div>
           <dt className="text-xs font-medium tracking-wide text-subtle uppercase">
-            Indicative cost of experiences
+            Indicative cost
           </dt>
           <dd className="font-medium" data-testid="itinerary-total">
             From {total} for {version.travelers}{" "}
@@ -58,8 +101,7 @@ export function ItineraryPlan({ itinerary }: { itinerary: ItineraryView }) {
           </dd>
           {version.unpricedItemCount > 0 ? (
             <dd className="text-xs text-subtle">
-              Excludes {version.unpricedItemCount} experience
-              {version.unpricedItemCount === 1 ? "" : "s"} with price on request
+              Excludes {plural(version.unpricedItemCount, "item")} with price on request
             </dd>
           ) : null}
         </div>
@@ -77,6 +119,15 @@ export function ItineraryPlan({ itinerary }: { itinerary: ItineraryView }) {
             <h2 className="text-lg font-semibold">
               Day {day.dayNumber} · {formatDate(day.date)}
             </h2>
+            {day.transport ? (
+              <ListingLine
+                label="Transport"
+                item={day.transport}
+                unitOne="vehicle"
+                priceUnit="per vehicle"
+                testId="itinerary-transport"
+              />
+            ) : null}
             {day.items.length === 0 ? (
               <p className="text-sm text-muted">
                 Free day: rest, travel or explore at your own pace.
@@ -115,6 +166,17 @@ export function ItineraryPlan({ itinerary }: { itinerary: ItineraryView }) {
                 })}
               </ul>
             )}
+            {day.stay ? (
+              <div className="mt-3">
+                <ListingLine
+                  label="Stay tonight"
+                  item={day.stay}
+                  unitOne="room"
+                  priceUnit="per room per night"
+                  testId="itinerary-stay"
+                />
+              </div>
+            ) : null}
             {day.note ? <p className="mt-2 text-sm text-muted">{day.note}</p> : null}
           </li>
         ))}

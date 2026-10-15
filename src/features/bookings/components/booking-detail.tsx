@@ -9,6 +9,7 @@ import {
   travelerCanCancel,
 } from "@/lib/booking-options";
 import { formatPriceFrom, formatBookingDates } from "@/lib/format";
+import { type ListingType, unitCount } from "@/lib/listing-options";
 import { getBooking } from "@/server/bookings/repository";
 
 import { CancelBookingForm, RespondForm } from "./booking-forms";
@@ -19,6 +20,12 @@ import { BookingStatusBadge } from "./booking-status";
  * to the partner's business. Each area shows only its side (ADR-0007), so a
  * booking that isn't the viewer's in that role is "not found" there.
  */
+/** " · 2 rooms" for listings booked by the unit; nothing for experiences. */
+function unitsText(listingType: ListingType | null, units: number): string {
+  if (listingType && listingType !== "experience") return ` · ${unitCount(listingType, units)}`;
+  return units > 1 ? ` · quantity ${units}` : "";
+}
+
 export async function BookingDetail({
   id,
   viewer,
@@ -62,7 +69,12 @@ export async function BookingDetail({
         <div>
           <dt className="text-xs font-medium tracking-wide text-subtle uppercase">Date</dt>
           <dd className="font-medium">
-            {formatBookingDates(booking.slotStartsOn, booking.slotStartTime, booking.endsOn)}
+            {formatBookingDates(
+              booking.slotStartsOn,
+              booking.slotStartTime,
+              booking.endsOn,
+              booking.listingType,
+            )}
           </dd>
         </div>
         <div>
@@ -72,7 +84,7 @@ export async function BookingDetail({
             {booking.children > 0
               ? `, ${booking.children} ${booking.children === 1 ? "child" : "children"}`
               : ""}
-            {booking.units > 1 ? ` · quantity ${booking.units}` : ""}
+            {unitsText(booking.listingType, booking.units)}
           </dd>
         </div>
         <div>

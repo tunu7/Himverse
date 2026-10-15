@@ -7,6 +7,7 @@ import {
   buildAliases,
   buildPrompt,
   buildRepairPrompt,
+  draftConstraints,
   PROMPT_VERSION,
 } from "@/server/itineraries/prompt";
 import {
@@ -123,11 +124,7 @@ export async function runItineraryGeneration(
   });
 
   const aliases = buildAliases(candidates);
-  const constraints = {
-    days: request.prefs.durationDays,
-    destinations: [...aliases.destinations.keys()],
-    experiences: [...aliases.experiences.keys()],
-  };
+  const constraints = draftConstraints(request.prefs.durationDays, aliases);
   const base = buildPrompt(
     request.prefs,
     candidates,
@@ -316,6 +313,8 @@ function isBudgetError(message: string): boolean {
 export function toAliasedDraft(plan: ResolvedPlan, aliases: AliasMap): ItineraryDraft {
   const experienceAlias = new Map([...aliases.experiences].map(([alias, e]) => [e.id, alias]));
   const destinationAlias = new Map([...aliases.destinations].map(([alias, d]) => [d.id, alias]));
+  const stayAlias = new Map([...aliases.stays].map(([alias, st]) => [st.id, alias]));
+  const transportAlias = new Map([...aliases.transport].map(([alias, t]) => [t.id, alias]));
   const fallbackBase = [...aliases.destinations.keys()][0] ?? "D1";
   return {
     title: plan.title.slice(0, 80),
@@ -337,6 +336,9 @@ export function toAliasedDraft(plan: ResolvedPlan, aliases: AliasMap): Itinerary
             ]
           : [];
       }),
+      // Kept only when the same listing is still a candidate.
+      stay: day.stay ? (stayAlias.get(day.stay.experienceId) ?? null) : null,
+      transport: day.transport ? (transportAlias.get(day.transport.experienceId) ?? null) : null,
     })),
   };
 }

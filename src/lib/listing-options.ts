@@ -50,6 +50,21 @@ export const CAPACITY_LABELS: Record<
   },
 };
 
+/**
+ * What a partner listed ("2 rooms of this type"), never phrased as live
+ * availability: only the partner confirms that.
+ */
+export function capacityText(type: Exclude<ListingType, "experience">, count: number): string {
+  return type === "stay"
+    ? `${unitCount(type, count)} of this type`
+    : `${unitCount(type, count)} per day`;
+}
+
+/** "2 rooms", "1 vehicle". */
+export function unitCount(type: Exclude<ListingType, "experience">, count: number): string {
+  return `${count} ${CAPACITY_LABELS[type].unitOne}${count === 1 ? "" : "s"}`;
+}
+
 /** How many service days a request covers (a stay's nights; inclusive dates). */
 export function serviceDays(startsOn: string, endsOn: string | null): number {
   if (!endsOn) return 1;

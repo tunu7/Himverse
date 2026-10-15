@@ -14,6 +14,7 @@ import { MAX_PARTY_SIZE } from "@/lib/booking-options";
 import { formatPriceFrom } from "@/lib/format";
 import {
   CAPACITY_LABELS,
+  capacityText,
   estimateTotalMinor,
   type ListingType,
   type PriceUnit,
@@ -151,7 +152,8 @@ export function ListingBookingForm({
         </label>
       </div>
       <p className="text-xs text-subtle">
-        Up to {maxGuests} people per {labels.unitOne}; {dailyCapacity} available.
+        Up to {maxGuests} people per {labels.unitOne}; {capacityText(listingType, dailyCapacity)}.
+        The partner confirms what&apos;s free on your dates.
       </p>
       {listingType === "transport" ? (
         <label className="flex flex-col gap-1">

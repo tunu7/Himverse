@@ -68,6 +68,9 @@ function preferencesSchema(startDate: z.ZodType<string>) {
         .default([]),
       pace: z.enum(Object.keys(PACES) as [Pace, ...Pace[]]).default("moderate"),
       limitedMobility: z.boolean().default(false),
+      // Phase 3b: let the planner add a stay each night and transport between places.
+      includeStays: z.boolean().default(true),
+      includeTransport: z.boolean().default(true),
       notes: z.string().trim().max(MAX_NOTES_LENGTH).default(""),
     })
     .refine((p) => p.adults + p.children <= MAX_TRAVELERS, {

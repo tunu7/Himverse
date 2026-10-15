@@ -65,6 +65,53 @@ export const candidates: Candidates = {
       destinationId: D2,
     },
   ],
+  stays: [],
+  transport: [],
+};
+
+export const S = (n: number) => `40000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
+
+/** The same inventory plus a stay at each destination and a vehicle between them. */
+export const withStaysAndTransport: Candidates = {
+  ...candidates,
+  stays: [
+    {
+      id: S(1),
+      title: "Ziro homestay room",
+      destinationId: D1,
+      priceFromMinor: 200_000,
+      maxGuests: 2,
+      dailyCapacity: 3,
+    },
+    {
+      id: S(2),
+      title: "Tawang guesthouse room",
+      destinationId: D2,
+      priceFromMinor: null,
+      maxGuests: 3,
+      dailyCapacity: 1,
+    },
+  ],
+  transport: [
+    {
+      id: S(3),
+      title: "Ziro to Tawang SUV",
+      destinationId: D1,
+      routeToDestinationId: D2,
+      priceFromMinor: 1_200_000,
+      maxGuests: 4,
+      dailyCapacity: 2,
+    },
+    {
+      id: S(4),
+      title: "Tawang day taxi",
+      destinationId: D2,
+      routeToDestinationId: null,
+      priceFromMinor: 300_000,
+      maxGuests: 4,
+      dailyCapacity: 1,
+    },
+  ],
 };
 
 export function prefs(overrides: Partial<TripPreferences> = {}): TripPreferences {
@@ -78,6 +125,8 @@ export function prefs(overrides: Partial<TripPreferences> = {}): TripPreferences
     interests: [],
     pace: "moderate",
     limitedMobility: false,
+    includeStays: true,
+    includeTransport: true,
     notes: "",
     ...overrides,
   };

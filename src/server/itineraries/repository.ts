@@ -82,16 +82,47 @@ export async function saveItineraryVersion(input: SaveVersionInput): Promise<Sav
     p_model: input.model,
     p_travelers: input.travelers,
     p_warnings: input.warnings,
-    p_items: input.plan.days.flatMap((day) =>
-      day.items.map((item, index) => ({
+    // Activities take positions 1-6; the night's stay 7; the day's transport 8.
+    p_items: input.plan.days.flatMap((day) => [
+      ...day.items.map((item, index) => ({
         day_number: day.dayNumber,
         position: index + 1,
+        item_kind: "activity",
+        units: 1,
         experience_id: item.experienceId,
         destination_id: item.destinationId,
         time_of_day: item.timeOfDay,
         rationale: item.rationale,
       })),
-    ),
+      ...(day.stay
+        ? [
+            {
+              day_number: day.dayNumber,
+              position: 7,
+              item_kind: "stay",
+              units: day.stay.units,
+              experience_id: day.stay.experienceId,
+              destination_id: day.destinationId,
+              time_of_day: "evening",
+              rationale: "",
+            },
+          ]
+        : []),
+      ...(day.transport
+        ? [
+            {
+              day_number: day.dayNumber,
+              position: 8,
+              item_kind: "transport",
+              units: day.transport.units,
+              experience_id: day.transport.experienceId,
+              destination_id: day.destinationId,
+              time_of_day: "morning",
+              rationale: "",
+            },
+          ]
+        : []),
+    ]),
   });
   if (error) {
     // 55000 also covers a missing/expired reservation, which isn't an inventory change.
@@ -156,6 +187,8 @@ export async function listMyItineraries(): Promise<ItineraryListItem[]> {
 
 export type ItineraryItemView = {
   id: string;
+  /** Rooms (stay) or vehicles (transport); 1 for activities. */
+  units: number;
   experienceId: string | null;
   experienceSlug: string | null;
   title: string;
@@ -185,7 +218,14 @@ export type ItineraryView = {
     warnings: string[];
     preferences: TripPreferences | null;
     plan: ResolvedPlan;
-    days: Array<{ dayNumber: number; date: string; note: string; items: ItineraryItemView[] }>;
+    days: Array<{
+      dayNumber: number;
+      date: string;
+      note: string;
+      items: ItineraryItemView[];
+      stay: ItineraryItemView | null;
+      transport: ItineraryItemView | null;
+    }>;
   };
 };
 
@@ -226,7 +266,7 @@ export async function getMyItinerary(
   const { data: items, error: itemsError } = await supabase
     .from("itinerary_items")
     .select(
-      "id, day_number, position, experience_id, experience_title_snapshot, destination_name_snapshot, time_of_day, rationale, price_snapshot_minor, duration_snapshot_minutes",
+      "id, day_number, position, item_kind, units, experience_id, experience_title_snapshot, destination_name_snapshot, time_of_day, rationale, price_snapshot_minor, duration_snapshot_minutes",
     )
     .eq("version_id", selected.id)
     .order("day_number")
@@ -244,6 +284,21 @@ export async function getMyItinerary(
     if (liveError) throw toAppError(liveError, "Could not load this itinerary.");
     for (const e of live) available.set(e.id, e.slug);
   }
+
+  const toView = (i: (typeof items)[number]): ItineraryItemView & { kind: string } => ({
+    kind: i.item_kind,
+    id: i.id,
+    units: i.units,
+    experienceId: i.experience_id,
+    experienceSlug: i.experience_id ? (available.get(i.experience_id) ?? null) : null,
+    title: i.experience_title_snapshot,
+    destinationName: i.destination_name_snapshot,
+    timeOfDay: i.time_of_day,
+    rationale: i.rationale,
+    priceFromMinor: i.price_snapshot_minor,
+    durationMinutes: i.duration_snapshot_minutes,
+    stillAvailable: i.experience_id !== null && available.has(i.experience_id),
+  });
 
   const plan = resolvedPlanSchema.parse(selected.plan);
   const preferences = storedPreferencesSchema.safeParse(selected.preferences);
@@ -272,25 +327,18 @@ export async function getMyItinerary(
         : [],
       preferences: preferences.success ? preferences.data : null,
       plan,
-      days: plan.days.map((day) => ({
-        dayNumber: day.dayNumber,
-        date: day.date,
-        note: day.note,
-        items: items
-          .filter((i) => i.day_number === day.dayNumber)
-          .map((i) => ({
-            id: i.id,
-            experienceId: i.experience_id,
-            experienceSlug: i.experience_id ? (available.get(i.experience_id) ?? null) : null,
-            title: i.experience_title_snapshot,
-            destinationName: i.destination_name_snapshot,
-            timeOfDay: i.time_of_day,
-            rationale: i.rationale,
-            priceFromMinor: i.price_snapshot_minor,
-            durationMinutes: i.duration_snapshot_minutes,
-            stillAvailable: i.experience_id !== null && available.has(i.experience_id),
-          })),
-      })),
+      days: plan.days.map((day) => {
+        const forDay = items.filter((i) => i.day_number === day.dayNumber).map(toView);
+        const ofKind = (kind: string) => forDay.filter((i) => i.kind === kind);
+        return {
+          dayNumber: day.dayNumber,
+          date: day.date,
+          note: day.note,
+          items: ofKind("activity"),
+          stay: ofKind("stay")[0] ?? null,
+          transport: ofKind("transport")[0] ?? null,
+        };
+      }),
     },
   };
 }

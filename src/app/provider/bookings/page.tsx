@@ -7,6 +7,7 @@ import { LoadingBlock, PageShell } from "@/components/page-shell";
 import { BookingStatusBadge } from "@/features/bookings/components/booking-status";
 import { effectiveStatus, type BookingStatus } from "@/lib/booking-options";
 import { formatBookingDates } from "@/lib/format";
+import { unitCount } from "@/lib/listing-options";
 import { requireAccountForPage } from "@/server/auth/session";
 import { listProviderBookings, type ProviderBooking } from "@/server/bookings/repository";
 
@@ -44,8 +45,12 @@ function Group({
                   {b.experienceTitle}
                 </Link>
                 <p className="text-sm text-muted">
-                  {formatBookingDates(b.slotStartsOn, b.slotStartTime, b.endsOn)} · {b.travelerName}{" "}
-                  · {b.partySize} {b.partySize === 1 ? "person" : "people"} · {b.reference}
+                  {formatBookingDates(b.slotStartsOn, b.slotStartTime, b.endsOn, b.listingType)} ·{" "}
+                  {b.travelerName} · {b.partySize} {b.partySize === 1 ? "person" : "people"}
+                  {b.listingType && b.listingType !== "experience"
+                    ? ` · ${unitCount(b.listingType, b.units)}`
+                    : ""}{" "}
+                  · {b.reference}
                 </p>
               </div>
               <BookingStatusBadge

@@ -95,8 +95,8 @@ describe("runItineraryGeneration", () => {
     expect(result.versionNumber).toBe(1);
     expect(t.saved[0]?.plan.days[0]?.items[0]?.experienceId).toBe(E(1));
     expect(t.saved[0]).toMatchObject({
-      schemaVersion: "itinerary.v1",
-      promptVersion: "itinerary-v2",
+      schemaVersion: "itinerary.v2",
+      promptVersion: "itinerary-v3",
       travelers: 2,
     });
     expect(t.logs).toEqual([
@@ -124,6 +124,8 @@ describe("runItineraryGeneration", () => {
       days: 2,
       destinations: [...aliases.destinations.keys()],
       experiences: [...aliases.experiences.keys()],
+      stays: [],
+      transport: [],
     });
   });
 
@@ -179,7 +181,13 @@ describe("runItineraryGeneration", () => {
 
   it("does not call the model or invent anything when inventory is empty", async () => {
     const model = scriptedModel(good);
-    const empty: Candidates = { experiences: [], destinations: [], widened: false };
+    const empty: Candidates = {
+      experiences: [],
+      destinations: [],
+      stays: [],
+      transport: [],
+      widened: false,
+    };
     const t = deps(model, { retrieve: async () => empty });
     await expect(runItineraryGeneration(request, t.deps)).rejects.toMatchObject({
       code: "NOT_FOUND",
@@ -287,6 +295,8 @@ describe("runItineraryGeneration", () => {
           items: [
             { experienceId: E(2), destinationId: D1, timeOfDay: "morning" as const, rationale: "" },
           ],
+          stay: null,
+          transport: null,
         },
         {
           dayNumber: 2,
@@ -301,6 +311,8 @@ describe("runItineraryGeneration", () => {
               rationale: "",
             },
           ],
+          stay: null,
+          transport: null,
         },
       ],
     };

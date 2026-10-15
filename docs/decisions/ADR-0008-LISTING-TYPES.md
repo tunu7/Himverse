@@ -4,7 +4,8 @@
 - Date: 2026-10-15
 - Deciders: Product owner (stay granularity, transport model, guide pricing, phasing), Engineering
 - Implementation: Phase 3a, migration `20261015095327_listing_types`, pgTAP
-  `supabase/tests/listing_types.test.sql`. Phase 3b (AI itineraries with stays and transport) follows.
+  `supabase/tests/listing_types.test.sql`. Phase 3b, migration `20261015101124_itinerary_stays_transport`,
+  pgTAP `supabase/tests/itinerary_stays.test.sql`.
 
 ## Context
 
@@ -64,7 +65,28 @@ renamed, because a rename would ripple through RLS, RPCs and tests; the UI calls
 - **Listing pages:** show type-specific facts and a booking form for each type, with a live estimate
   using the same formula as the database.
 - **Partner forms:** creating a listing starts by choosing its type.
-- **AI planning:** uses experiences only until 3b (`retrieval.ts`).
+- **AI planning (3b):** see below.
+
+## Phase 3b: stays and transport in AI itineraries
+
+- **Itinerary items** gain `item_kind` (activity, stay, transport) and `units` (rooms or vehicles).
+  Each day has at most one stay (that night) and one transport leg (into the day's base).
+- **Retrieval** adds bookable stays and transport at the candidate destinations whose total capacity
+  fits the group; travellers can switch either off. The prompt lists them by alias (S#, T#) with
+  guests per room or seats per vehicle, never ids or prices.
+- **Validation** (app and `save_itinerary_version`): a stay is at the day's base and never on the last
+  day; a route goes from the previous base to the new base, or day hire is at the base; units are
+  ⌈travellers ÷ per-unit guests⌉, within capacity. The database prices each kind: activities per person,
+  stays per room per night, transport per vehicle.
+- **Whole-trip booking** (`request_itinerary_bookings`) turns consecutive nights at the same stay and
+  room count into one `request_listing_booking` (check-in to last night); transport is a one-day request.
+  Each group's idempotency key is derived from the request key and its first item, so retries replay.
+- **Constraints** `experiences_languages_items` and `experiences_route_elsewhere` are added `NOT VALID`
+  so existing rows can't block the deploy. After confirming
+  `select id from public.experiences where route_to_destination_id = destination_id or not private.valid_languages(languages);`
+  returns nothing, the owner may run `alter table public.experiences validate constraint …` for each.
+- **Known limits:** a booking whose listing the viewer can no longer see is shown as a plain date range;
+  shared (seat) transport and multi-room-type stays remain out of scope.
 
 ## Alternatives considered
 
@@ -80,5 +102,5 @@ renamed, because a rename would ripple through RLS, RPCs and tests; the UI calls
 - Every listing feature (moderation, bookable switch, two-step rules, whole-trip booking) carries over.
 - `experiences` gained a second foreign key to `destinations`, so embeds must name
   `destinations!experiences_destination_id_fkey`.
-- **3b** will add per-night stays and transport legs to the itinerary schema and validation, and to
-  whole-trip booking.
+- Itinerary plans now carry stays and transport; the itinerary schema is `itinerary.v2` and the prompt
+  `itinerary-v3`.

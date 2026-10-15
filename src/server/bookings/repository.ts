@@ -1,6 +1,7 @@
 import "server-only";
 
 import { AppError } from "@/lib/errors";
+import type { ListingType } from "@/lib/listing-options";
 import { type BookingStatus, istDate } from "@/lib/booking-options";
 import { createSupabasePublicClient } from "@/lib/supabase/public";
 import { toAppError } from "@/lib/supabase/errors";
@@ -222,6 +223,8 @@ export type BookingSummary = {
   endsOn: string | null;
   /** Rooms, vehicles or guides. */
   units: number;
+  /** Null when the caller can no longer see the listing (archived or hidden). */
+  listingType: ListingType | null;
   partySize: number;
   estimatedTotalMinor: number | null;
   confirmedTotalMinor: number | null;
@@ -230,7 +233,7 @@ export type BookingSummary = {
 };
 
 const SUMMARY_COLUMNS =
-  "id, reference, status, experience_title, experience_id, slot_starts_on, slot_start_time, ends_on, units, party_size, estimated_total_minor, confirmed_total_minor, request_expires_at, created_at";
+  "id, reference, status, experience_title, experience_id, slot_starts_on, slot_start_time, ends_on, units, party_size, estimated_total_minor, confirmed_total_minor, request_expires_at, created_at, listing:experiences!bookings_experience_id_fkey(listing_type)";
 
 type SummaryRow = {
   id: string;
@@ -242,6 +245,7 @@ type SummaryRow = {
   slot_start_time: string | null;
   ends_on: string | null;
   units: number;
+  listing: { listing_type: ListingType } | null;
   // Generated column (adults + children, both NOT NULL); typed nullable by the generator.
   party_size: number | null;
   estimated_total_minor: number | null;
@@ -261,6 +265,7 @@ function toSummary(row: SummaryRow): BookingSummary {
     slotStartTime: row.slot_start_time,
     endsOn: row.ends_on,
     units: row.units,
+    listingType: row.listing?.listing_type ?? null,
     partySize: row.party_size ?? 0,
     estimatedTotalMinor: row.estimated_total_minor,
     confirmedTotalMinor: row.confirmed_total_minor,

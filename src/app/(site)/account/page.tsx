@@ -81,8 +81,13 @@ async function Overview() {
                   {next.experienceTitle}
                 </Link>
                 <p className="text-sm text-muted">
-                  {formatBookingDates(next.slotStartsOn, next.slotStartTime, next.endsOn)} ·{" "}
-                  {next.partySize} {next.partySize === 1 ? "person" : "people"} · {next.reference}
+                  {formatBookingDates(
+                    next.slotStartsOn,
+                    next.slotStartTime,
+                    next.endsOn,
+                    next.listingType,
+                  )}{" "}
+                  · {next.partySize} {next.partySize === 1 ? "person" : "people"} · {next.reference}
                 </p>
               </div>
               <BookingStatusBadge

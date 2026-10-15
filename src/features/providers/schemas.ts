@@ -77,6 +77,7 @@ const listingTypeFields = {
 };
 
 type TypeFields = {
+  destinationId: string;
   listingType: (typeof LISTING_TYPES)[number];
   priceUnit: string;
   dailyCapacity: number | null;
@@ -95,6 +96,13 @@ function checkTypeFields(v: TypeFields, ctx: z.RefinementCtx) {
     if (v.maxGuests === null) {
       ctx.addIssue({ code: "custom", path: ["maxGuests"], message: "Required." });
     }
+  }
+  if (v.routeToDestinationId && v.routeToDestinationId === v.destinationId) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["routeToDestinationId"],
+      message: "Choose a different destination, or day hire.",
+    });
   }
   if (v.routeToDestinationId && v.listingType !== "transport") {
     ctx.addIssue({

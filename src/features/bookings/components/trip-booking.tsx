@@ -14,10 +14,11 @@ import { PendingLabel } from "@/components/ui";
 
 import { bookTripAction } from "../actions";
 
-export type TripBookingItem = { id: string; title: string; dateLabel: string };
+/** One request: a stay's consecutive nights share a booking, so a line can cover several item ids. */
+export type TripBookingItem = { ids: readonly string[]; title: string; dateLabel: string };
 
 /**
- * "Book whole trip": one request per itinerary item on its planned day. Each
+ * "Book whole trip": one request per experience, transport leg and stay. Each
  * provider confirms its own request; nothing is booked until they do.
  */
 export function TripBookingForm({
@@ -30,10 +31,14 @@ export function TripBookingForm({
   idempotencyKey: string;
 }) {
   const [state, action, pending] = useActionState(bookTripAction, null);
-  const byId = new Map(items.map((i) => [i.id, i]));
-
   if (state?.ok) {
-    const results = state.data.items;
+    const byId = new Map(state.data.items.map((r) => [r.itemId, r]));
+    // One result per line; every id of a stay maps to the same booking.
+    const results = items.flatMap((item) => {
+      const id = item.ids.find((i) => byId.has(i));
+      const result = id === undefined ? undefined : byId.get(id);
+      return result ? [{ ...result, item }] : [];
+    });
     const sent = results.filter((r) => r.booking).length;
     return (
       <div className="flex flex-col gap-3" data-testid="trip-booking-results" role="status">
@@ -47,15 +52,15 @@ export function TripBookingForm({
         </p>
         <ul className="flex flex-col gap-2 text-sm">
           {results.map((r) => {
-            const item = byId.get(r.itemId);
+            const { item } = r;
             return (
               <li
                 key={r.itemId}
                 className="flex flex-wrap items-baseline justify-between gap-2 rounded-xl border border-line p-3"
               >
                 <span>
-                  <span className="font-medium">{item?.title ?? "Experience"}</span>
-                  {item ? <span className="text-muted"> · {item.dateLabel}</span> : null}
+                  <span className="font-medium">{item.title}</span>
+                  <span className="text-muted"> · {item.dateLabel}</span>
                 </span>
                 {r.booking ? (
                   <Link
@@ -91,10 +96,18 @@ export function TripBookingForm({
       <input type="hidden" name="idempotencyKey" value={idempotencyKey} />
       <input type="hidden" name="versionId" value={versionId} />
       <p className="text-sm text-fg-soft">
-        Sends {items.length} booking {items.length === 1 ? "request" : "requests"}, one per
-        experience on its planned day, for this trip&apos;s travellers. Providers confirm the final
-        price. Nothing is charged.
+        Sends {items.length} booking {items.length === 1 ? "request" : "requests"} for this
+        trip&apos;s travellers: each experience and transport leg on its planned day, and each stay
+        for its nights. Partners confirm availability and the final price. Nothing is charged.
       </p>
+      <ul className="flex flex-col gap-1 text-sm" data-testid="trip-booking-lines">
+        {items.map((item) => (
+          <li key={item.ids[0]}>
+            <span className="font-medium">{item.title}</span>
+            <span className="text-muted"> · {item.dateLabel}</span>
+          </li>
+        ))}
+      </ul>
       <label className="flex flex-col gap-1">
         <span className="text-sm font-medium">
           Contact phone (shared with each provider for these bookings)

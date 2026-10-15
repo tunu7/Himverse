@@ -219,9 +219,9 @@ select results_eq(
             ('e0000000-0000-4000-8000-000000000004'::uuid, 31, 2, 1, 'a0000000-0000-4000-8000-000000000002'::uuid) $$,
   'dates and party come from the stored itinerary; each provider gets its own request');
 select results_eq(
-  $$ select bool_and(coalesce(replayed, true)) from public.request_itinerary_bookings(
+  $$ select count(*) filter (where error_code is null), bool_and(replayed) from public.request_itinerary_bookings(
        '20000000-0000-4000-8000-000000000001', '+91 98765 43210', 'Trip', 'f0000000-0000-4000-8000-0000000000aa') $$,
-  $$ values (true) $$, 'retrying the whole trip replays instead of duplicating');
+  $$ values (2::bigint, true) $$, 'retrying the whole trip replays instead of duplicating');
 select is((select count(*) from public.bookings where traveler_note = 'Trip'), 2::bigint, 'no duplicate requests');
 select results_eq(
   $$ select error_code from public.request_itinerary_bookings(

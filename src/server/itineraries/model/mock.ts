@@ -22,6 +22,14 @@ type PromptExperience = {
   destination?: string;
 };
 
+type PromptStay = { alias: string; destination?: string };
+type PromptTransport = { alias: string; from?: string; to?: string };
+
+/** An optional section (Stays, Transport): empty when the prompt has none. */
+function optionalSection<T>(prompt: string, heading: string): T[] {
+  return prompt.includes(`\n\n${heading}:\n`) ? section<T[]>(prompt, heading) : [];
+}
+
 function section<T>(prompt: string, heading: string): T {
   const line = prompt.split("\n\n").find((block) => block.startsWith(`${heading}:\n`));
   if (!line) throw new Error(`mock model: missing ${heading} section`);
@@ -41,8 +49,12 @@ export function createMockItineraryModel(): ItineraryModel {
         experiences = [...experiences].reverse();
       }
 
+      const stays = optionalSection<PromptStay>(prompt, "Stays");
+      const transport = optionalSection<PromptTransport>(prompt, "Transport");
+
       const used = new Set<string>();
       const days: ItineraryDraft["days"] = [];
+      let previousBase: string | null = null;
       for (let day = 1; day <= trip.days; day++) {
         const base =
           destinations.find((d) =>
@@ -63,7 +75,17 @@ export function createMockItineraryModel(): ItineraryModel {
             rationale: `A ${e.category.replaceAll("_", " ")} experience in ${base.name}.`,
           });
         }
-        days.push({ day, base: base.alias, items });
+        // A stay at the base each night but the last; a route leg when the base changes.
+        const stay =
+          day < trip.days
+            ? (stays.find((st) => st.destination === base.alias)?.alias ?? null)
+            : null;
+        const leg =
+          previousBase && previousBase !== base.alias
+            ? (transport.find((t) => t.from === previousBase && t.to === base.alias)?.alias ?? null)
+            : null;
+        previousBase = base.alias;
+        days.push({ day, base: base.alias, items, stay, transport: leg });
       }
 
       const draft: ItineraryDraft = {

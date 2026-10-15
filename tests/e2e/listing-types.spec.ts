@@ -71,7 +71,7 @@ test("stays: partner lists a room type, traveller requests nights, partner confi
   await page.getByRole("button", { name: "Request booking" }).click();
   await expect(page).toHaveURL(/\/bookings\/[0-9a-f-]{36}$/);
   const bookingUrl = page.url();
-  await expect(page.getByText(/\(2 days\)/)).toBeVisible();
+  await expect(page.getByText(/\(2 nights\)/)).toBeVisible();
   await expect(page.getByTestId("booking-price").filter({ visible: true })).toContainText("₹5,000");
 
   // The host confirms.

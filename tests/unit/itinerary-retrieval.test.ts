@@ -96,7 +96,14 @@ describe("retrieveCandidates", () => {
   it("widens to all categories when interests can't fill the trip, and says so", async () => {
     state.results.push([row(1)]);
     state.results.push([row(1), row(2), row(3)]);
-    const result = await retrieveCandidates(prefs({ interests: ["wildlife"], durationDays: 3 }));
+    const result = await retrieveCandidates(
+      prefs({
+        interests: ["wildlife"],
+        durationDays: 3,
+        includeStays: false,
+        includeTransport: false,
+      }),
+    );
     expect(state.calls).toHaveLength(2);
     expect(by(state.calls[1]!, "in")).toEqual([]);
     expect(result.widened).toBe(true);
@@ -112,10 +119,59 @@ describe("retrieveCandidates", () => {
     );
   });
 
+  it("adds bookable stays and transport at the candidate destinations that fit the group", async () => {
+    state.results.push([row(1, 1), row(2, 2)]);
+    const listing = (id: string, fields: Record<string, unknown>) => ({
+      id,
+      title: id,
+      destination_id: "d1",
+      price_from_minor: 1000,
+      max_guests: 2,
+      daily_capacity: 2,
+      ...fields,
+    });
+    state.results.push([
+      listing("room", {}),
+      listing("tiny", { max_guests: 1, daily_capacity: 2 }), // 2 places for 3 travellers
+    ]);
+    state.results.push([
+      listing("route", { route_to_destination_id: "d2" }),
+      listing("hire", { route_to_destination_id: null }),
+      listing("elsewhere", { route_to_destination_id: "d9" }), // not a candidate destination
+    ]);
+    const result = await retrieveCandidates(prefs({ adults: 2, children: 1 }));
+
+    const [, stays, transport] = state.calls;
+    for (const [calls, type] of [
+      [stays!, "stay"],
+      [transport!, "transport"],
+    ] as const) {
+      expect(by(calls, "eq")).toEqual([
+        ["listing_type", type],
+        ["accepts_bookings", true],
+      ]);
+      expect(by(calls, "in")).toEqual([["destination_id", ["d1", "d2"]]]);
+    }
+    expect(result.stays.map((s) => s.id)).toEqual(["room"]);
+    expect(result.transport.map((t) => t.id)).toEqual(["route", "hire"]);
+    expect(result.transport[0]).toMatchObject({ destinationId: "d1", routeToDestinationId: "d2" });
+  });
+
+  it("skips stays and transport when the traveller turns them off", async () => {
+    state.results.push([row(1)]);
+    const result = await retrieveCandidates(
+      prefs({ durationDays: 1, includeStays: false, includeTransport: false }),
+    );
+    expect(state.calls).toHaveLength(1);
+    expect(result).toMatchObject({ stays: [], transport: [] });
+  });
+
   it("returns nothing when nothing is published", async () => {
     expect(await retrieveCandidates(prefs())).toEqual({
       experiences: [],
       destinations: [],
+      stays: [],
+      transport: [],
       widened: false,
     });
   });
