@@ -95,8 +95,8 @@ describe("runItineraryGeneration", () => {
     expect(result.versionNumber).toBe(1);
     expect(t.saved[0]?.plan.days[0]?.items[0]?.experienceId).toBe(E(1));
     expect(t.saved[0]).toMatchObject({
-      schemaVersion: "itinerary.v2",
-      promptVersion: "itinerary-v3",
+      schemaVersion: "itinerary.v3",
+      promptVersion: "itinerary-v4",
       travelers: 2,
     });
     expect(t.logs).toEqual([
@@ -126,6 +126,7 @@ describe("runItineraryGeneration", () => {
       experiences: [...aliases.experiences.keys()],
       stays: [],
       transport: [],
+      guides: [],
     });
   });
 
@@ -186,6 +187,7 @@ describe("runItineraryGeneration", () => {
       destinations: [],
       stays: [],
       transport: [],
+      guides: [],
       widened: false,
     };
     const t = deps(model, { retrieve: async () => empty });
@@ -297,6 +299,7 @@ describe("runItineraryGeneration", () => {
           ],
           stay: null,
           transport: null,
+          guide: null,
         },
         {
           dayNumber: 2,
@@ -313,6 +316,7 @@ describe("runItineraryGeneration", () => {
           ],
           stay: null,
           transport: null,
+          guide: null,
         },
       ],
     };

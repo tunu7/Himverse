@@ -24,6 +24,7 @@ type PromptExperience = {
 
 type PromptStay = { alias: string; destination?: string };
 type PromptTransport = { alias: string; from?: string; to?: string };
+type PromptGuide = { alias: string; destination?: string };
 
 /** An optional section (Stays, Transport): empty when the prompt has none. */
 function optionalSection<T>(prompt: string, heading: string): T[] {
@@ -51,6 +52,7 @@ export function createMockItineraryModel(): ItineraryModel {
 
       const stays = optionalSection<PromptStay>(prompt, "Stays");
       const transport = optionalSection<PromptTransport>(prompt, "Transport");
+      const guides = optionalSection<PromptGuide>(prompt, "Guides");
 
       const used = new Set<string>();
       const days: ItineraryDraft["days"] = [];
@@ -85,7 +87,9 @@ export function createMockItineraryModel(): ItineraryModel {
             ? (transport.find((t) => t.from === previousBase && t.to === base.alias)?.alias ?? null)
             : null;
         previousBase = base.alias;
-        days.push({ day, base: base.alias, items, stay, transport: leg });
+        // The first guide at the base, every day there.
+        const guide = guides.find((g) => g.destination === base.alias)?.alias ?? null;
+        days.push({ day, base: base.alias, items, stay, transport: leg, guide });
       }
 
       const draft: ItineraryDraft = {

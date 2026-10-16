@@ -192,6 +192,25 @@ export function PreferencesForm({
           />
           Suggest private vehicles between places
         </label>
+        <label className="flex items-center gap-2 text-sm text-fg-soft">
+          <input
+            type="checkbox"
+            name="includeGuide"
+            defaultChecked
+            className="size-4 accent-[var(--accent)]"
+          />
+          Suggest a local guide
+        </label>
+        <label className="flex flex-col gap-1 sm:max-w-xs">
+          <span className="text-sm font-medium">Guide language (optional)</span>
+          <input
+            name="guideLanguage"
+            maxLength={30}
+            placeholder="e.g. Hindi"
+            className={inputClass}
+          />
+          <FieldError errors={errors("guideLanguage")} />
+        </label>
         <label className="flex flex-col gap-1">
           <span className="text-sm font-medium">Anything else? (optional)</span>
           <textarea name="notes" rows={3} maxLength={MAX_NOTES_LENGTH} className={inputClass} />

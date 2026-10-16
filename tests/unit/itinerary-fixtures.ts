@@ -67,6 +67,7 @@ export const candidates: Candidates = {
   ],
   stays: [],
   transport: [],
+  guides: [],
 };
 
 export const S = (n: number) => `40000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
@@ -127,7 +128,36 @@ export function prefs(overrides: Partial<TripPreferences> = {}): TripPreferences
     limitedMobility: false,
     includeStays: true,
     includeTransport: true,
+    includeGuide: true,
+    guideLanguage: "",
     notes: "",
     ...overrides,
   };
 }
+
+/** Two guides in Ziro: per group (2 guides, 4 people each, English) and per person (Hindi). */
+export const withGuides: Candidates = {
+  ...candidates,
+  guides: [
+    {
+      id: S(5),
+      title: "Ziro group guide",
+      destinationId: D1,
+      priceFromMinor: 250_000,
+      priceUnit: "per_group_day",
+      languages: ["English", "Apatani"],
+      maxGuests: 4,
+      dailyCapacity: 2,
+    },
+    {
+      id: S(6),
+      title: "Ziro person guide",
+      destinationId: D1,
+      priceFromMinor: 80_000,
+      priceUnit: "per_person_day",
+      languages: ["Hindi"],
+      maxGuests: 8,
+      dailyCapacity: 1,
+    },
+  ],
+};

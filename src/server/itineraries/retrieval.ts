@@ -42,15 +42,26 @@ export async function retrieveCandidates(prefs: TripPreferences): Promise<Candid
     });
   }
   const destinationIds = [...destinations.keys()];
-  const [stays, transport] = await Promise.all([
+  const [stays, transport, guides] = await Promise.all([
     prefs.includeStays ? queryStays(destinationIds, travelerCount(prefs)) : [],
     prefs.includeTransport ? queryTransport(destinationIds, travelerCount(prefs)) : [],
+    prefs.includeGuide
+      ? queryGuides(destinationIds, travelerCount(prefs), prefs.guideLanguage)
+      : [],
   ]);
-  return { experiences, destinations: [...destinations.values()], stays, transport, widened };
+  return {
+    experiences,
+    destinations: [...destinations.values()],
+    stays,
+    transport,
+    guides,
+    widened,
+  };
 }
 
 export const MAX_CANDIDATE_STAYS = 20;
 export const MAX_CANDIDATE_TRANSPORT = 20;
+export const MAX_CANDIDATE_GUIDES = 20;
 
 /** Bookable stays at the candidate destinations with room for the whole group. */
 async function queryStays(
@@ -154,4 +165,49 @@ async function query(prefs: TripPreferences, categories: TripPreferences["intere
     throw toAppError(error, "Could not load experiences for your trip.");
   }
   return data;
+}
+
+/**
+ * Bookable guides at the candidate destinations who can take the whole group,
+ * speaking the requested language when one is given (case-insensitive).
+ */
+async function queryGuides(
+  destinationIds: string[],
+  travellers: number,
+  language: string,
+): Promise<Candidates["guides"]> {
+  if (destinationIds.length === 0) return [];
+  const { data, error } = await createSupabasePublicClient()
+    .from("experiences")
+    .select(
+      "id, title, destination_id, price_from_minor, price_unit, languages, max_guests, daily_capacity",
+    )
+    .eq("listing_type", "guide")
+    .eq("accepts_bookings", true)
+    .in("destination_id", destinationIds)
+    .order("price_from_minor", { ascending: true, nullsFirst: false })
+    .order("id", { ascending: true })
+    .limit(MAX_CANDIDATE_GUIDES);
+  if (error) throw toAppError(error, "Could not load guides for your trip.");
+  const wanted = language.trim().toLowerCase();
+  return data.flatMap((g) =>
+    g.max_guests &&
+    g.daily_capacity &&
+    g.max_guests * g.daily_capacity >= travellers &&
+    (g.price_unit === "per_group_day" || g.price_unit === "per_person_day") &&
+    (!wanted || g.languages.some((l) => l.toLowerCase() === wanted))
+      ? [
+          {
+            id: g.id,
+            title: g.title,
+            destinationId: g.destination_id,
+            priceFromMinor: g.price_from_minor,
+            priceUnit: g.price_unit,
+            languages: g.languages,
+            maxGuests: g.max_guests,
+            dailyCapacity: g.daily_capacity,
+          },
+        ]
+      : [],
+  );
 }

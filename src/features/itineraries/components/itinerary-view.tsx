@@ -177,6 +177,21 @@ export function ItineraryPlan({ itinerary }: { itinerary: ItineraryView }) {
                 />
               </div>
             ) : null}
+            {day.guide ? (
+              <div className="mt-3">
+                <ListingLine
+                  label="Guide"
+                  item={day.guide}
+                  unitOne="guide"
+                  priceUnit={
+                    day.guide.priceUnit === "per_person_day"
+                      ? "per person per day"
+                      : "per group per day"
+                  }
+                  testId="itinerary-guide"
+                />
+              </div>
+            ) : null}
             {day.note ? <p className="mt-2 text-sm text-muted">{day.note}</p> : null}
           </li>
         ))}

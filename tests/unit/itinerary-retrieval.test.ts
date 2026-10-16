@@ -102,6 +102,7 @@ describe("retrieveCandidates", () => {
         durationDays: 3,
         includeStays: false,
         includeTransport: false,
+        includeGuide: false,
       }),
     );
     expect(state.calls).toHaveLength(2);
@@ -157,10 +158,38 @@ describe("retrieveCandidates", () => {
     expect(result.transport[0]).toMatchObject({ destinationId: "d1", routeToDestinationId: "d2" });
   });
 
+  it("offers bookable guides who fit the group and speak the asked language", async () => {
+    state.results.push([row(1, 1)]);
+    const guide = (id: string, fields: Record<string, unknown>) => ({
+      id,
+      title: id,
+      destination_id: "d1",
+      price_from_minor: 1000,
+      price_unit: "per_group_day",
+      languages: ["English", "Hindi"],
+      max_guests: 4,
+      daily_capacity: 1,
+      ...fields,
+    });
+    state.results.push([
+      guide("fits", {}),
+      guide("small", { max_guests: 2 }), // 2 places for 3 travellers
+      guide("other-language", { languages: ["Apatani"] }),
+    ]);
+    const result = await retrieveCandidates(
+      prefs({ adults: 3, includeStays: false, includeTransport: false, guideLanguage: "hindi" }),
+    );
+    expect(by(state.calls[1]!, "eq")).toEqual([
+      ["listing_type", "guide"],
+      ["accepts_bookings", true],
+    ]);
+    expect(result.guides.map((g) => g.id)).toEqual(["fits"]);
+  });
+
   it("skips stays and transport when the traveller turns them off", async () => {
     state.results.push([row(1)]);
     const result = await retrieveCandidates(
-      prefs({ durationDays: 1, includeStays: false, includeTransport: false }),
+      prefs({ durationDays: 1, includeStays: false, includeTransport: false, includeGuide: false }),
     );
     expect(state.calls).toHaveLength(1);
     expect(result).toMatchObject({ stays: [], transport: [] });
@@ -172,6 +201,7 @@ describe("retrieveCandidates", () => {
       destinations: [],
       stays: [],
       transport: [],
+      guides: [],
       widened: false,
     });
   });

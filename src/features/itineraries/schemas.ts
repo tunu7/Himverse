@@ -54,6 +54,8 @@ export function preferencesFromForm(formData: FormData, now: Date): TripPreferen
     limitedMobility: formData.get("limitedMobility") === "on",
     includeStays: formData.get("includeStays") === "on",
     includeTransport: formData.get("includeTransport") === "on",
+    includeGuide: formData.get("includeGuide") === "on",
+    guideLanguage: String(formData.get("guideLanguage") ?? ""),
     notes: String(formData.get("notes") ?? ""),
   });
   if (!result.success) throw toValidationError(result.error);

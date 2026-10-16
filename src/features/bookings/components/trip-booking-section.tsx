@@ -18,7 +18,7 @@ function dateLabel(isoDate: string): string {
 type Line = {
   ids: string[];
   title: string;
-  kind: "activity" | "stay" | "transport";
+  kind: "activity" | "stay" | "transport" | "guide";
   units: number;
   experienceId: string;
   from: string;
@@ -27,7 +27,8 @@ type Line = {
 
 /**
  * One line per request the database will send: consecutive nights at the same
- * stay and room count become one stay booking (as in `request_itinerary_bookings`).
+ * stay and room count, and consecutive days with the same guide and number of
+ * guides, become one booking (as in `request_itinerary_bookings`).
  */
 function tripLines(version: ItineraryView["version"]): Line[] {
   const lines: Line[] = [];
@@ -53,19 +54,24 @@ function tripLines(version: ItineraryView["version"]): Line[] {
       const activity = line(item, "activity");
       if (activity) lines.push(activity);
     }
-    const stay = day.stay ? line(day.stay, "stay") : null;
-    if (!stay) continue;
-    const previous = lines.findLast((l) => l.kind === "stay");
-    if (
-      previous &&
-      previous.experienceId === stay.experienceId &&
-      previous.units === stay.units &&
-      previous.to === addDays(stay.from, -1)
-    ) {
-      previous.ids.push(...stay.ids);
-      previous.to = stay.from;
-    } else {
-      lines.push(stay);
+    for (const [item, kind] of [
+      [day.guide, "guide"],
+      [day.stay, "stay"],
+    ] as const) {
+      const next = item ? line(item, kind) : null;
+      if (!next) continue;
+      const previous = lines.findLast((l) => l.kind === kind);
+      if (
+        previous &&
+        previous.experienceId === next.experienceId &&
+        previous.units === next.units &&
+        previous.to === addDays(next.from, -1)
+      ) {
+        previous.ids.push(...next.ids);
+        previous.to = next.from;
+      } else {
+        lines.push(next);
+      }
     }
   }
   return lines;
@@ -81,6 +87,12 @@ function lineLabel(line: Line): string {
   if (line.kind === "stay") {
     const nights = line.ids.length;
     return `${dateLabel(line.from)} – ${dateLabel(addDays(line.to, 1))} · ${nights} ${nights === 1 ? "night" : "nights"}, ${line.units} ${line.units === 1 ? "room" : "rooms"}`;
+  }
+  if (line.kind === "guide") {
+    const days = line.ids.length;
+    const range =
+      days === 1 ? dateLabel(line.from) : `${dateLabel(line.from)} – ${dateLabel(line.to)}`;
+    return `${range} · ${days} ${days === 1 ? "day" : "days"}, ${line.units} ${line.units === 1 ? "guide" : "guides"}`;
   }
   if (line.kind === "transport") {
     return `${dateLabel(line.from)} · ${line.units} ${line.units === 1 ? "vehicle" : "vehicles"}`;

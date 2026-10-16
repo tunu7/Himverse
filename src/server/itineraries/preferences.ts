@@ -71,6 +71,14 @@ function preferencesSchema(startDate: z.ZodType<string>) {
       // Phase 3b: let the planner add a stay each night and transport between places.
       includeStays: z.boolean().default(true),
       includeTransport: z.boolean().default(true),
+      // Guides (owner decision 2026-10-16): suggested by default, optionally by language.
+      includeGuide: z.boolean().default(true),
+      guideLanguage: z
+        .string()
+        .trim()
+        .max(30)
+        .regex(/^[\p{L} ]*$/u, "Letters only, for example Hindi.")
+        .default(""),
       notes: z.string().trim().max(MAX_NOTES_LENGTH).default(""),
     })
     .refine((p) => p.adults + p.children <= MAX_TRAVELERS, {

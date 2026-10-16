@@ -11,7 +11,7 @@ bookings migration and `src/lib/booking-options.ts` together.
 | Who can be booked | Published experiences of **verified** providers at published destinations whose provider **accepts booking requests** (default on; partner switch), on any date from tomorrow | `request_booking_on_date` |
 | Dates | Any future date. An open published slot on that date is used (seat limits apply); otherwise the provider confirms availability | `request_booking_on_date` |
 | Guides, stays, transport | Booked for a date range and a quantity (guides, rooms, vehicles). Capacity per day is checked when requested and enforced when confirmed. Stays at most 30 nights, others at most 14 days | `request_listing_booking`, `respond_to_booking` |
-| Whole trip | The itinerary owner can request every item at once, on each item's day, for the trip's travellers; consecutive nights at one stay become one stay booking; each request succeeds or fails on its own | `request_itinerary_bookings` |
+| Whole trip | The itinerary owner can request every item at once, on each item's day, for the trip's travellers; consecutive nights at one stay, and consecutive days with one guide, each become one booking; each request succeeds or fails on its own | `request_itinerary_bookings` |
 | Request limits | 30 per hour, 60 per day, 40 awaiting a response, per traveller | Insert trigger |
 | Party size | 1–20 people (adults ≥ 1) | Form schema + `request_booking` |
 | Contact | A phone number for this booking is required and shared with the provider; account email is never shared | `request_booking` + RLS |

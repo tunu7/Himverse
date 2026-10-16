@@ -88,6 +88,21 @@ renamed, because a rename would ripple through RLS, RPCs and tests; the UI calls
 - **Known limits:** a booking whose listing the viewer can no longer see is shown as a plain date range;
   shared (seat) transport and multi-room-type stays remain out of scope.
 
+## Guides in AI itineraries (2026-10-16)
+
+Owner decisions: guides are suggested by default (the traveller can untick "Suggest a local guide"),
+optionally only those speaking a chosen language, and consecutive days with the same guide are one booking.
+
+- **Schema:** `itinerary_item_kind` gains `guide` (its own migration: a new enum value can't be used in
+  the transaction that adds it); item positions widen to 1–9 (guide = 9).
+- **Retrieval and prompt:** up to 20 bookable guides at the candidate destinations whose capacity fits
+  the group, filtered by language; listed by alias (G#) with languages and group size, never ids or
+  prices. Schema `itinerary.v3`, prompt `itinerary-v4`.
+- **Validation** (app and `save_itinerary_version`): at the day's base, guides = ⌈travellers ÷ group
+  size⌉ within capacity, one guide per day; priced by `private.estimate_listing_total` for one day.
+- **Whole-trip booking:** consecutive days with the same guide and number of guides become one
+  `request_listing_booking` (first to last day), keyed like stays.
+
 ## Alternatives considered
 
 - **Separate tables per type:** cleaner columns, but booking, RLS and moderation logic would be

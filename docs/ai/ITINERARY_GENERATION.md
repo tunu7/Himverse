@@ -9,8 +9,8 @@ Implemented in Phase 3 for flows T2 and T3 in [USER_FLOWS](../product/USER_FLOWS
 preferences (Zod, server-side) → kill switch → retrieve (deterministic, public only)
   → none? stop with "no suitable inventory" (no model call, nothing invented, no quota used)
   → reserve: begin_itinerary_generation (per-user 10/h + 30/day and platform daily cap, atomic)
-  → prompt (itinerary-v3: aliases only, notes fenced, answer schema spelled out) → model (45 s timeout, capped tokens)
-  → schema check (itinerary.v2) → grounding + constraint checks
+  → prompt (itinerary-v4: aliases only, notes fenced, answer schema spelled out) → model (45 s timeout, capped tokens)
+  → schema check (itinerary.v3) → grounding + constraint checks
       ├─ pass → save_itinerary_version RPC (consumes the reservation, re-checks visibility +
       │         ownership, DB snapshots) → finish_itinerary_generation
       └─ fail → one repair attempt with the specific errors → re-check → else fail, nothing saved
@@ -19,9 +19,9 @@ preferences (Zod, server-side) → kill switch → retrieve (deterministic, publ
 | Module | Responsibility |
 | --- | --- |
 | `preferences.ts` | Trip preference schema (dates in IST, 1–14 days, 1–12 travellers, INR only, notes ≤ 500) |
-| `retrieval.ts` | Candidate experiences, destinations, stays and transport (anonymous client; 40/10/20/20) |
+| `retrieval.ts` | Candidate experiences, destinations, stays, transport and guides (anonymous client; 40/10/20/20/20) |
 | `prompt.ts` | Versioned system and user prompt, alias maps, repair prompt, size cap |
-| `schemas.ts` | `itinerary.v2` model output schema; stored plan schema |
+| `schemas.ts` | `itinerary.v3` model output schema; stored plan schema |
 | `validate.ts` | Deterministic grounding, date, capacity, multi-day and budget checks; cost estimate |
 | `model/` | `ItineraryModel` interface, AI Gateway adapter, deterministic mock, factory |
 | `repository.ts` | RPC calls, owner-scoped reads, current-version changes, delete |
@@ -32,9 +32,10 @@ preferences (Zod, server-side) → kill switch → retrieve (deterministic, publ
 `place` (anywhere, a district or a destination), `startDate`, `durationDays`, `adults`, `children`,
 optional `budget` (₹, total for experiences), `currency` (INR), `interests` (categories), `pace`
 (relaxed 6 h, moderate 9 h or packed 11 h of activities per day), `limitedMobility`, optional `origin`,
-optional `notes`, `includeStays` and `includeTransport` (both on by default).
+optional `notes`, `includeStays`, `includeTransport` and `includeGuide` (all on by default), and an
+optional `guideLanguage` (only guides who list it, case-insensitive).
 
-## Model output (`itinerary.v2`)
+## Model output (`itinerary.v3`)
 
 ```ts
 {
@@ -46,6 +47,7 @@ optional `notes`, `includeStays` and `includeTransport` (both on by default).
     items: Array<{ experience: "E1" | …; timeOfDay: "morning" | "afternoon" | "evening" | "full_day"; rationale: string }>;
     stay?: "S1" | … | null;       // where the group sleeps that night (only when stays were retrieved)
     transport?: "T1" | … | null;  // vehicle into this day's base, or day hire there
+    guide?: "G1" | … | null;      // a local guide at this day's base
     note?: string;
   }>;
   cautions: string[];       // things the traveller should check; never stated as facts
@@ -67,8 +69,10 @@ The model never sees or returns database IDs, prices or dates.
 - **Transport:** a route from the previous day's base to this day's base (any origin on day 1), or day
   hire at the base; vehicles = ⌈travellers ÷ seats⌉ within the listing's vehicles. A base change without
   transport adds a "arrange travel" warning.
-- **Budget:** activities × travellers + stay nights × rooms + transport legs × vehicles, from database
-  prices, must be ≤ the budget. Unpriced items are excluded and flagged.
+- **Guides** (2026-10-16): at the day's base; guides = ⌈travellers ÷ group size⌉ within the listing's
+  guides; priced per group per day × guides, or per person per day × travellers.
+- **Budget:** activities × travellers + stay nights × rooms + transport legs × vehicles + guide days, from
+  database prices, must be ≤ the budget. Unpriced items are excluded and flagged.
 - The save RPC re-checks that every listing is bookable now, of the right type, at the stated
   destination (or route end), with units within capacity and enough for the party, no stay on the last
   day; it prices the plan itself and snapshots title, price and duration from the database.

@@ -1,6 +1,7 @@
 import "server-only";
 
 import { AppError } from "@/lib/errors";
+import type { PriceUnit } from "@/lib/listing-options";
 import { logger } from "@/lib/logger";
 import { createSupabasePublicClient } from "@/lib/supabase/public";
 import { toAppError } from "@/lib/supabase/errors";
@@ -82,7 +83,7 @@ export async function saveItineraryVersion(input: SaveVersionInput): Promise<Sav
     p_model: input.model,
     p_travelers: input.travelers,
     p_warnings: input.warnings,
-    // Activities take positions 1-6; the night's stay 7; the day's transport 8.
+    // Activities take positions 1-6; the night's stay 7; the day's transport 8; the guide 9.
     p_items: input.plan.days.flatMap((day) => [
       ...day.items.map((item, index) => ({
         day_number: day.dayNumber,
@@ -118,6 +119,20 @@ export async function saveItineraryVersion(input: SaveVersionInput): Promise<Sav
               experience_id: day.transport.experienceId,
               destination_id: day.destinationId,
               time_of_day: "morning",
+              rationale: "",
+            },
+          ]
+        : []),
+      ...(day.guide
+        ? [
+            {
+              day_number: day.dayNumber,
+              position: 9,
+              item_kind: "guide",
+              units: day.guide.units,
+              experience_id: day.guide.experienceId,
+              destination_id: day.destinationId,
+              time_of_day: "full_day",
               rationale: "",
             },
           ]
@@ -197,6 +212,8 @@ export type ItineraryItemView = {
   rationale: string;
   priceFromMinor: number | null;
   durationMinutes: number;
+  /** The listing's price unit (e.g. per group per day), when still visible. */
+  priceUnit: PriceUnit | null;
   /** False when the experience has since been unpublished or hidden. */
   stillAvailable: boolean;
 };
@@ -225,6 +242,7 @@ export type ItineraryView = {
       items: ItineraryItemView[];
       stay: ItineraryItemView | null;
       transport: ItineraryItemView | null;
+      guide: ItineraryItemView | null;
     }>;
   };
 };
@@ -276,13 +294,17 @@ export async function getMyItinerary(
   // Which referenced experiences are still publicly visible (anonymous client = RLS-public set).
   const ids = items.flatMap((i) => (i.experience_id ? [i.experience_id] : []));
   const available = new Map<string, string>();
+  const priceUnits = new Map<string, PriceUnit>();
   if (ids.length > 0) {
     const { data: live, error: liveError } = await createSupabasePublicClient()
       .from("experiences")
-      .select("id, slug")
+      .select("id, slug, price_unit")
       .in("id", ids);
     if (liveError) throw toAppError(liveError, "Could not load this itinerary.");
-    for (const e of live) available.set(e.id, e.slug);
+    for (const e of live) {
+      available.set(e.id, e.slug);
+      priceUnits.set(e.id, e.price_unit);
+    }
   }
 
   const toView = (i: (typeof items)[number]): ItineraryItemView & { kind: string } => ({
@@ -297,6 +319,7 @@ export async function getMyItinerary(
     rationale: i.rationale,
     priceFromMinor: i.price_snapshot_minor,
     durationMinutes: i.duration_snapshot_minutes,
+    priceUnit: i.experience_id ? (priceUnits.get(i.experience_id) ?? null) : null,
     stillAvailable: i.experience_id !== null && available.has(i.experience_id),
   });
 
@@ -337,6 +360,7 @@ export async function getMyItinerary(
           items: ofKind("activity"),
           stay: ofKind("stay")[0] ?? null,
           transport: ofKind("transport")[0] ?? null,
+          guide: ofKind("guide")[0] ?? null,
         };
       }),
     },

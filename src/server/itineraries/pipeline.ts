@@ -315,6 +315,7 @@ export function toAliasedDraft(plan: ResolvedPlan, aliases: AliasMap): Itinerary
   const destinationAlias = new Map([...aliases.destinations].map(([alias, d]) => [d.id, alias]));
   const stayAlias = new Map([...aliases.stays].map(([alias, st]) => [st.id, alias]));
   const transportAlias = new Map([...aliases.transport].map(([alias, t]) => [t.id, alias]));
+  const guideAlias = new Map([...aliases.guides].map(([alias, g]) => [g.id, alias]));
   const fallbackBase = [...aliases.destinations.keys()][0] ?? "D1";
   return {
     title: plan.title.slice(0, 80),
@@ -339,6 +340,7 @@ export function toAliasedDraft(plan: ResolvedPlan, aliases: AliasMap): Itinerary
       // Kept only when the same listing is still a candidate.
       stay: day.stay ? (stayAlias.get(day.stay.experienceId) ?? null) : null,
       transport: day.transport ? (transportAlias.get(day.transport.experienceId) ?? null) : null,
+      guide: day.guide ? (guideAlias.get(day.guide.experienceId) ?? null) : null,
     })),
   };
 }

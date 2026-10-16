@@ -13,7 +13,17 @@ import { buildAliases, buildPrompt, MAX_PROMPT_CHARS } from "@/server/itinerarie
 import { itineraryDraftSchema, type ItineraryDraft } from "@/server/itineraries/schemas";
 import { estimateCost, validateDraft } from "@/server/itineraries/validate";
 
-import { candidates, D1, D2, E, NOW, prefs, S, withStaysAndTransport } from "./itinerary-fixtures";
+import {
+  candidates,
+  D1,
+  D2,
+  E,
+  NOW,
+  prefs,
+  S,
+  withGuides,
+  withStaysAndTransport,
+} from "./itinerary-fixtures";
 
 const aliases = buildAliases(candidates);
 const raw = {
@@ -521,5 +531,79 @@ describe("stays and transport", () => {
     if (!validated.ok) return;
     expect(validated.plan.days[0]?.stay).not.toBeNull();
     expect(validated.plan.days[1]?.stay).toBeNull();
+  });
+});
+
+describe("guides", () => {
+  const guideAliases = buildAliases(withGuides);
+  const draft = (days: ItineraryDraft["days"]): ItineraryDraft => ({
+    title: "T",
+    summary: "S",
+    cautions: [],
+    days,
+  });
+  const walk = { experience: "E1", timeOfDay: "morning" as const, rationale: "" };
+  const monastery = { experience: "E4", timeOfDay: "morning" as const, rationale: "" };
+
+  it("lists guides by alias with languages and group size, never ids or prices", () => {
+    const { prompt, system } = buildPrompt(prefs(), withGuides, guideAliases);
+    expect(prompt).toContain('"alias":"G1"');
+    expect(prompt).toContain('"languages":["English","Apatani"]');
+    expect(prompt + system).not.toContain(S(5));
+    expect(prompt).not.toMatch(/250000|80000/);
+  });
+
+  it("books enough guides for the group and prices each by its unit", () => {
+    const result = validateDraft(
+      draft([
+        { day: 1, base: "D1", items: [walk], guide: "G1" },
+        { day: 2, base: "D1", items: [], guide: "G2" },
+      ]),
+      prefs({ adults: 6 }),
+      guideAliases,
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    // 6 people: 2 group guides of 4; the per-person guide covers all 6.
+    expect(result.plan.days[0]?.guide).toEqual({ experienceId: S(5), units: 2 });
+    expect(result.plan.days[1]?.guide).toEqual({ experienceId: S(6), units: 1 });
+    expect(result.estimate.totalMinor).toBe(100_000 * 6 + 250_000 * 2 + 80_000 * 6);
+  });
+
+  it.each([
+    [
+      "an unknown guide",
+      draft([{ day: 1, base: "D1", items: [walk], guide: "G9" }]),
+      2,
+      /G9 is not in the list/,
+    ],
+    [
+      "a guide at another base",
+      draft([{ day: 1, base: "D2", items: [monastery], guide: "G1" }]),
+      2,
+      /G1 is not at the day's base/,
+    ],
+    [
+      "a group too big for the guides",
+      draft([{ day: 1, base: "D1", items: [walk], guide: "G1" }]),
+      9,
+      /can't take a group of 9/,
+    ],
+  ])("refuses %s", (_label, plan, adults, error) => {
+    const result = validateDraft(plan, prefs({ durationDays: 1, adults }), guideAliases);
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.errors.join(" ")).toMatch(error);
+  });
+
+  it("mock model adds a guide at the base every day", async () => {
+    const p = prefs({ durationDays: 2 });
+    const result = await createMockItineraryModel().generate({
+      ...buildPrompt(p, withGuides, guideAliases),
+      maxOutputTokens: 1,
+      timeoutMs: 1,
+    });
+    const validated = validateDraft(itineraryDraftSchema.parse(result.draft), p, guideAliases);
+    expect(validated.ok).toBe(true);
+    if (validated.ok) expect(validated.plan.days.every((d) => d.guide !== null)).toBe(true);
   });
 });

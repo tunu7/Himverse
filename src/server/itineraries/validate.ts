@@ -193,6 +193,29 @@ export function validateDraft(
     }
     previousBaseId = base.id;
 
+    // A guide for the day: at the base, with enough guides for the group,
+    // priced by its own unit (per group per day x guides, per person x travellers).
+    let guide: ResolvedPlan["days"][number]["guide"] = null;
+    if (day.guide) {
+      const candidate = aliases.guides.get(day.guide);
+      if (!candidate) {
+        errors.push(`Day ${day.day}: guide ${day.guide} is not in the list.`);
+      } else if (candidate.destinationId !== base.id) {
+        errors.push(`Day ${day.day}: guide ${day.guide} is not at the day's base ${day.base}.`);
+      } else {
+        const guidesNeeded = unitsFor(travellers, candidate.maxGuests);
+        if (guidesNeeded > candidate.dailyCapacity) {
+          errors.push(`Day ${day.day}: guide ${day.guide} can't take a group of ${travellers}.`);
+        } else {
+          guide = { experienceId: candidate.id, units: guidesNeeded };
+          lines.push({
+            priceMinor: candidate.priceFromMinor,
+            quantity: candidate.priceUnit === "per_person_day" ? travellers : guidesNeeded,
+          });
+        }
+      }
+    }
+
     plannedDays.push({
       dayNumber: day.day,
       date: dateOfDay(prefs, day.day),
@@ -201,6 +224,7 @@ export function validateDraft(
       items,
       stay,
       transport,
+      guide,
     });
   }
 

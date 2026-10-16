@@ -3,16 +3,16 @@ import { z } from "zod";
 import type { ExperienceCategory } from "@/lib/catalog-options";
 
 /**
- * Structured output requested from the model: schema version itinerary.v2
- * (v2 adds an optional stay "S1" and transport leg "T1" per day; v1 plans
- * remain readable because both are optional).
+ * Structured output requested from the model: schema version itinerary.v3
+ * (v2 added an optional stay "S1" and transport leg "T1" per day, v3 a guide
+ * "G1"; older plans remain readable because all three are optional).
  *
  * The model references retrieved records ONLY by alias ("E3", "D1"); it never
  * sees or returns database ids, prices or dates. Aliases are resolved and
  * checked server-side (validate.ts), dates come from the preferences and costs
  * from database prices.
  */
-export const SCHEMA_VERSION = "itinerary.v2";
+export const SCHEMA_VERSION = "itinerary.v3";
 
 export const TIMES_OF_DAY = ["morning", "afternoon", "evening", "full_day"] as const;
 export type TimeOfDay = (typeof TIMES_OF_DAY)[number];
@@ -23,6 +23,7 @@ export type DraftConstraints = {
   experiences: readonly string[];
   stays?: readonly string[];
   transport?: readonly string[];
+  guides?: readonly string[];
 };
 
 function draftSchema(constraints?: DraftConstraints) {
@@ -59,6 +60,8 @@ function draftSchema(constraints?: DraftConstraints) {
         // Where to sleep that night, and how to get to the day's base.
         stay: optionalAlias(/^S\d{1,3}$/, constraints?.stays),
         transport: optionalAlias(/^T\d{1,3}$/, constraints?.transport),
+        // A local guide for the day at its base.
+        guide: optionalAlias(/^G\d{1,3}$/, constraints?.guides),
       }),
     )
     .min(constraints?.days ?? 1)
@@ -124,11 +127,26 @@ export type CandidateTransport = {
   dailyCapacity: number;
 };
 
+/** A bookable guide at a candidate destination. */
+export type CandidateGuide = {
+  id: string;
+  title: string;
+  destinationId: string;
+  priceFromMinor: number | null;
+  /** Per group per day, or per person per day (ADR-0008). */
+  priceUnit: "per_group_day" | "per_person_day";
+  languages: string[];
+  /** Group size per guide and guides available per day. */
+  maxGuests: number;
+  dailyCapacity: number;
+};
+
 export type Candidates = {
   experiences: CandidateExperience[];
   destinations: CandidateDestination[];
   stays: CandidateStay[];
   transport: CandidateTransport[];
+  guides: CandidateGuide[];
   /** True when interest filters returned too little and retrieval widened to all categories. */
   widened: boolean;
 };
@@ -165,6 +183,11 @@ export const resolvedPlanSchema = z.object({
           .default(null),
         /** Transport arriving at (or day hire around) the day's base. */
         transport: z
+          .object({ experienceId: z.uuid(), units: z.number().int().min(1).max(50) })
+          .nullable()
+          .default(null),
+        /** A guide for the day at its base (guides computed from travellers). */
+        guide: z
           .object({ experienceId: z.uuid(), units: z.number().int().min(1).max(50) })
           .nullable()
           .default(null),
