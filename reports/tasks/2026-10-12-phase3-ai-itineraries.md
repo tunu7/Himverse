@@ -64,26 +64,26 @@ Out of scope (not built): bookings, payments, sharing, streaming, live-model eva
 
 ## Files
 
-| Change   | Path                                                                                                                                                                                                                                                                                                                                                                      | Notes                                                |
-| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
-| Created  | `supabase/migrations/20261012145550_itineraries.sql`                                                                                                                                                                                                                                                                                                                      | Tables, RLS, RPCs                                    |
-| Created  | `supabase/tests/itineraries.test.sql`                                                                                                                                                                                                                                                                                                                                     | 35 assertions                                        |
-| Created  | `src/server/itineraries/{preferences,retrieval,prompt,schemas,validate,pipeline,repository,service}.ts`, `src/server/itineraries/model/{types,gateway,mock,index}.ts`                                                                                                                                                                                                     |                                                      |
-| Created  | `src/features/itineraries/{schemas,actions}.ts`, `src/features/itineraries/components/{preferences-form,itinerary-controls,itinerary-view}.tsx`                                                                                                                                                                                                                           |                                                      |
-| Created  | `src/app/itineraries/{page,new/page,[id]/page,[id]/not-found}.tsx`                                                                                                                                                                                                                                                                                                        |                                                      |
-| Created  | `src/lib/itinerary-options.ts`, `src/lib/catalog-options.ts`                                                                                                                                                                                                                                                                                                              | Shared constants; see "Issues found"                 |
-| Created  | `tests/unit/{itinerary-core,itinerary-pipeline,itinerary-retrieval,itinerary-gateway-model,itinerary-actions}.test.ts`, `tests/unit/itinerary-fixtures.ts`, `tests/e2e/itineraries.spec.ts`                                                                                                                                                                               |                                                      |
-| Created  | `docs/decisions/ADR-0003-AI-ITINERARY-GENERATION.md`, this report                                                                                                                                                                                                                                                                                                         |                                                      |
-| Deleted  | `src/server/catalog/search-options.ts`                                                                                                                                                                                                                                                                                                                                    | Moved to `src/lib/catalog-options.ts`                |
-| Modified | `package.json`, `package-lock.json`                                                                                                                                                                                                                                                                                                                                       | `ai@^7` (7.0.137)                                    |
-| Modified | `src/lib/env.ts`, `src/lib/env.server.ts`, `.env.example`                                                                                                                                                                                                                                                                                                                 | AI environment contract                              |
-| Modified | `src/proxy.ts`, `src/components/site-header.tsx`                                                                                                                                                                                                                                                                                                                          | Protected prefix; nav link and mobile wrapping       |
-| Modified | `supabase/tests/{privileges,catalog,discovery,providers,security_review,system_roles}.test.sql`                                                                                                                                                                                                                                                                           | Snapshot additions; truncate `itinerary_items`       |
-| Modified | `playwright.config.ts`, `tests/e2e/*.spec.ts`                                                                                                                                                                                                                                                                                                                             | Mock provider for E2E; visible-only test-id locators |
-| Modified | `eslint.config.mjs`                                                                                                                                                                                                                                                                                                                                                       | Ignore Playwright output folders                     |
-| Modified | Imports in `src/server/catalog/catalog.ts`, `src/features/{providers,discovery}/…`, `tests/unit/{search-params,catalog-queries}.test.ts`                                                                                                                                                                                                                                  | Path change only                                     |
-| Modified | `src/types/database.ts`                                                                                                                                                                                                                                                                                                                                                   | Regenerated                                          |
-| Modified | `docs/ai/{AI_ARCHITECTURE,ITINERARY_GENERATION,AI_EVALUATION}.md`, `docs/database/{DATABASE_DESIGN,DATA_ACCESS_PATTERNS}.md`, `docs/security/AUTHORIZATION_AND_RLS.md`, `docs/operations/ENVIRONMENTS.md`, `docs/engineering/OBSERVABILITY.md`, `docs/product/{ROADMAP,USER_FLOWS}.md`, `docs/architecture/PROJECT_STRUCTURE.md`, `docs/decisions/README.md`, `README.md` |                                                      |
+| Change | Path | Notes |
+| --- | --- | --- |
+| Created | `supabase/migrations/20261012145550_itineraries.sql` | Tables, RLS, RPCs |
+| Created | `supabase/tests/itineraries.test.sql` | 35 assertions |
+| Created | `src/server/itineraries/{preferences,retrieval,prompt,schemas,validate,pipeline,repository,service}.ts`, `src/server/itineraries/model/{types,gateway,mock,index}.ts` |  |
+| Created | `src/features/itineraries/{schemas,actions}.ts`, `src/features/itineraries/components/{preferences-form,itinerary-controls,itinerary-view}.tsx` |  |
+| Created | `src/app/itineraries/{page,new/page,[id]/page,[id]/not-found}.tsx` |  |
+| Created | `src/lib/itinerary-options.ts`, `src/lib/catalog-options.ts` | Shared constants; see "Issues found" |
+| Created | `tests/unit/{itinerary-core,itinerary-pipeline,itinerary-retrieval,itinerary-gateway-model,itinerary-actions}.test.ts`, `tests/unit/itinerary-fixtures.ts`, `tests/e2e/itineraries.spec.ts` |  |
+| Created | `docs/decisions/ADR-0003-AI-ITINERARY-GENERATION.md`, this report |  |
+| Deleted | `src/server/catalog/search-options.ts` | Moved to `src/lib/catalog-options.ts` |
+| Modified | `package.json`, `package-lock.json` | `ai@^7` (7.0.137) |
+| Modified | `src/lib/env.ts`, `src/lib/env.server.ts`, `.env.example` | AI environment contract |
+| Modified | `src/proxy.ts`, `src/components/site-header.tsx` | Protected prefix; nav link and mobile wrapping |
+| Modified | `supabase/tests/{privileges,catalog,discovery,providers,security_review,system_roles}.test.sql` | Snapshot additions; truncate `itinerary_items` |
+| Modified | `playwright.config.ts`, `tests/e2e/*.spec.ts` | Mock provider for E2E; visible-only test-id locators |
+| Modified | `eslint.config.mjs` | Ignore Playwright output folders |
+| Modified | Imports in `src/server/catalog/catalog.ts`, `src/features/{providers,discovery}/…`, `tests/unit/{search-params,catalog-queries}.test.ts` | Path change only |
+| Modified | `src/types/database.ts` | Regenerated |
+| Modified | `docs/ai/{AI_ARCHITECTURE,ITINERARY_GENERATION,AI_EVALUATION}.md`, `docs/database/{DATABASE_DESIGN,DATA_ACCESS_PATTERNS}.md`, `docs/security/AUTHORIZATION_AND_RLS.md`, `docs/operations/ENVIRONMENTS.md`, `docs/engineering/OBSERVABILITY.md`, `docs/product/{ROADMAP,USER_FLOWS}.md`, `docs/architecture/PROJECT_STRUCTURE.md`, `docs/decisions/README.md`, `README.md` |  |
 
 ## Architectural and database changes
 
@@ -117,22 +117,22 @@ Out of scope (not built): bookings, payments, sharing, streaming, live-model eva
 
 ## Tests and commands executed
 
-| Command                                                                                                | Result (actual)                                                                  |
-| ------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------- |
-| `npm install ai@^7`                                                                                    | 7.0.137; `npm audit --omit=dev`: 0 vulnerabilities                               |
-| Gateway model list (`ai-gateway.vercel.sh/v1/models`)                                                  | `anthropic/claude-sonnet-5.5` and `claude-haiku-5.5` listed (2026-10-12)         |
-| `npm run db:test` (final, after fresh reset)                                                           | **PASS: 8 files, 219 assertions**                                                |
-| Mutation: other users read all itineraries, direct version inserts, `is_provider_verified` always true | 4 itinerary assertions failed as expected; reset restored                        |
-| Adapter tests with `MockLanguageModelV4`                                                               | 5/5, including a **real SDK timeout mapped to `timeout`**                        |
-| `npm run verify` (final)                                                                               | **Pass**: **207 unit tests in 17 files**, build                                  |
-| `npm run build` without `.env.local`                                                                   | **Pass**                                                                         |
-| Browser-bundle scan (`.next/static`)                                                                   | No `AI_GATEWAY_API_KEY`, gateway URL, `createGateway` or `SUPABASE_SECRET_KEY`   |
-| `npm run test:e2e`, CI-like (agent env stripped, `CI=1`), fresh DB                                     | **42/42**                                                                        |
-| `npm run test:e2e`, normal, 3× in a row on the used DB                                                 | **42/42** each time                                                              |
-| `npm run lint` after a CI-mode Playwright report exists                                                | Pass (was failing; see issues)                                                   |
-| Link audit / secret scan                                                                               | 0 problems / clean                                                               |
-| **Live AI Gateway call**                                                                               | **Not run: no credentials.** Real-model quality, latency and cost are unverified |
-| GitHub CI                                                                                              | **Not run** for these uncommitted changes                                        |
+| Command | Result (actual) |
+| --- | --- |
+| `npm install ai@^7` | 7.0.137; `npm audit --omit=dev`: 0 vulnerabilities |
+| Gateway model list (`ai-gateway.vercel.sh/v1/models`) | `anthropic/claude-sonnet-5.5` and `claude-haiku-5.5` listed (2026-10-12) |
+| `npm run db:test` (final, after fresh reset) | **PASS: 8 files, 219 assertions** |
+| Mutation: other users read all itineraries, direct version inserts, `is_provider_verified` always true | 4 itinerary assertions failed as expected; reset restored |
+| Adapter tests with `MockLanguageModelV4` | 5/5, including a **real SDK timeout mapped to `timeout`** |
+| `npm run verify` (final) | **Pass**: **207 unit tests in 17 files**, build |
+| `npm run build` without `.env.local` | **Pass** |
+| Browser-bundle scan (`.next/static`) | No `AI_GATEWAY_API_KEY`, gateway URL, `createGateway` or `SUPABASE_SECRET_KEY` |
+| `npm run test:e2e`, CI-like (agent env stripped, `CI=1`), fresh DB | **42/42** |
+| `npm run test:e2e`, normal, 3× in a row on the used DB | **42/42** each time |
+| `npm run lint` after a CI-mode Playwright report exists | Pass (was failing; see issues) |
+| Link audit / secret scan | 0 problems / clean |
+| **Live AI Gateway call** | **Not run: no credentials.** Real-model quality, latency and cost are unverified |
+| GitHub CI | **Not run** for these uncommitted changes |
 
 ## Build, lint and type-check status
 

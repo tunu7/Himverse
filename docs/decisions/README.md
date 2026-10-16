@@ -19,17 +19,17 @@ immutable once accepted — to change a decision, write a new ADR that supersede
 
 ## Index
 
-| ADR                                               | Title                                                                | Status                                           |
-| ------------------------------------------------- | -------------------------------------------------------------------- | ------------------------------------------------ |
-| [0001](ADR-0001-MODULAR-MONOLITH.md)              | Start as a modular monolith                                          | Accepted                                         |
-| [0002](ADR-0002-AUTHORIZATION-MODEL.md)           | Authorization model: database-enforced roles and provider membership | Accepted (multi-role premise superseded by 0007) |
-| [0003](ADR-0003-AI-ITINERARY-GENERATION.md)       | AI itinerary generation: provider, grounding and persistence         | Accepted                                         |
-| [0004](ADR-0004-BOOKING-LIFECYCLE.md)             | Booking lifecycle: slots, provider confirmation and idempotency      | Accepted                                         |
-| [0005](ADR-0005-PAYMENTS-RAZORPAY.md)             | Payments with Razorpay: server-verified states, webhooks, refunds    | Accepted (2026-10-15)                            |
-| [0006](ADR-0006-SWITCHABLE-AI-PROVIDER-OLLAMA.md) | Switchable AI provider, with Ollama for free local models            | Accepted                                         |
-| [0007](ADR-0007-ONE-ACCOUNT-TYPE-PER-ACCOUNT.md)  | One account type per account (traveller, partner or admin)           | Accepted                                         |
-| [0008](ADR-0008-LISTING-TYPES.md)                 | Partner listing types (experiences, guides, stays, transport)        | Accepted                                         |
-| [0009](ADR-0009-ACCOUNT-DELETION-AND-ALERTS.md)   | Self-serve account deletion and in-app booking alerts                | Accepted                                         |
+| ADR | Title | Status |
+| --- | --- | --- |
+| [0001](ADR-0001-MODULAR-MONOLITH.md) | Start as a modular monolith | Accepted |
+| [0002](ADR-0002-AUTHORIZATION-MODEL.md) | Authorization model: database-enforced roles and provider membership | Accepted (multi-role premise superseded by 0007) |
+| [0003](ADR-0003-AI-ITINERARY-GENERATION.md) | AI itinerary generation: provider, grounding and persistence | Accepted |
+| [0004](ADR-0004-BOOKING-LIFECYCLE.md) | Booking lifecycle: slots, provider confirmation and idempotency | Accepted |
+| [0005](ADR-0005-PAYMENTS-RAZORPAY.md) | Payments with Razorpay: server-verified states, webhooks, refunds | Accepted (2026-10-15) |
+| [0006](ADR-0006-SWITCHABLE-AI-PROVIDER-OLLAMA.md) | Switchable AI provider, with Ollama for free local models | Accepted |
+| [0007](ADR-0007-ONE-ACCOUNT-TYPE-PER-ACCOUNT.md) | One account type per account (traveller, partner or admin) | Accepted |
+| [0008](ADR-0008-LISTING-TYPES.md) | Partner listing types (experiences, guides, stays, transport) | Accepted |
+| [0009](ADR-0009-ACCOUNT-DELETION-AND-ALERTS.md) | Self-serve account deletion and in-app booking alerts | Accepted |
 
 ## Template
 

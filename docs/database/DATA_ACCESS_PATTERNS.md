@@ -2,12 +2,12 @@
 
 ## Which Supabase client
 
-| Context                                                            | Client                                                         | RLS            |
-| ------------------------------------------------------------------ | -------------------------------------------------------------- | -------------- |
-| Server Component / Server Action / Route Handler acting for a user | `createSupabaseServerClient()` (`src/lib/supabase/server.ts`)  | Applies        |
-| Public page that must show only public rows (e.g. `/experiences`)  | `createSupabasePublicClient()` (`src/lib/supabase/public.ts`)  | Applies (anon) |
-| Client Component (realtime, auth UI only)                          | `createSupabaseBrowserClient()` (`src/lib/supabase/client.ts`) | Applies        |
-| System/admin job with documented justification                     | Secret-key client (does not exist; not needed by Phase 1)      | **Bypassed**   |
+| Context | Client | RLS |
+| --- | --- | --- |
+| Server Component / Server Action / Route Handler acting for a user | `createSupabaseServerClient()` (`src/lib/supabase/server.ts`) | Applies |
+| Public page that must show only public rows (e.g. `/experiences`) | `createSupabasePublicClient()` (`src/lib/supabase/public.ts`) | Applies (anon) |
+| Client Component (realtime, auth UI only) | `createSupabaseBrowserClient()` (`src/lib/supabase/client.ts`) | Applies |
+| System/admin job with documented justification | Secret-key client (does not exist; not needed by Phase 1) | **Bypassed** |
 
 Default to the user-context server client. Client Components should rarely query the DB directly —
 prefer Server Components and Server Actions so validation and authorization stay on the server.

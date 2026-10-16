@@ -39,24 +39,24 @@ One responsibility, one location. Directories are created when first needed — 
 │   └── tests/                    pgTAP tests for RLS and constraints (`supabase test db`)
 ├── tests/
 │   ├── unit/                     Vitest, pure logic
-│   ├── integration/              Vitest, against local Supabase (planned)
+│   ├── integration/              Vitest, parallel connections to local Supabase
 │   └── e2e/                      Playwright
 └── scripts/                      Developer/CI scripts (`write-local-env.mjs`)
 ```
 
 ## Placement rules
 
-| Code                                         | Location                         |
-| -------------------------------------------- | -------------------------------- |
-| Page/layout/route handler                    | `src/app/`                       |
-| UI used by one feature                       | `src/features/<f>/components/`   |
-| UI used by 2+ features                       | `src/components/`                |
-| Server Action                                | `src/features/<f>/actions.ts`    |
-| DB queries, business rules, AI orchestration | `src/server/<domain>/`           |
-| Zod schema for user input                    | `src/features/<f>/schemas.ts`    |
-| Zod schema for AI output / domain types      | `src/server/<domain>/schemas.ts` |
-| Supabase generated types                     | `src/types/database.ts`          |
-| Unit tests                                   | `tests/unit/` mirroring `src/`   |
+| Code | Location |
+| --- | --- |
+| Page/layout/route handler | `src/app/` |
+| UI used by one feature | `src/features/<f>/components/` |
+| UI used by 2+ features | `src/components/` |
+| Server Action | `src/features/<f>/actions.ts` |
+| DB queries, business rules, AI orchestration | `src/server/<domain>/` |
+| Zod schema for user input | `src/features/<f>/schemas.ts` |
+| Zod schema for AI output / domain types | `src/server/<domain>/schemas.ts` |
+| Supabase generated types | `src/types/database.ts` |
+| Unit tests | `tests/unit/` mirroring `src/` |
 
 No workspace monorepo: one package keeps tooling simple ([ADR-0001](../decisions/ADR-0001-MODULAR-MONOLITH.md)).
 
@@ -67,13 +67,13 @@ Pure constants used by both client components and server code live in `src/lib`,
 
 Route groups separate the three audiences without changing URLs:
 
-| Area                       | Location                | Frame                                                                                     |
-| -------------------------- | ----------------------- | ----------------------------------------------------------------------------------------- |
-| Public site and travellers | `src/app/(site)/`       | Site header (Destinations, Experiences, Plan a trip, account menu) and footer             |
-| Sign-in / sign-up          | `src/app/(auth)/`       | Split layout without site navigation; sign-up has Traveller / Tourism partner modes       |
-| Tourism-partner portal     | `src/app/provider/`     | `PortalShell` "Partner portal": Dashboard, Booking requests                               |
-| Admin console              | `src/app/admin/`        | `PortalShell` "Admin console" (dark) for admins only; non-admins get the site frame + 404 |
-| Auth callbacks, API        | `src/app/auth/`, `api/` | Route handlers, no UI                                                                     |
+| Area | Location | Frame |
+| --- | --- | --- |
+| Public site and travellers | `src/app/(site)/` | Site header (Destinations, Experiences, Plan a trip, account menu) and footer |
+| Sign-in / sign-up | `src/app/(auth)/` | Split layout without site navigation; sign-up has Traveller / Tourism partner modes |
+| Tourism-partner portal | `src/app/provider/` | `PortalShell` "Partner portal": Dashboard, Booking requests |
+| Admin console | `src/app/admin/` | `PortalShell` "Admin console" (dark) for admins only; non-admins get the site frame + 404 |
+| Auth callbacks, API | `src/app/auth/`, `api/` | Route handlers, no UI |
 
 After sign-in without a `next` destination, `landingPathFor` (`src/server/auth/landing.ts`) sends
 admins to `/admin`, partners (provider members) to `/provider` and everyone else to `/account`. An

@@ -51,12 +51,12 @@ owner wants a free model that works now, and the ability to change models later 
 
 ## Models tested (M1, 8 GB, local seed catalogue)
 
-| Base model         | Result                                                                                                     |
-| ------------------ | ---------------------------------------------------------------------------------------------------------- |
-| `gemma3:4b`        | **Default.** With the narrowed schema, 3 of 3 real-app runs saved valid plans on the first try, ~45 s each |
-| `qwen2.5:3b`       | Valid JSON, but often broke the multi-day and capacity rules                                               |
-| `qwen3:4b`         | Timed out at 300 s ("thinking" output)                                                                     |
-| `qwen2.5-coder:7b` | Timed out at 300 s: with a 16k context it spills to CPU on 8 GB                                            |
+| Base model | Result |
+| --- | --- |
+| `gemma3:4b` | **Default.** With the narrowed schema, 3 of 3 real-app runs saved valid plans on the first try, ~45 s each |
+| `qwen2.5:3b` | Valid JSON, but often broke the multi-day and capacity rules |
+| `qwen3:4b` | Timed out at 300 s ("thinking" output) |
+| `qwen2.5-coder:7b` | Timed out at 300 s: with a 16k context it spills to CPU on 8 GB |
 
 A 7B model, or `AI_PROVIDER=gateway` with Claude, should give better plans on machines that can run them.
 

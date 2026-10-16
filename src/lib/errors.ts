@@ -1,7 +1,7 @@
 import { logger } from "@/lib/logger";
 
 /**
- * Application error contract. See docs/engineering/ERROR_HANDLING.md.
+ * Application error contract. See docs/api/API_CONTRACTS.md.
  *
  * `AppError` carries a stable machine-readable `code` and a user-safe
  * `message`. Internal details go in `cause` and are logged, never returned to

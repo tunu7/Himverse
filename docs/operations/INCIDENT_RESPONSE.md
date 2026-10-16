@@ -4,11 +4,11 @@ Lightweight process for a small team; expand before launch.
 
 ## Severity
 
-| Sev | Examples                                                          | Response         |
-| --- | ----------------------------------------------------------------- | ---------------- |
-| 1   | Data exposure, secret leak, bookings falsely confirmed, site down | Immediately      |
-| 2   | Booking or itinerary generation broken for many users             | Same day         |
-| 3   | Degraded feature with workaround                                  | Next working day |
+| Sev | Examples | Response |
+| --- | --- | --- |
+| 1 | Data exposure, secret leak, bookings falsely confirmed, site down | Immediately |
+| 2 | Booking or itinerary generation broken for many users | Same day |
+| 3 | Degraded feature with workaround | Next working day |
 
 ## Steps
 
@@ -53,7 +53,7 @@ this is Sev 3 unless it persists; re-create the schedule with a forward migratio
 
 ### Abuse spike (spam requests, applications or dates)
 
-Database limits cap each account ([SECURITY](../security/SECURITY.md#rate-limits-and-abuse-controls)).
+Database limits cap each account ([SECURITY](../security/SECURITY.md#rate-limits)).
 For one abusive account, ban the user in Supabase Auth and decline or cancel their requests. If the
 limits are too loose, tighten them with a migration. Many accounts → enable or tighten CAPTCHA and
 Supabase Auth rate limits.

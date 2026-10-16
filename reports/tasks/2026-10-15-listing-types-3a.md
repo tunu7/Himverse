@@ -39,12 +39,12 @@ See [ADR-0008](../../docs/decisions/ADR-0008-LISTING-TYPES.md).
 
 ## Tests and commands executed
 
-| Command                           | Result                                                               |
-| --------------------------------- | -------------------------------------------------------------------- |
-| `npm run db:test`                 | 425 passed (16 files; `listing_types.test.sql` has 24)               |
-| `npx vitest run tests/unit`       | 341 passed                                                           |
+| Command | Result |
+| --- | --- |
+| `npm run db:test` | 425 passed (16 files; `listing_types.test.sql` has 24) |
+| `npx vitest run tests/unit` | 341 passed |
 | `npm run test:e2e -- --workers=1` | 64 passed (includes a new stay end-to-end flow and the browse pages) |
-| `npm run verify`                  | see the commit                                                       |
+| `npm run verify` | see the commit |
 
 ## Security and migration implications
 

@@ -55,16 +55,16 @@ Out of scope: Phase 3 (partner listing types), production deployment (owner-oper
 
 ## Files
 
-| Change   | Path                                                                                                                                                                                                                                                                                                           |
-| -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Created  | `supabase/migrations/20261014215750_account_types.sql`, `20261014221826_two_step_login.sql`                                                                                                                                                                                                                    |
-| Created  | `supabase/tests/accounts.test.sql` (28 tests), `two_step.test.sql` (10 tests)                                                                                                                                                                                                                                  |
-| Created  | `src/server/auth/{assurance,mfa,passwords}.ts`, `src/lib/password-strength.ts`, `src/components/password-field.tsx`                                                                                                                                                                                            |
-| Created  | `src/features/auth/components/{account-type-form,password-forms,mfa-forms}.tsx`, `src/features/account/components/account-settings.tsx`, `src/features/bookings/components/booking-detail.tsx`                                                                                                                 |
-| Created  | `src/app/(auth)/{welcome,forgot-password,reset-password,mfa/setup,mfa/verify}/page.tsx`, `src/app/auth/reset/route.ts`, `src/app/provider/{account,bookings/[id]}/page.tsx`, `src/app/admin/account/page.tsx`                                                                                                  |
-| Created  | `tests/e2e/account-security.spec.ts`, `tests/unit/{password-strength,landing}.test.ts` (landing rewritten)                                                                                                                                                                                                     |
+| Change | Path |
+| --- | --- |
+| Created | `supabase/migrations/20261014215750_account_types.sql`, `20261014221826_two_step_login.sql` |
+| Created | `supabase/tests/accounts.test.sql` (28 tests), `two_step.test.sql` (10 tests) |
+| Created | `src/server/auth/{assurance,mfa,passwords}.ts`, `src/lib/password-strength.ts`, `src/components/password-field.tsx` |
+| Created | `src/features/auth/components/{account-type-form,password-forms,mfa-forms}.tsx`, `src/features/account/components/account-settings.tsx`, `src/features/bookings/components/booking-detail.tsx` |
+| Created | `src/app/(auth)/{welcome,forgot-password,reset-password,mfa/setup,mfa/verify}/page.tsx`, `src/app/auth/reset/route.ts`, `src/app/provider/{account,bookings/[id]}/page.tsx`, `src/app/admin/account/page.tsx` |
+| Created | `tests/e2e/account-security.spec.ts`, `tests/unit/{password-strength,landing}.test.ts` (landing rewritten) |
 | Modified | Session guards, auth actions and schemas, site header, portal shell, booking, provider and itinerary actions, sign-in and sign-up pages, `supabase/config.toml` (local TOTP, E2E redirect URL), existing pgTAP / unit / E2E tests, docs (ADR-0002 status, ADR-0007 notes, AUTHORIZATION_AND_RLS, ENVIRONMENTS) |
-| Deleted  | `docs/decisions/ADR-0007-ONE-ACCOUNT-TYPE.md` (a duplicate of the ADR written in another session)                                                                                                                                                                                                              |
+| Deleted | `docs/decisions/ADR-0007-ONE-ACCOUNT-TYPE.md` (a duplicate of the ADR written in another session) |
 
 ## Security and migration implications
 
@@ -85,12 +85,12 @@ Out of scope: Phase 3 (partner listing types), production deployment (owner-oper
 
 ## Tests and commands executed
 
-| Command                                                                     | Result (actual)                                                                                                                                                               |
-| --------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `npm run db:test`                                                           | Pass. 14 files, 388 tests                                                                                                                                                     |
-| `npx vitest run tests/unit`                                                 | Pass. 326 tests                                                                                                                                                               |
-| `npm run test:e2e` (production build, local Supabase with TOTP and Mailpit) | Pass. 62 tests, including real-email password reset, change password, partner two-step, admin two-step, and per-type redirects                                                |
-| Security reviews (security-reviewer agent)                                  | Phase 1: 1 blocker, 3 should-fix, 6 nits; all addressed except N3 (sign-up type squatting, accepted) and N4 (`next` lost when signed out, UX only). Phase 2: see the addendum |
+| Command | Result (actual) |
+| --- | --- |
+| `npm run db:test` | Pass. 14 files, 388 tests |
+| `npx vitest run tests/unit` | Pass. 326 tests |
+| `npm run test:e2e` (production build, local Supabase with TOTP and Mailpit) | Pass. 62 tests, including real-email password reset, change password, partner two-step, admin two-step, and per-type redirects |
+| Security reviews (security-reviewer agent) | Phase 1: 1 blocker, 3 should-fix, 6 nits; all addressed except N3 (sign-up type squatting, accepted) and N4 (`next` lost when signed out, UX only). Phase 2: see the addendum |
 
 ## Known issues, limitations, unverified assumptions
 

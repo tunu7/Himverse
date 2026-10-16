@@ -14,7 +14,7 @@ import type { Database } from "@/types/database";
  * <Suspense> boundary.
  *
  * There is intentionally no secret-key (RLS-bypassing) client yet. Add one
- * only for a documented admin path; see docs/security/AUTHORIZATION_AND_RLS.md.
+ * only for a documented admin path; see docs/security/SECURITY.md.
  */
 export async function createSupabaseServerClient() {
   // Read cookies first: during prerendering this defers the caller to request

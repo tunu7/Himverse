@@ -52,13 +52,13 @@ from migrations.
 
 ## Local drill record (2026-10-13)
 
-| Step                                                     | Result                                                        |
-| -------------------------------------------------------- | ------------------------------------------------------------- |
+| Step | Result |
+| --- | --- |
 | Seeded database + one extra auth user; counts + checksum | destinations 8, providers 4, experiences 22, slots 4, users 1 |
-| Data dump with `--table` patterns                        | 17 tables                                                     |
-| Simulated loss: `supabase db reset --no-seed`            | experiences 0                                                 |
-| Restore as `supabase_admin` with `--disable-triggers`    | exit 0                                                        |
-| Compare counts + experience checksum                     | **identical**                                                 |
-| RLS after restore (anon)                                 | 17 public experiences (unchanged)                             |
-| `himverse-booking-sweep` cron job                        | present (from migrations)                                     |
-| Loss → restored                                          | 29 s locally                                                  |
+| Data dump with `--table` patterns | 17 tables |
+| Simulated loss: `supabase db reset --no-seed` | experiences 0 |
+| Restore as `supabase_admin` with `--disable-triggers` | exit 0 |
+| Compare counts + experience checksum | **identical** |
+| RLS after restore (anon) | 17 public experiences (unchanged) |
+| `himverse-booking-sweep` cron job | present (from migrations) |
+| Loss → restored | 29 s locally |

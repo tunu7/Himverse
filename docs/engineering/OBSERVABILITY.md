@@ -1,7 +1,8 @@
 # Observability
 
-Status: **logging, a health check and SQL signals exist; no error-tracking or alerting vendor is connected
-yet.** Sentry (errors) is planned via the Vercel Marketplace (Phase 5, Workstream B). Until then, alerts below are checked manually or by an uptime monitor on `/api/health`.
+Status: **logging, a health check and SQL signals exist; no error-tracking or alerting vendor yet.**
+Sentry (Vercel Marketplace) is waiting on the owner accepting its terms. Until then, the signals below
+are checked by hand or by an uptime monitor on `/api/health`.
 
 ## Logging (`src/lib/logger.ts`)
 
@@ -16,15 +17,15 @@ yet.** Sentry (errors) is planned via the Vercel Marketplace (Phase 5, Workstrea
 
 Events in use:
 
-| Event                                                                                     | Level | Meaning                                                              |
-| ----------------------------------------------------------------------------------------- | ----- | -------------------------------------------------------------------- |
-| `auth.role_lookup_failed`                                                                 | error | Admin role check failed; the user is treated as non-admin            |
-| `itineraries.global_daily_limit_reached`                                                  | error | Platform AI cap hit; generation refused until the next IST day       |
-| `itineraries.log_failed`                                                                  | error | Finishing a generation log failed (result still returned)            |
-| `health.database_unreachable`                                                             | error | `/api/health` couldn't read from the database                        |
-| `account.deleted`                                                                         | info  | A user deleted their account (user ID only)                          |
+| Event | Level | Meaning |
+| --- | --- | --- |
+| `auth.role_lookup_failed` | error | Admin role check failed; the user is treated as non-admin |
+| `itineraries.global_daily_limit_reached` | error | Platform AI cap hit; generation refused until the next IST day |
+| `itineraries.log_failed` | error | Finishing a generation log failed (result still returned) |
+| `health.database_unreachable` | error | `/api/health` couldn't read from the database |
+| `account.deleted` | info | A user deleted their account (user ID only) |
 | `bookings.alerts_failed` / `bookings.partner_alerts_failed` / `bookings.mark_seen_failed` | error | In-app booking alerts couldn't be read or cleared (pages still work) |
-| `<feature>.<action>_failed`                                                               | error | Unexpected error in a Server Action (`toLoggedFailure`)              |
+| `<feature>.<action>_failed` | error | Unexpected error in a Server Action (`toLoggedFailure`) |
 
 ## Health check
 

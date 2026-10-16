@@ -1,117 +1,145 @@
-# Environments
+# Environments and deployment
 
-| Environment | App                   | Database                                                | Purpose                      |
-| ----------- | --------------------- | ------------------------------------------------------- | ---------------------------- |
-| Local       | `npm run dev` (:3000) | `npx supabase start` (Docker)                           | Development, tests           |
-| CI          | GitHub Actions        | Throwaway local Supabase (`npx supabase start`) per run | Quality gates, DB tests, E2E |
-| Preview     | Vercel preview per PR | Supabase staging project (not created yet)              | Review and QA                |
-| Production  | Vercel production     | Supabase production project (live)                      | Live users                   |
+Status: **production live** on Vercel + Supabase with sample content, not launched; no staging
+project yet. Production database pushes, env changes and deploys are run by the owner; agents are
+blocked from them by `.claude/settings.json`. Go-live gates: [RELEASE_CHECKLIST](RELEASE_CHECKLIST.md).
 
-Preview deployments must **never** point at the production database.
+| Environment | App | Database | Purpose |
+| --- | --- | --- | --- |
+| Local | `npm run dev` (:3000) | `npx supabase start` (Docker) | Development, tests |
+| CI | GitHub Actions | Throwaway local Supabase per run | Quality gates, DB tests, E2E |
+| Preview | Vercel preview per PR | Supabase staging project _(not created yet)_ | Review and QA |
+| Production | Vercel production (`bom1`) | Supabase production (`ap-south-1`) | Live users |
 
-**Region:** Vercel functions run in `bom1` (Mumbai, `vercel.json`). Create both Supabase projects in
-`ap-south-1` (Mumbai) so each request's database round trips stay in-region; a cross-region pairing adds
-latency to every query.
+Previews must **never** use the production database. Keep Supabase projects in `ap-south-1`, next to the
+`bom1` functions. Vercel deploys from Git (PR → preview, `main` → production); GitHub Actions only
+validates. Node.js runtime (Fluid Compute), no Edge runtime.
 
 ## Variables
 
-Defined and documented in [.env.example](../../.env.example); validated in `src/lib/env.ts` and
+Documented in [.env.example](../../.env.example), validated in `src/lib/env.ts` and
 `src/lib/env.server.ts`.
 
-| Variable                               | Exposure | Notes                                                                                                             |
-| -------------------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------- |
-| `NEXT_PUBLIC_SITE_URL`                 | Public   | Per environment; used for auth redirects                                                                          |
-| `NEXT_PUBLIC_SUPABASE_URL`             | Public   | Supabase API URL                                                                                                  |
-| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Public   | Publishable (formerly anon) key; RLS applies                                                                      |
-| `NEXT_PUBLIC_AUTH_GOOGLE_ENABLED`      | Public   | `false` (default). `true` shows "Continue with Google" (set up the provider first)                                |
-| `NEXT_PUBLIC_SUPPORT_EMAIL`            | Public   | Optional. Support address shown on `/privacy` and `/terms`                                                        |
-| `RAZORPAY_KEY_ID`                      | Server   | Optional. Razorpay key id (`rzp_test_…`); with the next two, enables deposits ([PAYMENTS](PAYMENTS.md))           |
-| `RAZORPAY_KEY_SECRET`                  | Secret   | Razorpay key secret (API auth, Checkout signature)                                                                |
-| `RAZORPAY_WEBHOOK_SECRET`              | Secret   | Secret set on the Razorpay webhook (signature check)                                                              |
-| `RAZORPAY_ALLOW_LIVE`                  | Server   | `false` (default). `true` only after the ADR-0005 go-live gate; live keys are refused otherwise                   |
-| `CRON_SECRET`                          | Secret   | Bearer secret for `/api/cron/payments` (Vercel Cron sends it)                                                     |
-| `SUPABASE_SECRET_KEY`                  | Server   | Secret (formerly service_role) key; bypasses RLS                                                                  |
-| `AI_PROVIDER`                          | Server   | `gateway` (default), `ollama` (free local models, ADR-0006) or `mock` (tests only; see `AI_ALLOW_MOCK`)           |
-| `AI_ALLOW_MOCK`                        | Server   | `false` (default). Mock refused on Vercel production always, and in any production build unless `true` (E2E only) |
-| `AI_ITINERARY_MODEL`                   | Server   | Default `anthropic/claude-sonnet-5.5` (gateway) or `himverse-planner` (ollama)                                    |
-| `OLLAMA_BASE_URL`                      | Server   | Default `http://127.0.0.1:11434/v1`. On Vercel preview/production: remote HTTPS only                              |
-| `OLLAMA_API_KEY`                       | Server   | Bearer token for Ollama Cloud or an auth proxy. Required on Vercel preview/production. Never `NEXT_PUBLIC_`       |
-| `AI_MODEL_TIMEOUT_MS`                  | Server   | Per-call model timeout; default 45000 (gateway), 180000 (local ollama), 90000 (remote ollama)                     |
-| `AI_GATEWAY_API_KEY`                   | Server   | Local only; on Vercel the gateway uses OIDC. Never `NEXT_PUBLIC_`                                                 |
-| `AI_ITINERARY_ENABLED`                 | Server   | Kill switch, `true` (default) / `false`. Takes effect on the next deployment                                      |
-| `AI_DAILY_GENERATION_LIMIT`            | Server   | Platform-wide model calls per IST day (default 300; 0 blocks all generation)                                      |
+**When adding a variable,** update `.env.example`, the Zod schema, this table and Vercel together.
+`NEXT_PUBLIC_*` values are built into the browser bundle, so never put secrets in them. Env changes
+apply only to new deployments.
 
-## Local AI with Ollama (free)
+| Variable | Exposure | Notes |
+| --- | --- | --- |
+| `NEXT_PUBLIC_SITE_URL` | Public | Per environment; auth redirects |
+| `NEXT_PUBLIC_SUPABASE_URL` | Public | Supabase API URL |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Public | Publishable key; RLS applies |
+| `NEXT_PUBLIC_AUTH_GOOGLE_ENABLED` | Public | `false` (default); `true` shows "Continue with Google" once the provider is set up |
+| `NEXT_PUBLIC_SUPPORT_EMAIL` | Public | Optional; shown on `/privacy` and `/terms` |
+| `SUPABASE_SECRET_KEY` | Secret | Bypasses RLS. Used only by the payments system path ([SECURITY](../security/SECURITY.md)) |
+| `RAZORPAY_KEY_ID` | Server | Optional (`rzp_test_…`); with the next two, enables deposits ([PAYMENTS](PAYMENTS.md)) |
+| `RAZORPAY_KEY_SECRET` | Secret | API auth and Checkout signature |
+| `RAZORPAY_WEBHOOK_SECRET` | Secret | Webhook signature check |
+| `RAZORPAY_ALLOW_LIVE` | Server | `false` (default); `true` only after the ADR-0005 go-live gate |
+| `RAZORPAY_API_BASE` | Server | Tests only (fake API); must be `https://api.razorpay.com` on Vercel |
+| `CRON_SECRET` | Secret | Bearer secret for `/api/cron/payments` (Vercel Cron sends it) |
+| `AI_PROVIDER` | Server | `gateway` (default), `ollama` (ADR-0006) or `mock` (tests) |
+| `AI_ALLOW_MOCK` | Server | `false`; mock is refused in production builds unless `true` (E2E only), never on Vercel production |
+| `AI_ITINERARY_MODEL` | Server | Default `anthropic/claude-sonnet-5.5` (gateway) or `himverse-planner` (ollama) |
+| `OLLAMA_BASE_URL` | Server | Default `http://127.0.0.1:11434/v1`; remote HTTPS only on Vercel |
+| `OLLAMA_API_KEY` | Secret | Required on Vercel with Ollama Cloud or an auth proxy |
+| `AI_MODEL_TIMEOUT_MS` | Server | Default 45 s (gateway), 180 s (local Ollama), 90 s (remote Ollama) |
+| `AI_GATEWAY_API_KEY` | Secret | Local only; Vercel uses OIDC |
+| `AI_ITINERARY_ENABLED` | Server | Kill switch (`true` default) |
+| `AI_DAILY_GENERATION_LIMIT` | Server | Platform model calls per IST day (default 300; 0 blocks generation) |
 
-1. Install and start Ollama: `brew install ollama && brew services start ollama`.
-2. `npm run ai:ollama` pulls `gemma3:4b` and builds `himverse-planner` from it with a 16k-token context.
-   Ollama's OpenAI-compatible API otherwise truncates our prompts silently.
-3. In `.env.local`, set `AI_PROVIDER=ollama` and restart `npm run dev`.
+**Local:** values live in `.env.local` (gitignored). `npm run env:local` writes it from the local
+stack's `supabase status`, including the local stack's secret key. It never prints values, and it
+refuses to overwrite without `--force`.
 
-To switch local models, run `npm run ai:ollama -- <model>` (for example `qwen2.5:7b`); no env change is
-needed. To use a model tag directly, set `AI_ITINERARY_MODEL=<tag>`, but make sure it has a context
-window of at least 16k tokens. For Claude or another hosted model, set `AI_PROVIDER=gateway` and
-`AI_ITINERARY_MODEL=<provider/model>`. On an 8 GB Mac, 7B models with a 16k context don't fit in GPU memory
-and time out; 3–4B models run in about 45 s per plan. ADR-0006 lists the models tested.
+## AI with Ollama
 
-## Ollama in production (Vercel)
+- **Local (free):**
+  1. Install and start Ollama: `brew install ollama && brew services start ollama`.
+  2. Run `npm run ai:ollama`, which builds `himverse-planner` (`gemma3:4b`, 16k context; Ollama's
+     default context truncates our prompts).
+  3. Set `AI_PROVIDER=ollama` and restart.
 
-A Vercel function can't reach Ollama on a developer machine. Use a remote Ollama:
+  On an 8 GB Mac, 3–4B models take about 45 s per plan, and 7B models time out. ADR-0006 lists the
+  models tested.
+- **Production:**
+  - **Ollama Cloud:** set `AI_PROVIDER=ollama`, `OLLAMA_BASE_URL=https://ollama.com/v1`,
+    `OLLAMA_API_KEY` and `AI_ITINERARY_MODEL` (for example `gpt-oss:120b`). The free tier allows one
+    concurrent request.
+  - **Self-hosted:** put it behind an HTTPS proxy that checks a bearer token, and use
+    `OLLAMA_CONTEXT_LENGTH=16384`.
 
-- **Ollama Cloud** (simplest). Create a key at ollama.com → Settings → Keys, then set these for
-  Production (and Preview):
-  `AI_PROVIDER=ollama`, `OLLAMA_BASE_URL=https://ollama.com/v1`, `OLLAMA_API_KEY=<key>` (sensitive) and
-  `AI_ITINERARY_MODEL=<cloud model>`, for example `gpt-oss:120b`. The free tier's quota and model list
-  change often and allow one concurrent request; check ollama.com/pricing before launch.
-- **Self-hosted Ollama** on a GPU server. Put it behind an HTTPS reverse proxy that checks a bearer
-  token, because Ollama has no auth of its own. Start the server with `OLLAMA_CONTEXT_LENGTH=16384`.
-  Then set the same four variables.
+  `getAiEnv` refuses localhost, plain HTTP, a missing key or a missing model on Vercel.
 
-`getAiEnv` refuses a localhost or plain-HTTP URL, a missing key or a missing model on Vercel
-preview/production, so a misconfiguration fails loudly rather than on every request. Env changes apply
-to new deployments only, so redeploy after changing them.
+## One-time setup (per environment)
 
-## Rules
+1. **Vercel:** import the repo (framework Next.js, build `npm run build`, install `npm ci`).
+2. **Supabase project** in `ap-south-1`: enable `pg_cron` **before** migrations (the booking sweep and
+   unpaid-deposit jobs run every 15 minutes). Apply migrations; never run `supabase/seed.sql` outside
+   local.
+3. **Vercel env vars:** set them from the table above. Previews use staging. Leave
+   `AI_GATEWAY_API_KEY` unset.
+4. **Supabase Auth (dashboard, not `config.toml`):**
+   - email confirmations on; minimum password length 8; leaked-password protection;
+   - an exact Site URL and redirect allow-list: `<site>/auth/confirm`, `<site>/auth/callback` and
+     `<site>/auth/reset`;
+   - CAPTCHA and custom SMTP. The built-in sender allows only a few emails per hour; Resend needs a
+     verified domain. Raise the email rate limit afterwards.
+5. **TOTP:** Authentication → Multi-Factor → enable TOTP. Partners and admins must enrol before their
+   area opens.
+6. **Google sign-in** (optional):
+   1. In Google Cloud, create an OAuth client (Web, scopes `openid email profile`) with the redirect
+      URI `https://<project-ref>.supabase.co/auth/v1/callback`.
+   2. Enable Google in Supabase with that client.
+   3. Set `NEXT_PUBLIC_AUTH_GOOGLE_ENABLED=true` and redeploy.
 
-- Local values in `.env.local` (gitignored). For the local stack, `npm run env:local` writes it from
-  `npx supabase status` (public values only, never printed; refuses to overwrite without `--force`).
-  Never commit `.env*` other than `.env.example`.
-- `SUPABASE_SECRET_KEY` is not needed by any Phase 1 code path; leave it unset locally.
-- **Production auth settings** live in the Supabase dashboard, not `config.toml`: enable email
-  confirmations (required by the admin bootstrap runbook), minimum password length 8, leaked-password
-  protection, and an exact Site URL / redirect URL allow-list including `<site>/auth/confirm`.
-- **Confirmation links:** `/auth/confirm` accepts both formats. The default (PKCE, `?code=`) works only
-  in the browser that signed up. To support confirming on another device, change the "Confirm signup"
-  email template to link to
-  `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=signup&next=/account`. Only `signup` and
-  `email_change` token types are accepted; magic-link, recovery and invite links are refused.
-- **Google sign-in** (Supabase OAuth with PKCE; `/auth/google` → Google → Supabase →
-  `/auth/callback`):
-  1. Google Cloud Console → APIs & Services → OAuth consent screen (External; app name, support
-     email, `openid`/`email`/`profile` scopes only), then Credentials → OAuth client ID → Web
-     application. Authorised redirect URI: `https://<project-ref>.supabase.co/auth/v1/callback`.
-  2. Supabase → Authentication → Sign In / Providers → Google: enable, paste the client ID and
-     secret (stored by Supabase, never in this repo or Vercel).
-  3. Supabase → Authentication → URL Configuration → Redirect URLs: add
-     `<site>/auth/callback` (as well as `<site>/auth/confirm`).
-  4. Vercel: `NEXT_PUBLIC_AUTH_GOOGLE_ENABLED=true`, then redeploy (public values are built in).
-     A new Google account chooses traveller or partner once, on `/welcome` (ADR-0007). Admin still comes
-     only from `user_roles`. A Google sign-in with the same verified email as an existing password
-     account is linked to it by Supabase.
-- **Password reset** (Phase 2): `/forgot-password` sends a PKCE reset email. The link only works in the
-  browser that asked for it, and lands on `<site>/auth/reset`, then `/reset-password`. Add
-  `<site>/auth/reset` to the Redirect URLs allow-list. Keep the default "Reset password" template
-  (`{{ .ConfirmationURL }}`). Don't switch it to a `token_hash` link: that would allow login CSRF.
-- **Email delivery:** Supabase's built-in sender allows only a few emails per hour and is meant for
-  testing. Confirmation, resend and password-reset emails need a real SMTP provider. Set one up under
-  Supabase → Authentication → Emails → SMTP Settings (for example Resend: verify the domain, then paste
-  host `smtp.resend.com`, port 465, user `resend`, and the API key as the password). Then raise the
-  email rate limit under Authentication → Rate Limits.
-- **Two-step login (TOTP):** Supabase → Authentication → Multi-Factor → enable **TOTP** (app
-  authenticator). Partner and admin accounts must enroll before their area opens. The database refuses
-  their powers to sessions below `aal2` (migration `two_step_login`).
-  - **Lost authenticator:** see the runbook in [SECURITY](../security/SECURITY.md#accounts-and-sign-in-adr-0007).
-    Delete the factor and sign the user out everywhere.
-- Adding a variable: update `.env.example`, the Zod schema, this table, and Vercel settings in the same PR.
-- `NEXT_PUBLIC_*` values are inlined at build time and visible to anyone — never put secrets there.
-- Rotate keys immediately if exposed ([INCIDENT_RESPONSE](INCIDENT_RESPONSE.md)).
+   New Google users choose traveller or partner once, on `/welcome`.
+7. **Email templates:**
+   - To let people confirm on another device, the "Confirm signup" template can link to
+     `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=signup&next=/account`.
+   - Keep the default "Reset password" template. A `token_hash` reset link would allow login CSRF.
+8. **First admin:** use the bootstrap runbook in [SECURITY](../security/SECURITY.md#admin-bootstrap-runbook).
+9. **Payments (optional):** follow [PAYMENTS](PAYMENTS.md) §1.
+10. **Branch protection on `main`:** require CI and one review.
+
+## Sample content (pre-launch)
+
+`supabase/sample-content/apply.sql` adds 8 destinations and 22 experiences under one provider, "Sample
+listings (not bookable)". The provider has no dates and isn't bookable, the script is idempotent, and
+it's kept outside the migrations. Applied to production on 2026-10-13. Remove it before launch with
+`npx supabase db query --linked -f supabase/sample-content/remove.sql`.
+
+## Migrations
+
+Migrations are forward-only and must stay compatible with the code currently deployed (expand →
+migrate → contract). **Apply them before pushing code that uses them**, because Vercel deploys `main`
+immediately. A push that goes first breaks production pages.
+
+1. **Review:** CI ran `supabase db reset`, the pgTAP tests, the integration tests and the types-drift
+   check.
+2. **Back up:** if the migration rewrites or drops data, take a backup first
+   ([BACKUP_AND_RESTORE](BACKUP_AND_RESTORE.md)).
+3. **Apply:** `npx supabase db push --dry-run`, read the list, then `npx supabase db push`. Use staging
+   first, once it exists. Run it from a checkout that contains **only** reviewed migrations.
+4. **Verify:**
+   - `npx supabase migration list` shows local and remote matching;
+   - `/api/health` is `ok`;
+   - the cron jobs exist (`select jobname from cron.job`).
+
+Never edit an applied migration. Never run `supabase db reset` against a linked project.
+
+## Releasing and rollback
+
+- **Release:**
+  1. Merge after green CI.
+  2. Apply migrations.
+  3. Push or deploy `main`.
+  4. Check that `/api/health` shows the new `release` SHA.
+  5. Run `STAGING_BASE_URL=<url> npm run test:smoke` (read-only), then walk the critical journeys.
+- **App rollback:** promote the previous Vercel deployment. This only works while the database is
+  still compatible with that build.
+- **AI problems:** set `AI_ITINERARY_ENABLED=false` (or lower the daily limit) and redeploy.
+- **Payments problems:** stop requiring deposits at `/admin/payments`.
+- **Database:** write a forward-fix migration. For data loss, use PITR
+  ([BACKUP_AND_RESTORE](BACKUP_AND_RESTORE.md)).
+- **Exposed key:** rotate it immediately ([INCIDENT_RESPONSE](INCIDENT_RESPONSE.md)).

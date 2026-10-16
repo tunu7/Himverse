@@ -24,10 +24,29 @@ Applies to every feature, fix and refactor — by humans and AI agents alike.
 - Never disable a test, skip a check or loosen RLS to get a green build. Fix the cause or report the blocker.
 - Never claim deployment, external integration or production readiness without evidence.
 
-## Branching and PRs
+## Branches, commits and PRs
 
-Short-lived branches from `main`; PRs require green CI and review ([CONTRIBUTING](../../CONTRIBUTING.md)).
-Database migrations ship in the same PR as the code that needs them.
+- **Branches:** short-lived, from `main`: `feat/<slug>`, `fix/<slug>`, `chore/<slug>`, `docs/<slug>`.
+- **Commits:** [Conventional Commits](https://www.conventionalcommits.org/), for example
+  `feat(catalog): list experiences by region`. Keep commits focused. Never commit `.env*` files
+  (except `.env.example`), credentials or unrelated changes.
+- **Migrations:** ship in the same PR as the code that needs them, and are applied to production
+  **before** that code is pushed to `main` ([ENVIRONMENTS](../operations/ENVIRONMENTS.md#migrations)).
+- **Before pushing to `main`:** also run what only CI runs:
+  - `npm run test:integration`;
+  - the types-drift check (`npm run db:types` and an unchanged `git diff`);
+  - a build with no env file.
+- **PR checklist:**
+  - [ ] Acceptance criteria met and described.
+  - [ ] Tests cover logic, authorisation boundaries and critical journeys.
+  - [ ] `npm run verify` passes, plus E2E and DB tests when affected.
+  - [ ] New tables have RLS and pgTAP tests, and the privileges snapshot is updated.
+  - [ ] Untrusted input is validated with Zod ([API_CONTRACTS](../api/API_CONTRACTS.md)).
+  - [ ] No secrets in client code or `NEXT_PUBLIC_` variables.
+  - [ ] Docs and ADRs updated; a task report for significant work.
+  - [ ] Migration and rollout notes if manual steps are needed.
+
+Vulnerabilities are reported privately, never in public issues ([SECURITY](../security/SECURITY.md)).
 
 ## Database changes
 
@@ -36,13 +55,13 @@ Database migrations ship in the same PR as the code that needs them.
 
 ## Claude Code configuration
 
-| Path                        | Purpose                                                                                                                                                                                                                                                                                                                                                              |
-| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `CLAUDE.md`                 | Entry point; imports `AGENTS.md` (Next.js-managed block)                                                                                                                                                                                                                                                                                                             |
-| `.claude/settings.json`     | Shared permissions: allows project checks and read-only git (exact `git diff`/`git branch` forms only); denies reading real env files, `supabase status`, `git diff --no-index`, remote DB push/link/secrets, force-push, branch force-delete and deploys. Deny rules are prefix matches, so unusual argument orders fall back to a prompt rather than being blocked |
-| `.claude/rules/*.md`        | Path-scoped rules (`paths:` frontmatter) loaded when matching files are touched                                                                                                                                                                                                                                                                                      |
-| `.claude/skills/*/SKILL.md` | `implement-feature`, `db-migration-rls`, `verify`, `production-review`                                                                                                                                                                                                                                                                                               |
-| `.claude/agents/`           | `security-reviewer` — read-only independent security pass                                                                                                                                                                                                                                                                                                            |
+| Path | Purpose |
+| --- | --- |
+| `CLAUDE.md` | Entry point; imports `AGENTS.md` (Next.js-managed block) |
+| `.claude/settings.json` | Shared permissions. **Allows** project checks and read-only git. **Denies** reading env files, `supabase status`, `git diff --no-index`, remote DB push/link/secrets, force-push and deploys. Deny rules are prefix matches |
+| `.claude/rules/*.md` | Path-scoped rules (`paths:` frontmatter), loaded when matching files are touched |
+| `.claude/skills/*/SKILL.md` | `implement-feature`, `db-migration-rls`, `verify`, `production-review` |
+| `.claude/agents/` | `security-reviewer`: a read-only independent security pass |
 
 Personal overrides go in `.claude/settings.local.json` (gitignored).
 

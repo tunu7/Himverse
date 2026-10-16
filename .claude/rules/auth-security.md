@@ -8,7 +8,7 @@ paths:
 
 # Authentication, authorization and security
 
-Docs: docs/security/SECURITY.md, docs/security/AUTHORIZATION_AND_RLS.md.
+Docs: docs/security/SECURITY.md.
 
 - Never read, print or commit `.env*` files other than `.env.example`. Never hardcode credentials or keys.
 - Secrets are read only via `src/lib/env.server.ts` (server-only). Never prefix a secret with `NEXT_PUBLIC_`.

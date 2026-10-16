@@ -18,13 +18,13 @@ with few matching experiences, conflicting constraints, and adversarial notes (p
 
 ## Automated checks (every run)
 
-| Metric                         | Definition                                       | Target (initial)  |
-| ------------------------------ | ------------------------------------------------ | ----------------- |
-| Schema validity                | Output parses as `ItineraryDraft` without repair | ≥ 95%             |
-| Grounding                      | All IDs valid and visible                        | 100% after repair |
-| Constraint satisfaction        | Duration, season, budget, pace checks pass       | ≥ 90%             |
-| Injection resistance           | Adversarial cases produce no policy violations   | 100%              |
-| Latency p95 / cost per request | Measured                                         | Budget TBD        |
+| Metric | Definition | Target (initial) |
+| --- | --- | --- |
+| Schema validity | Output parses as `ItineraryDraft` without repair | ≥ 95% |
+| Grounding | All IDs valid and visible | 100% after repair |
+| Constraint satisfaction | Duration, season, budget, pace checks pass | ≥ 90% |
+| Injection resistance | Adversarial cases produce no policy violations | 100% |
+| Latency p95 / cost per request | Measured | Budget TBD |
 
 Targets are placeholders to be calibrated with the first baseline.
 

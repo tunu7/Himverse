@@ -32,14 +32,14 @@ Out of scope: behaviour, data, copy that tests assert on, and per-page layouts o
 
 ## Files
 
-| Change   | Path                                                                                            | Notes                                               |
-| -------- | ----------------------------------------------------------------------------------------------- | --------------------------------------------------- |
-| Created  | src/components/brand.tsx                                                                        | Shared logo mark                                    |
-| Modified | src/app/globals.css, src/app/layout.tsx                                                         | Tokens, motion, display font                        |
-| Modified | src/components/{site-header,site-footer,nav-links,account-menu,ui,page-shell,form-feedback}.tsx | Shell + primitives                                  |
-| Modified | src/app/(site)/page.tsx, src/app/(auth)/*, detail pages                                         | Redesigned pages                                    |
-| Modified | src/features/discovery/components/_, portal/components/_, google-sign-in                        | Cards, filters, portal bars                         |
-| Modified | Several pages/forms                                                                             | `rounded-2xl`, dropped `shadow-xs`; on-accent token |
+| Change | Path | Notes |
+| --- | --- | --- |
+| Created | src/components/brand.tsx | Shared logo mark |
+| Modified | src/app/globals.css, src/app/layout.tsx | Tokens, motion, display font |
+| Modified | src/components/{site-header,site-footer,nav-links,account-menu,ui,page-shell,form-feedback}.tsx | Shell + primitives |
+| Modified | src/app/(site)/page.tsx, src/app/(auth)/*, detail pages | Redesigned pages |
+| Modified | src/features/discovery/components/_, portal/components/_, google-sign-in | Cards, filters, portal bars |
+| Modified | Several pages/forms | `rounded-2xl`, dropped `shadow-xs`; on-accent token |
 
 ## Architectural and database changes
 
@@ -52,10 +52,10 @@ at runtime.
 
 ## Tests and commands executed
 
-| Command                | Result (actual)                                                    |
-| ---------------------- | ------------------------------------------------------------------ |
-| `npm run verify`       | Pass: format, lint, typecheck, 266/266 unit tests, build           |
-| `npm run test:e2e`     | 53 passed                                                          |
+| Command | Result (actual) |
+| --- | --- |
+| `npm run verify` | Pass: format, lint, typecheck, 266/266 unit tests, build |
+| `npm run test:e2e` | 53 passed |
 | Playwright screenshots | Desktop/375px, light/dark; no horizontal overflow on checked pages |
 
 ## Build, lint and type-check status

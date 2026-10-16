@@ -34,19 +34,19 @@ User decisions: docs + minimal app; npm; `git init` with one initial commit.
 
 ## Files
 
-| Change                         | Path                                                                                                                                          | Notes                                                                                                |
-| ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| Created                        | `CLAUDE.md`, `CONTRIBUTING.md`, `.env.example`                                                                                                | Entry point, workflow, placeholder-only env                                                          |
-| Created                        | `docs/**` (30 files: product, architecture, engineering, database, api, security, ai, operations, decisions)                                  | Includes `TASK_REPORT_TEMPLATE.md`, ADR-0001                                                         |
-| Created                        | `.claude/settings.json`, `.claude/rules/*.md` (7), `.claude/skills/*/SKILL.md` (4), `.claude/agents/security-reviewer.md`                     |                                                                                                      |
-| Created                        | `.github/workflows/ci.yml`                                                                                                                    |                                                                                                      |
-| Created                        | `src/lib/env.ts`, `src/lib/env.server.ts`, `src/lib/errors.ts`, `src/lib/supabase/{client,server}.ts`                                         |                                                                                                      |
-| Created                        | `vitest.config.mts`, `playwright.config.ts`, `tests/unit/{env,errors}.test.ts`, `tests/e2e/home.spec.ts`                                      |                                                                                                      |
-| Created                        | `.prettierrc.json`, `.prettierignore`, `supabase/config.toml` (via `supabase init`)                                                           |                                                                                                      |
-| Created                        | `reports/tasks/2026-10-12-engineering-foundation.md`                                                                                          | This report                                                                                          |
-| Created by scaffold, modified  | `package.json`, `tsconfig.json`, `.gitignore`, `README.md`, `src/app/page.tsx`, `src/app/layout.tsx`                                          | Scripts/engines; strictness; env/test/supabase ignores; rewritten README; placeholder page; metadata |
-| Created by scaffold, unchanged | `AGENTS.md` (managed by `next dev`), `next.config.ts`, `eslint.config.mjs`, `src/app/globals.css`, `src/app/favicon.ico`, `package-lock.json` | `AGENTS.md` excluded from Prettier so it never fights `next dev`                                     |
-| Deleted                        | `public/{next,vercel,file,globe,window}.svg`                                                                                                  | Unused scaffold assets                                                                               |
+| Change | Path | Notes |
+| --- | --- | --- |
+| Created | `CLAUDE.md`, `CONTRIBUTING.md`, `.env.example` | Entry point, workflow, placeholder-only env |
+| Created | `docs/**` (30 files: product, architecture, engineering, database, api, security, ai, operations, decisions) | Includes `TASK_REPORT_TEMPLATE.md`, ADR-0001 |
+| Created | `.claude/settings.json`, `.claude/rules/*.md` (7), `.claude/skills/*/SKILL.md` (4), `.claude/agents/security-reviewer.md` |  |
+| Created | `.github/workflows/ci.yml` |  |
+| Created | `src/lib/env.ts`, `src/lib/env.server.ts`, `src/lib/errors.ts`, `src/lib/supabase/{client,server}.ts` |  |
+| Created | `vitest.config.mts`, `playwright.config.ts`, `tests/unit/{env,errors}.test.ts`, `tests/e2e/home.spec.ts` |  |
+| Created | `.prettierrc.json`, `.prettierignore`, `supabase/config.toml` (via `supabase init`) |  |
+| Created | `reports/tasks/2026-10-12-engineering-foundation.md` | This report |
+| Created by scaffold, modified | `package.json`, `tsconfig.json`, `.gitignore`, `README.md`, `src/app/page.tsx`, `src/app/layout.tsx` | Scripts/engines; strictness; env/test/supabase ignores; rewritten README; placeholder page; metadata |
+| Created by scaffold, unchanged | `AGENTS.md` (managed by `next dev`), `next.config.ts`, `eslint.config.mjs`, `src/app/globals.css`, `src/app/favicon.ico`, `package-lock.json` | `AGENTS.md` excluded from Prettier so it never fights `next dev` |
+| Deleted | `public/{next,vercel,file,globe,window}.svg` | Unused scaffold assets |
 
 ## Architectural and database changes
 
@@ -65,22 +65,22 @@ User decisions: docs + minimal app; npm; `git init` with one initial commit.
 
 ## Tests and commands executed
 
-| Command                                                                  | Result (actual)                                                                                                                                                            |
-| ------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `npx create-next-app@latest . … --use-npm --disable-git --yes`           | Success; Next.js 16.4.0                                                                                                                                                    |
-| `npm install -D …` (first attempt)                                       | **Failed**: ERESOLVE, `@types/node@^20` vs vitest 5 peer; fixed with `@types/node@^22` (Node 22 target)                                                                    |
-| `npx supabase init`                                                      | Success; `supabase/config.toml` (Postgres 17)                                                                                                                              |
-| `npm run test:e2e` (first run)                                           | **Failed**: another local app on :3000 was reused by Playwright; fixed with dedicated port 3100 and `reuseExistingServer: false`                                           |
-| `npm run format:check` (after docs written)                              | Failed on 23 markdown files (table alignment); fixed with `npm run format`                                                                                                 |
-| `npm run verify` (final)                                                 | **Pass**, exit 0                                                                                                                                                           |
-| `npm test` (final)                                                       | **Pass**: 2 files, 8 tests                                                                                                                                                 |
-| `npm run test:e2e` (final)                                               | **Pass**: 1 test (Chromium)                                                                                                                                                |
-| Link/anchor/frontmatter/JSON audit script (scratchpad, not committed)    | **Pass**: 44 markdown files, 0 broken links/anchors; all rules have `paths`, skills `name`+`description` matching dir, agent `name`/`description`/`tools`; all JSON parses |
-| CI YAML parse with `js-yaml` + script-reference check                    | **Pass**: parses; every `npm run` target exists in `package.json`                                                                                                          |
-| `actionlint`                                                             | **Not run**: not installed                                                                                                                                                 |
-| Secret scan (grep for `sb_secret_`, `sb_publishable_`, JWTs, `sk-`, PEM) | **Pass**: none found; only `.env.example` present                                                                                                                          |
-| `npm audit`                                                              | 5 high, dev-only ESLint chain; accepted and documented in SECURITY.md                                                                                                      |
-| `npm run db:test`                                                        | **Not run**: no migrations or pgTAP tests exist yet; requires Docker                                                                                                       |
+| Command | Result (actual) |
+| --- | --- |
+| `npx create-next-app@latest . … --use-npm --disable-git --yes` | Success; Next.js 16.4.0 |
+| `npm install -D …` (first attempt) | **Failed**: ERESOLVE, `@types/node@^20` vs vitest 5 peer; fixed with `@types/node@^22` (Node 22 target) |
+| `npx supabase init` | Success; `supabase/config.toml` (Postgres 17) |
+| `npm run test:e2e` (first run) | **Failed**: another local app on :3000 was reused by Playwright; fixed with dedicated port 3100 and `reuseExistingServer: false` |
+| `npm run format:check` (after docs written) | Failed on 23 markdown files (table alignment); fixed with `npm run format` |
+| `npm run verify` (final) | **Pass**, exit 0 |
+| `npm test` (final) | **Pass**: 2 files, 8 tests |
+| `npm run test:e2e` (final) | **Pass**: 1 test (Chromium) |
+| Link/anchor/frontmatter/JSON audit script (scratchpad, not committed) | **Pass**: 44 markdown files, 0 broken links/anchors; all rules have `paths`, skills `name`+`description` matching dir, agent `name`/`description`/`tools`; all JSON parses |
+| CI YAML parse with `js-yaml` + script-reference check | **Pass**: parses; every `npm run` target exists in `package.json` |
+| `actionlint` | **Not run**: not installed |
+| Secret scan (grep for `sb_secret_`, `sb_publishable_`, JWTs, `sk-`, PEM) | **Pass**: none found; only `.env.example` present |
+| `npm audit` | 5 high, dev-only ESLint chain; accepted and documented in SECURITY.md |
+| `npm run db:test` | **Not run**: no migrations or pgTAP tests exist yet; requires Docker |
 
 ## Build, lint and type-check status
 

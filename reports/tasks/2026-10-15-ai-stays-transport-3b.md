@@ -43,21 +43,21 @@ Acceptance criteria:
 
 ## Files
 
-| Change   | Path                                                                                                                                                                                                                                              | Notes                                          |
-| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
-| Created  | `supabase/migrations/20261015101124_itinerary_stays_transport.sql`                                                                                                                                                                                | Schema, RPCs, 3a fixes                         |
-| Created  | `supabase/tests/itinerary_stays.test.sql`                                                                                                                                                                                                         | 26 pgTAP tests                                 |
-| Created  | `tests/e2e/itinerary-stays.spec.ts`                                                                                                                                                                                                               | Plan with a stay, book the whole trip          |
-| Created  | `reports/tasks/2026-10-15-ai-stays-transport-3b.md`                                                                                                                                                                                               | This report                                    |
-| Modified | `src/server/itineraries/{retrieval,prompt,schemas,validate,pipeline,repository,preferences}.ts`, `model/mock.ts`                                                                                                                                  | AI pipeline                                    |
-| Modified | `src/features/itineraries/{schemas.ts,components/itinerary-view.tsx,components/preferences-form.tsx}`                                                                                                                                             | Plan view and options                          |
-| Modified | `src/features/bookings/components/{trip-booking-section,trip-booking,booking-detail,listing-booking-form}.tsx`                                                                                                                                    | Booking UI                                     |
+| Change | Path | Notes |
+| --- | --- | --- |
+| Created | `supabase/migrations/20261015101124_itinerary_stays_transport.sql` | Schema, RPCs, 3a fixes |
+| Created | `supabase/tests/itinerary_stays.test.sql` | 26 pgTAP tests |
+| Created | `tests/e2e/itinerary-stays.spec.ts` | Plan with a stay, book the whole trip |
+| Created | `reports/tasks/2026-10-15-ai-stays-transport-3b.md` | This report |
+| Modified | `src/server/itineraries/{retrieval,prompt,schemas,validate,pipeline,repository,preferences}.ts`, `model/mock.ts` | AI pipeline |
+| Modified | `src/features/itineraries/{schemas.ts,components/itinerary-view.tsx,components/preferences-form.tsx}` | Plan view and options |
+| Modified | `src/features/bookings/components/{trip-booking-section,trip-booking,booking-detail,listing-booking-form}.tsx` | Booking UI |
 | Modified | `src/server/bookings/repository.ts`, `src/lib/{format,listing-options}.ts`, `src/features/providers/schemas.ts`, `src/app/(site)/experiences/[slug]/page.tsx`, `src/app/provider/bookings/page.tsx`, `src/app/(site)/{bookings,account}/page.tsx` | Listing type on bookings, wording, route check |
-| Modified | `src/types/database.ts`                                                                                                                                                                                                                           | Regenerated                                    |
-| Modified | `supabase/tests/{privileges,bookable}.test.sql`                                                                                                                                                                                                   | Grants snapshot; stricter replay assertion     |
-| Modified | `tests/unit/itinerary-{fixtures,core,pipeline,retrieval}.test.ts`, `tests/e2e/listing-types.spec.ts`                                                                                                                                              | New shapes and cases                           |
-| Modified | `docs/decisions/ADR-0008-LISTING-TYPES.md`, `docs/ai/{ITINERARY_GENERATION,AI_ARCHITECTURE}.md`, `docs/database/DATABASE_DESIGN.md`, `docs/product/{MVP_SCOPE,ROADMAP,BOOKING_POLICY}.md`                                                         | Docs                                           |
-| Deleted  | None                                                                                                                                                                                                                                              |                                                |
+| Modified | `src/types/database.ts` | Regenerated |
+| Modified | `supabase/tests/{privileges,bookable}.test.sql` | Grants snapshot; stricter replay assertion |
+| Modified | `tests/unit/itinerary-{fixtures,core,pipeline,retrieval}.test.ts`, `tests/e2e/listing-types.spec.ts` | New shapes and cases |
+| Modified | `docs/decisions/ADR-0008-LISTING-TYPES.md`, `docs/ai/{ITINERARY_GENERATION,AI_ARCHITECTURE}.md`, `docs/database/DATABASE_DESIGN.md`, `docs/product/{MVP_SCOPE,ROADMAP,BOOKING_POLICY}.md` | Docs |
+| Deleted | None |  |
 
 ## Architectural and database changes
 
@@ -93,12 +93,12 @@ old item shape, because a missing kind defaults to activity.
 
 ## Tests and commands executed
 
-| Command                                                   | Result (actual)                                      |
-| --------------------------------------------------------- | ---------------------------------------------------- |
-| `npx supabase db reset` then `npm run db:test`            | PASS: 17 files, 451 tests                            |
-| `npm run verify`                                          | PASS: format, lint, typecheck, 354 unit tests, build |
-| `npx playwright test --workers=1` (after the final build) | PASS: 65 tests                                       |
-| security-reviewer agent                                   | No blockers; should-fixes applied as above           |
+| Command | Result (actual) |
+| --- | --- |
+| `npx supabase db reset` then `npm run db:test` | PASS: 17 files, 451 tests |
+| `npm run verify` | PASS: format, lint, typecheck, 354 unit tests, build |
+| `npx playwright test --workers=1` (after the final build) | PASS: 65 tests |
+| security-reviewer agent | No blockers; should-fixes applied as above |
 
 ## Build, lint and type-check status
 

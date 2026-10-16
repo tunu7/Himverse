@@ -1,113 +1,164 @@
-# Security
+# Security, authorization and RLS
 
-## Reporting vulnerabilities
+Decisions: [ADR-0002](../decisions/ADR-0002-AUTHORIZATION-MODEL.md) (authority in the database),
+[ADR-0007](../decisions/ADR-0007-ONE-ACCOUNT-TYPE-PER-ACCOUNT.md) (one account type),
+[ADR-0009](../decisions/ADR-0009-ACCOUNT-DELETION-AND-ALERTS.md) (account deletion). Behaviour is pinned
+by `supabase/tests/*.test.sql`. Report vulnerabilities privately to the maintainers (contact to be
+published before launch); never in public issues.
 
-Report privately to the maintainers (contact to be published before launch — open question). Do not open
-public issues for vulnerabilities.
+## Threat model (MVP)
 
-## Threat model summary (MVP)
+| Asset | Threat | Control |
+| --- | --- | --- |
+| Traveller data | Cross-user access | RLS per user; explicit columns; pgTAP |
+| Partner data and bookings | Reading/changing other partners' bookings | RLS via `provider_members` + server checks |
+| Catalogue | Unverified listings; AI fabrication | Admin verification; AI never writes curated tables |
+| Bookings | Double booking; false confirmation | Idempotency keys; DB-enforced transitions |
+| Payments | Marking paid without money; double refunds | Signed webhooks/server fetch only; claimed, idempotent refunds ([PAYMENTS](../operations/PAYMENTS.md)) |
+| Secrets | Leak to browser or logs | `server-only` modules; no `NEXT_PUBLIC_` secrets; log redaction |
+| AI pipeline | Prompt injection | Output validation + grounding; no write tools ([AI_ARCHITECTURE](../ai/AI_ARCHITECTURE.md)) |
+| Google sign-in | Login CSRF, open redirect | PKCE cookie; `next` limited to internal paths |
+| Accounts | Credential stuffing, enumeration, lost authenticator | Supabase Auth limits; generic errors; per-account attempt limits; CAPTCHA before launch |
+| Resources | Spam; AI cost runaway | DB rate limits; per-user + platform AI caps; kill switch |
 
-| Asset                      | Threat                                        | Control                                                                                                                                  |
-| -------------------------- | --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| Traveler personal data     | Cross-user access                             | RLS per user; explicit column selection; pgTAP tests                                                                                     |
-| Provider data and bookings | Provider reading/changing others' bookings    | RLS via `provider_members`; server-side authorization                                                                                    |
-| Catalogue integrity        | Unverified/malicious listings; AI fabrication | Admin verification; AI never writes curated tables                                                                                       |
-| Booking correctness        | Double booking, false confirmation            | Idempotency keys; DB-enforced transitions; authoritative confirmation only                                                               |
-| Secrets                    | Leak to browser or logs                       | `server-only` modules; no `NEXT_PUBLIC_` secrets; log hygiene                                                                            |
-| AI pipeline                | Prompt injection via user text or content     | Output validation + grounding; no tool access to writes; see [AI_ARCHITECTURE](../ai/AI_ARCHITECTURE.md)                                 |
-| OAuth sign-in (Google)     | Login CSRF, open redirect, role spoofing      | PKCE verifier cookie bound to the browser; `next` restricted to internal paths; provider metadata only prefills the display name (pgTAP) |
-| Accounts                   | Credential stuffing, enumeration              | Supabase Auth rate limits; generic auth error messages; CAPTCHA before launch (release checklist)                                        |
-| Platform resources         | Abuse/spam of write paths; AI cost runaway    | Database-enforced rate limits (below); per-user + platform AI caps; AI kill switch                                                       |
+## Roles and authority
+
+**Every account has exactly one type** (`profiles.account_type`: traveller, partner or admin), never
+writable through the API. Only travellers book and plan trips; only partners run providers; admins
+moderate (`accounts.test.sql`). **Partner and admin powers need two-step login:** `has_role` and
+`is_provider_member` are true only in `aal2` sessions (`two_step.test.sql`). Roles are never read from
+`user_metadata` or anything client-supplied; policies look them up live.
+
+| Actor | Authority from | Can |
+| --- | --- | --- |
+| anonymous | — | Read verified providers, published destinations, and listings that are published, from a verified provider, at a published destination |
+| traveller | `account_type = 'traveller'` | Above, plus own profile (update `display_name` only), own itineraries, own bookings and payments |
+| partner (provider member) | partner account + `provider_members` row + provider `status` | Edit the public profile (not while `pending_review`/`suspended`) and private details (only `draft`/`rejected`); manage listings (≤ 200), publish only while `verified` and not admin-locked; add dates up to 2 years ahead; read and answer their bookings; read their deposits and balance |
+| admin | `user_roles` row `admin` | Read all; review providers (`review_provider`); manage destinations; unpublish/archive listings (moderation lock); switch deposits; record payouts |
+| itinerary owner | `itineraries.owner_id` | Read, rename, switch version, delete own itineraries. Versions/items are immutable, written only by `save_itinerary_version` ([ADR-0003](../decisions/ADR-0003-AI-ITINERARY-GENERATION.md)) |
+| booking parties | `traveler_id` or provider membership | Read the booking and its history (not who acted). All writes go through the booking functions ([ADR-0004](../decisions/ADR-0004-BOOKING-LIFECYCLE.md)) |
+
+**Admin console** (`/admin`, `requireAdminForPage`: signed out → sign-in, non-admin → plain 404). Pages:
+overview, providers, destinations, experiences (moderation), bookings (read-only, no traveller contact
+details), payments (deposit switch, partner balances, payouts), users. Every read and write goes
+through `src/server/admin/*` with the signed-in user's client, so RLS stays the authority.
+
+### Admin bootstrap runbook
+
+There is **no application path that grants admin**. Admins are created only by the database owner
+running SQL, never with the secret key. Prerequisite: email confirmations **on** in that environment.
+
+1. The future admin signs up as a traveller, confirms their email, signs in, and sends their
+   **Account ID** (on `/account`) to the owner over a trusted channel.
+2. The owner opens the project's SQL Editor (or `psql` locally); never `npx supabase status` in an agent
+   session (it prints keys).
+3. Check the account: `select id, email, email_confirmed_at, last_sign_in_at from auth.users where id = '<account id>';`
+   Stop if the email doesn't match, it isn't confirmed, or the last sign-in is missing or old.
+4. Grant by user id (creates the first admin only once):
+
+   ```sql
+   insert into public.user_roles (user_id, role, granted_by)
+   select u.id, 'admin', null from auth.users u
+   where u.id = '<account id>' and u.email_confirmed_at is not null
+     and not exists (select 1 from public.user_roles where role = 'admin')
+   returning user_id, role, granted_at;
+   ```
+
+5. Expect exactly one row. The admin signs out and in, opens `/admin`, and sets up two-step login.
+   Record who granted it, when, and to whom, in the operations log (not the repo).
+
+Later admins and revocation use the same SQL path without the `not exists` guard, with `granted_by` set.
+Never put these statements in application code, migrations or seeds.
+
+## RLS rules
+
+1. Enable RLS in the same migration that creates the table. No exceptions.
+2. One policy per operation and role (`to authenticated` / `to anon`); no `for all` on sensitive tables.
+3. `update` policies have `using` **and** `with check`.
+4. Use `(select auth.uid())` and index policy columns.
+5. `security definer` helpers: `set search_path = ''`, fully qualified names, `private` schema, execute
+   revoked from API roles unless needed.
+6. Never trust `user_metadata`. Views use `security_invoker = true`.
+7. Only partners (or verified payment state) can confirm a booking; travellers never set status.
+8. `supabase/tests/privileges.test.sql` snapshots every table, function and column privilege of API
+   roles: a new object must be added there deliberately.
+
+Every table has pgTAP tests impersonating each role, asserting allowed **and** denied operations
+(`npm run db:test`).
 
 ## Requirements
 
-1. **Secrets** only in Vercel/Supabase environment configuration and `.env.local` (gitignored). Secret
-   access goes through `src/lib/env.server.ts`. `.claude/settings.json` denies agents reading real env files (`.env`, `.env.local*`, `.env.<environment>*`, `.envrc`), running `supabase status` (which prints local keys), and `git diff --no-index` (which can print untracked files). Only exact `git diff` forms are auto-allowed. `.env.example` stays readable.
-2. **Least privilege:** user-context Supabase client by default; secret-key client only for documented
-   admin/system operations, reviewed in PR.
-3. **Authorization in depth:** RLS in the database **and** checks in Server Actions. `src/proxy.ts` is for
-   optimistic redirects only, never the sole check.
-4. **Input validation** at every boundary ([VALIDATION](../api/VALIDATION.md)).
-5. **Output safety:** React escapes by default; `dangerouslySetInnerHTML` is prohibited unless content is
-   sanitised and the use is reviewed. AI text is rendered as text, never HTML.
-6. **Server Actions are public endpoints** — authenticate and authorize inside each one.
-7. **Webhooks** verify signatures on the raw body and are idempotent.
-8. **Headers** (`next.config.ts`, all routes, E2E-tested in `tests/e2e/security-headers.spec.ts`):
-   Content-Security-Policy (`default-src 'self'`, no third-party origins, `frame-ancestors 'none'`,
-   `object-src 'none'`, `form-action 'self'`), HSTS (2 years, subdomains), `X-Content-Type-Options`,
-   `X-Frame-Options: DENY`, `Referrer-Policy`, `Permissions-Policy` and COOP; `X-Powered-By` removed.
-   `script-src` allows `'unsafe-inline'` because nonces would force every page to render dynamically
-   (Cache Components); revisit if third-party scripts are ever added. Adding Sentry or another browser
-   SDK requires extending `connect-src`. `upgrade-insecure-requests` is deliberately omitted (all sources
-   are `'self'` and HSTS forces HTTPS; on plain-HTTP builds it broke protected-link prefetches).
-9. **Dependencies:** lockfile committed; `npm audit` reviewed in PRs that change dependencies; no
-   abandoned packages.
-10. **Never weaken controls to pass a build** (disable RLS, broaden a policy, skip a test).
+1. **Secrets** only in Vercel/Supabase env and `.env.local` (gitignored), read through
+   `src/lib/env.server.ts`. `.claude/settings.json` denies agents reading env files, `supabase status`,
+   `db push`, `link` and `git diff --no-index`.
+2. **Least privilege:** the user-context client by default. The **secret key** is used only by the
+   payments system path (`src/server/payments/system-db.ts`, payment RPCs only) for webhooks, the
+   payments cron and server-verified checkout.
+3. **Authorisation in depth:** RLS **and** checks in every Server Action and Route Handler (they are
+   public endpoints). `src/proxy.ts` only redirects optimistically.
+4. **Validate input** at every boundary ([API_CONTRACTS](../api/API_CONTRACTS.md)).
+5. **Output safety:** React escaping; no `dangerouslySetInnerHTML` without sanitising and review; AI
+   text rendered as text.
+6. **Webhooks:** verify the signature on the raw body first; process idempotently.
+7. **Headers** (`next.config.ts`, tested by `security-headers.spec.ts`):
+   - a CSP with `default-src 'self'`, `frame-ancestors 'none'`, `object-src 'none'` and
+     `form-action 'self'`;
+   - HSTS, `nosniff`, `X-Frame-Options: DENY`, a referrer policy, a permissions policy and COOP;
+     `X-Powered-By` is removed;
+   - `script-src` allows `'unsafe-inline'`, because nonces would make every page dynamic (Cache
+     Components);
+   - **Exception:** `/bookings/:id` also allows Razorpay Checkout (script, frame, API, popups and
+     `payment=(self)`);
+   - no `upgrade-insecure-requests` (it broke prefetches on plain-HTTP builds).
+8. **Dependencies:** lockfile committed; `npm audit --omit=dev` reviewed. 5 high advisories in the
+   dev-only `eslint-config-next` chain (`braces`) are accepted. The fix would downgrade to Next 14.
+9. **Never weaken a control to get green** (RLS, policies, tests).
 
-## Accounts and sign-in (ADR-0007)
+## Accounts and sign-in
 
-- **Account types:** one per account (traveller, partner or admin), enforced by the database
-  (`supabase/tests/accounts.test.sql`).
-- **Two-step login (TOTP):** required for partners and admins. Without an `aal2` session,
-  `has_role` and `is_provider_member` grant nothing (`two_step.test.sql`).
-- **Password reset:**
-  - PKCE email link (same browser), handled at `/auth/reset`.
-  - `/reset-password` needs a recovery sign-in from the last 15 minutes, plus the second step if
-    enrolled. Other sessions are signed out.
-- **Password change:** checks the current password on a separate cookie-less client, requires the
-  second step if enrolled, and signs out other sessions.
-- **Wrong two-step codes and wrong current passwords:** each limited to 5 per account per 15 minutes
-  (`auth_attempt_limits`). Failures are logged without the guessed value.
-- **No account enumeration:** forgot-password and resend give the same answer whether or not the
-  address exists, including Supabase's per-address limit. Sign-in uses one message for a wrong email
-  or a wrong password.
-- **Lost authenticator (owner runbook):**
-  1. Verify the person out-of-band.
-  2. In Supabase → Authentication → Users, delete their TOTP factor **and** sign them out of all
-     sessions, because an existing `aal2` token stays valid for up to an hour.
-  3. They enrol again at their next sign-in.
+- **Two-step login (TOTP):** required for partners and admins.
+- **Password reset:** a PKCE email link (`/auth/reset`). `/reset-password` needs a recovery sign-in
+  from the last 15 minutes, plus the second step if enrolled. Other sessions are signed out.
+- **Password change:** checks the current password on a separate cookie-less client. It requires the
+  second step if enrolled and signs out other sessions.
+- **Wrong two-step codes or current passwords:** limited to 5 per account per 15 minutes
+  (`auth_attempt_limits`). The guessed values are never logged.
+- **No account enumeration:** forgot-password and resend always answer the same; sign-in has one
+  message for a wrong email or password.
+- **Account deletion** (ADR-0009):
+  - needs a sign-in within 15 minutes, which the **database** checks from the JWT `amr`;
+  - bookings are anonymised by a trigger on every deletion path.
+- **Lost authenticator (runbook):** verify the person out-of-band. Then, in Supabase Auth, delete
+  their TOTP factor **and** sign them out everywhere; existing `aal2` tokens last up to an hour.
 
-## Rate limits and abuse controls
+## Rate limits
 
-Enforced in the database by `BEFORE INSERT` triggers or `security definer` functions keyed on the
-acting user, so they cover every path (UI, direct API calls) and can't be spoofed. They raise SQLSTATE
-`54000`, which the app shows as `RATE_LIMITED`. Values are provisional; tune them with real usage.
+Enforced in the database (triggers or `security definer` functions keyed on the acting user, so every
+path is covered). They raise `54000`, which the app shows as `RATE_LIMITED`. The values are provisional.
 
-| Action                           | Limit                                                                           | Where                                         |
-| -------------------------------- | ------------------------------------------------------------------------------- | --------------------------------------------- |
-| Booking requests                 | 10 per hour, 30 per day, 20 awaiting a reply per traveller                      | `private.enforce_booking_request_limits`      |
-| Provider applications            | 3 per day, 5 unverified per user                                                | `private.enforce_provider_application_limits` |
-| Experiences                      | 200 per provider                                                                | `private.enforce_experience_limits`           |
-| Dates (availability slots)       | 366 open future dates per experience; only verified providers; ≤ 2 years ahead  | trigger + insert policy                       |
-| Itinerary generations            | 10 per hour, 30 per day per user (reserved atomically before the model call)    | `begin_itinerary_generation`                  |
-| Platform AI usage                | `AI_DAILY_GENERATION_LIMIT` model-calling generations per IST day (default 300) | `begin_itinerary_generation`                  |
-| Provider-confirmed booking total | INR 1 crore                                                                     | check constraint                              |
+| Action | Limit | Where |
+| --- | --- | --- |
+| Booking requests | 30/hour, 60/day, 40 awaiting a reply per traveller | `private.enforce_booking_request_limits` |
+| Provider applications | 3/day, 5 unverified per user | `private.enforce_provider_application_limits` |
+| Listings | 200 per provider | `private.enforce_experience_limits` |
+| Dates | 366 open future dates per listing; verified providers; ≤ 2 years ahead | trigger + policy |
+| Itinerary generations | 10/hour, 30/day per user (reserved before the model call) | `begin_itinerary_generation` |
+| Platform AI | `AI_DAILY_GENERATION_LIMIT` per IST day (default 300) | `begin_itinerary_generation` |
+| Confirmed booking total | INR 1 crore | check constraint |
 
-Not limited here, deliberately: **sign-in and sign-up**. An anonymous-callable limiter would let anyone
-exhaust another person's quota. They rely on Supabase Auth's built-in rate limits plus CAPTCHA, which
-must be enabled on hosted projects before launch ([release checklist](../operations/RELEASE_CHECKLIST.md)).
+Sign-in and sign-up aren't limited here: an anonymous-callable limiter would let anyone exhaust
+another person's quota. They rely on Supabase Auth's limits plus CAPTCHA before launch.
 
 ## Personal data
 
-Collect the minimum: name, email, trip parameters, contact details for confirmed bookings. Applicable
-law includes India's Digital Personal Data Protection Act, 2023 — retention, consent and deletion
-requirements are an **open question** for legal review before launch.
+- **Collected:** the minimum, namely name, email, trip preferences, and the booking contact phone.
+- **Deletion:** self-serve (ADR-0009).
+- **Open:** retention for active accounts. India's DPDP Act 2023 review is pending before launch.
 
-## Known accepted risks (foundation)
+## Accepted risks
 
-- **First-time two-step setup needs only the password.** An attacker who already knows a partner's
-  or admin's password could enrol their own authenticator first, locking the owner out until support
-  resets it. This is not a regression (a password alone used to grant everything). Mitigation for
-  now:
-  - admins enrol in a controlled bootstrap before launch;
-  - partners are told to enrol promptly.
-
-  A follow-up option is to require an email code before enrolment.
-
-- **Sign-in, forgot-password and resend have no per-IP limit of our own.** They rely on Supabase's
-  limits, which see the server's IP. A captcha (for example Turnstile) is the follow-up.
-
-`npm audit` (2026-10-12) reports 5 high-severity advisories, all in the dev-only ESLint chain
-`braces` → `micromatch` → `fast-glob` → `@next/eslint-plugin-next` → `eslint-config-next`. None ship to
-production bundles. The suggested `npm audit fix --force` downgrades `eslint-config-next` to 14.x, which is
-incompatible with Next.js 16, so it is not applied. Re-check on every dependency update.
+- **First-time two-step setup needs only the password**, so an attacker who already knows it could
+  enrol first. Mitigation: admins enrol in a controlled bootstrap, and partners are told to enrol
+  promptly. Follow-up: an email code before enrolment.
+- **No per-IP limits of our own on sign-in, forgot-password and resend:** Supabase sees the server's
+  IP. Follow-up: CAPTCHA (Turnstile).

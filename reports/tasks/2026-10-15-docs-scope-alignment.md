@@ -64,21 +64,21 @@ The other docs were corrected to match the code and the deployment state:
 
 ## Files
 
-| Change   | Path                                               | Notes                                                    |
-| -------- | -------------------------------------------------- | -------------------------------------------------------- |
-| Created  | `reports/tasks/2026-10-15-docs-scope-alignment.md` | This report                                              |
-| Modified | `CLAUDE.md`                                        | Restructured as described above                          |
-| Modified | `docs/product/MVP_SCOPE.md`                        | Rewritten: built/planned status, roles, scope boundaries |
-| Modified | `docs/product/ROADMAP.md`                          | Phase status, Phase 6, payments post-MVP                 |
-| Modified | `docs/product/PRD.md`                              | Accounts, listing types, non-goals, open questions       |
-| Modified | `docs/product/USER_FLOWS.md`                       | Implementation status, T4 any-date and whole trip        |
-| Modified | `docs/architecture/ARCHITECTURE.md`                | Real module boundaries, AI provider                      |
-| Modified | `docs/architecture/TECH_STACK.md`                  | AI row, undecided list (payments, MFA)                   |
-| Modified | `docs/architecture/PROJECT_STRUCTURE.md`           | Feature and server domain lists                          |
-| Modified | `docs/ai/AI_ARCHITECTURE.md`                       | Production provider, open questions                      |
-| Modified | `docs/operations/DEPLOYMENT.md`                    | Status live, owner-run production, staging caveat        |
-| Modified | `docs/operations/ENVIRONMENTS.md`                  | Preview/production rows                                  |
-| Modified | `docs/engineering/OBSERVABILITY.md`                | Dropped "once the Vercel project exists"                 |
+| Change | Path | Notes |
+| --- | --- | --- |
+| Created | `reports/tasks/2026-10-15-docs-scope-alignment.md` | This report |
+| Modified | `CLAUDE.md` | Restructured as described above |
+| Modified | `docs/product/MVP_SCOPE.md` | Rewritten: built/planned status, roles, scope boundaries |
+| Modified | `docs/product/ROADMAP.md` | Phase status, Phase 6, payments post-MVP |
+| Modified | `docs/product/PRD.md` | Accounts, listing types, non-goals, open questions |
+| Modified | `docs/product/USER_FLOWS.md` | Implementation status, T4 any-date and whole trip |
+| Modified | `docs/architecture/ARCHITECTURE.md` | Real module boundaries, AI provider |
+| Modified | `docs/architecture/TECH_STACK.md` | AI row, undecided list (payments, MFA) |
+| Modified | `docs/architecture/PROJECT_STRUCTURE.md` | Feature and server domain lists |
+| Modified | `docs/ai/AI_ARCHITECTURE.md` | Production provider, open questions |
+| Modified | `docs/operations/DEPLOYMENT.md` | Status live, owner-run production, staging caveat |
+| Modified | `docs/operations/ENVIRONMENTS.md` | Preview/production rows |
+| Modified | `docs/engineering/OBSERVABILITY.md` | Dropped "once the Vercel project exists" |
 
 ## Architectural and database changes
 
@@ -94,11 +94,11 @@ None. These are documentation changes only. The only security-relevant changes a
 
 ## Tests and commands executed
 
-| Command                                                                 | Result (actual)                                    |
-| ----------------------------------------------------------------------- | -------------------------------------------------- |
-| `npx prettier --write` on changed docs                                  | Done                                               |
-| Relative-link check (Python script over `CLAUDE.md` and `docs/**/*.md`) | 0 broken links                                     |
-| `npm run format:check`                                                  | Pass: "All matched files use Prettier code style!" |
+| Command | Result (actual) |
+| --- | --- |
+| `npx prettier --write` on changed docs | Done |
+| Relative-link check (Python script over `CLAUDE.md` and `docs/**/*.md`) | 0 broken links |
+| `npm run format:check` | Pass: "All matched files use Prettier code style!" |
 
 ## Build, lint and type-check status
 

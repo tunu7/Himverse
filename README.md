@@ -2,20 +2,20 @@
 
 AI-assisted trip planning for trusted Himalayan tourism experiences, starting with **Arunachal Pradesh**.
 
-Travelers discover curated experiences from verified local providers, generate a personalised itinerary
-grounded in our own tourism database, refine it to their budget and constraints, and book what is
-actually available.
+Travellers discover experiences, guides, stays and transport from verified local partners. They plan
+a trip with AI grounded in our own tourism database, refine it, and send booking requests that partners
+confirm. An optional 50% deposit is taken via Razorpay.
 
-> **Status:** Phases 1–3 (identity, provider verification, catalogue, discovery, AI itineraries) are
-> green in CI; the AI is verified with a mock model only. Phase 4 (bookings: request → provider
-> confirmation, no payments) is implemented locally. Not deployed. See the
-> [roadmap](docs/product/ROADMAP.md).
+> **Status:** live on Vercel + Supabase with sample content, not yet launched. Scope:
+> [MVP_SCOPE](docs/product/MVP_SCOPE.md); progress: [ROADMAP](docs/product/ROADMAP.md); launch gates:
+> [RELEASE_CHECKLIST](docs/operations/RELEASE_CHECKLIST.md).
 
 ## Tech stack
 
 Next.js 16 (App Router, Cache Components) · React 19 · TypeScript (strict) · Tailwind CSS 4 ·
-Supabase (Auth, Postgres, Row Level Security) · Zod · Vitest · Playwright · Vercel.
-Rationale: [TECH_STACK](docs/architecture/TECH_STACK.md).
+Supabase (Auth, Postgres, Row Level Security, pg_cron) · Zod · AI SDK (Ollama / AI Gateway) · Razorpay ·
+Vitest · Playwright · Vercel.
+Rationale: [ARCHITECTURE](docs/architecture/ARCHITECTURE.md).
 
 ## Prerequisites
 
@@ -40,7 +40,7 @@ npm run db:types                   # regenerate src/types/database.ts after a mi
 ```
 
 The first administrator is created with a one-time SQL runbook, never from the app:
-[admin bootstrap runbook](docs/security/AUTHORIZATION_AND_RLS.md#admin-bootstrap-runbook).
+[admin bootstrap runbook](docs/security/SECURITY.md).
 Local email confirmation is off; sign up at `/sign-up` and you're signed in immediately.
 
 ## Scripts
@@ -73,4 +73,4 @@ infrastructure, `supabase/` migrations and RLS tests, `tests/` unit, integration
 
 ## Contributing
 
-Read [CONTRIBUTING.md](CONTRIBUTING.md). AI coding agents start at [CLAUDE.md](CLAUDE.md).
+Read the [development workflow](docs/engineering/DEVELOPMENT_WORKFLOW.md). AI coding agents start at [CLAUDE.md](CLAUDE.md).

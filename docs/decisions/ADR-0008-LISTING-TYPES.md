@@ -19,12 +19,12 @@ bought differently, so each needs its own booking shape.
 **One generic listings model.** The existing `experiences` table holds every listing type. It isn't
 renamed, because a rename would ripple through RLS, RPCs and tests; the UI calls them "listings".
 
-| Type       | Price units                                         | `daily_capacity`                    | `max_guests`         | Booking                                                       |
-| ---------- | --------------------------------------------------- | ----------------------------------- | -------------------- | ------------------------------------------------------------- |
-| experience | `per_person`                                        | — (optional dated slots with seats) | —                    | one date                                                      |
-| guide      | `per_group_day` or `per_person_day` (owner: "both") | guides available per day            | group size per guide | start to end date, guides                                     |
-| stay       | `per_room_night`                                    | rooms of this room type             | guests per room      | check-in to check-out, rooms                                  |
-| transport  | `per_vehicle_trip` or `per_vehicle_day`             | vehicles available per day          | seats per vehicle    | a date (trip) or date range (day hire), vehicles, pickup note |
+| Type | Price units | `daily_capacity` | `max_guests` | Booking |
+| --- | --- | --- | --- | --- |
+| experience | `per_person` | — (optional dated slots with seats) | — | one date |
+| guide | `per_group_day` or `per_person_day` (owner: "both") | guides available per day | group size per guide | start to end date, guides |
+| stay | `per_room_night` | rooms of this room type | guests per room | check-in to check-out, rooms |
+| transport | `per_vehicle_trip` or `per_vehicle_day` | vehicles available per day | seats per vehicle | a date (trip) or date range (day hire), vehicles, pickup note |
 
 ### Owner decisions
 

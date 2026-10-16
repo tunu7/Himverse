@@ -27,19 +27,19 @@ model for now (Ollama). Out of scope: hosting Ollama for production, prompt chan
 
 ## Files
 
-| Change   | Path                                                                                                                   | Notes                                          |
-| -------- | ---------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
-| Created  | `src/server/itineraries/model/ollama.ts`                                                                               | Ollama factory                                 |
-| Created  | `src/server/itineraries/model/ai-sdk.ts`                                                                               | Shared adapter (was `gateway.ts`)              |
-| Created  | `scripts/setup-ollama.mjs`                                                                                             | `npm run ai:ollama`                            |
-| Created  | `tests/unit/itinerary-ollama-model.test.ts`                                                                            | Request shape, narrowed schema, error mapping  |
-| Created  | `docs/decisions/ADR-0006-SWITCHABLE-AI-PROVIDER-OLLAMA.md`                                                             |                                                |
-| Modified | `src/server/itineraries/model/{gateway,index,types}.ts`                                                                | Thin gateway factory, provider switch, timeout |
-| Modified | `src/server/itineraries/{pipeline,schemas}.ts`                                                                         | Constraints, timeout, rejection log            |
-| Modified | `src/lib/env.ts`, `src/lib/env.server.ts`                                                                              | New AI env contract                            |
-| Modified | `tests/unit/env.test.ts`, `tests/unit/itinerary-pipeline.test.ts`                                                      |                                                |
-| Modified | `package.json`, `package-lock.json`                                                                                    | `@ai-sdk/openai-compatible`, `ai:ollama`       |
-| Modified | `.env.example`, `docs/operations/ENVIRONMENTS.md`, `docs/ai/AI_ARCHITECTURE.md`, `docs/decisions/{README,ADR-0003}.md` |                                                |
+| Change | Path | Notes |
+| --- | --- | --- |
+| Created | `src/server/itineraries/model/ollama.ts` | Ollama factory |
+| Created | `src/server/itineraries/model/ai-sdk.ts` | Shared adapter (was `gateway.ts`) |
+| Created | `scripts/setup-ollama.mjs` | `npm run ai:ollama` |
+| Created | `tests/unit/itinerary-ollama-model.test.ts` | Request shape, narrowed schema, error mapping |
+| Created | `docs/decisions/ADR-0006-SWITCHABLE-AI-PROVIDER-OLLAMA.md` |  |
+| Modified | `src/server/itineraries/model/{gateway,index,types}.ts` | Thin gateway factory, provider switch, timeout |
+| Modified | `src/server/itineraries/{pipeline,schemas}.ts` | Constraints, timeout, rejection log |
+| Modified | `src/lib/env.ts`, `src/lib/env.server.ts` | New AI env contract |
+| Modified | `tests/unit/env.test.ts`, `tests/unit/itinerary-pipeline.test.ts` |  |
+| Modified | `package.json`, `package-lock.json` | `@ai-sdk/openai-compatible`, `ai:ollama` |
+| Modified | `.env.example`, `docs/operations/ENVIRONMENTS.md`, `docs/ai/AI_ARCHITECTURE.md`, `docs/decisions/{README,ADR-0003}.md` |  |
 
 ## Architectural and database changes
 
@@ -56,12 +56,12 @@ No database changes. A new model adapter boundary is described in ADR-0006, whic
 
 ## Tests and commands executed
 
-| Command                                                                                         | Result (actual)                                                                                          |
-| ----------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| `npm run verify`                                                                                | Pass. 23 files, 279 unit tests; build OK                                                                 |
-| `npx playwright test tests/e2e/itineraries.spec.ts`                                             | First run: 3 failed at sign-up (local auth rate limit after repeated runs). Rerun after 5 min: 33 passed |
-| Live pipeline, fixture catalogue, various models (temp test)                                    | See the ADR-0006 table                                                                                   |
-| Live real-app flow, `next start` + local Supabase + `gemma3:4b` (temp Playwright spec, deleted) | Before narrowing: 1 of 3 saved. After: 3 of 3 saved, ~44 s each                                          |
+| Command | Result (actual) |
+| --- | --- |
+| `npm run verify` | Pass. 23 files, 279 unit tests; build OK |
+| `npx playwright test tests/e2e/itineraries.spec.ts` | First run: 3 failed at sign-up (local auth rate limit after repeated runs). Rerun after 5 min: 33 passed |
+| Live pipeline, fixture catalogue, various models (temp test) | See the ADR-0006 table |
+| Live real-app flow, `next start` + local Supabase + `gemma3:4b` (temp Playwright spec, deleted) | Before narrowing: 1 of 3 saved. After: 3 of 3 saved, ~44 s each |
 
 ## Build, lint and type-check status
 

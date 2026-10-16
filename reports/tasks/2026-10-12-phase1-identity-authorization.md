@@ -42,31 +42,31 @@ admin-grant UI, destination-editing UI, experience field editing (create and sta
 
 ## Files
 
-| Change               | Path                                                                                                                                                                                                                             | Notes                                                                                                   |
-| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| Created              | `supabase/migrations/20261012131029_identity_and_roles.sql`                                                                                                                                                                      | `private` schema, `profiles`, `user_roles`, signup trigger, `has_role`                                  |
-| Created              | `supabase/migrations/20261012131030_providers.sql`                                                                                                                                                                               | Providers, members, private details, status events, lifecycle RPCs                                      |
-| Created              | `supabase/migrations/20261012131031_catalog.sql`                                                                                                                                                                                 | Destinations, experiences, publication rules                                                            |
-| Created              | `supabase/seed.sql`                                                                                                                                                                                                              | Local-only sample catalogue: 2 visible, 2 deliberately hidden experiences; no users or admins           |
-| Created              | `supabase/tests/{identity_and_roles,providers,catalog}.test.sql`                                                                                                                                                                 | 87 pgTAP assertions                                                                                     |
-| Created              | `src/proxy.ts`, `src/server/{auth/session,profiles/profiles,providers/providers,providers/status,catalog/catalog}.ts`                                                                                                            |                                                                                                         |
-| Created              | `src/lib/{validation,redirect,format}.ts`, `src/lib/supabase/{public,errors}.ts`                                                                                                                                                 |                                                                                                         |
-| Created              | `src/features/{auth,account,providers,admin}/{schemas,actions}.ts` + `components/*`                                                                                                                                              |                                                                                                         |
-| Created              | `src/app/{sign-in,sign-up,account,explore,provider,admin/providers}/page.tsx`, `src/app/auth/confirm/route.ts`, `src/app/error.tsx`                                                                                              |                                                                                                         |
-| Created              | `src/components/{site-header,page-shell,form-feedback}.tsx`                                                                                                                                                                      |                                                                                                         |
-| Created              | `src/types/database.ts`                                                                                                                                                                                                          | Generated (`npm run db:types`), excluded from Prettier                                                  |
-| Created              | `scripts/write-local-env.mjs`                                                                                                                                                                                                    | Writes `.env.local` from `supabase status` (public values only, never printed)                          |
-| Created              | `tests/unit/{session,provider-status,schemas,redirect,database-errors,format}.test.ts`, `tests/e2e/{explore,auth-and-provider}.spec.ts`                                                                                          |                                                                                                         |
-| Created              | `docs/decisions/ADR-0002-AUTHORIZATION-MODEL.md`, this report                                                                                                                                                                    |                                                                                                         |
-| Modified             | `src/lib/supabase/{server,client}.ts`                                                                                                                                                                                            | `Database` generics; server client awaits `cookies()` then `io()` before reading env (see issues found) |
-| Modified             | `src/lib/errors.ts`                                                                                                                                                                                                              | `toLoggedFailure`                                                                                       |
-| Modified             | `src/app/layout.tsx`                                                                                                                                                                                                             | Site header                                                                                             |
-| Modified             | `package.json`                                                                                                                                                                                                                   | Scripts `db:types`, `env:local`                                                                         |
-| Modified             | `supabase/config.toml`                                                                                                                                                                                                           | Local `minimum_password_length = 8`                                                                     |
-| Modified             | `.github/workflows/ci.yml`                                                                                                                                                                                                       | Job `database-build-e2e`: build without env, local Supabase, pgTAP, types drift check, E2E              |
-| Modified             | `.claude/settings.json`, `.prettierignore`                                                                                                                                                                                       | Allow `db:types`; ignore generated types                                                                |
-| Modified             | `CLAUDE.md`, `README.md`, `docs/{decisions/README,security/AUTHORIZATION_AND_RLS,database/*,architecture/{SYSTEM_DESIGN,PROJECT_STRUCTURE},engineering/TESTING_STRATEGY,operations/ENVIRONMENTS,product/{MVP_SCOPE,ROADMAP}}.md` | Brought in line with the implementation                                                                 |
-| Created (gitignored) | `.env.local`                                                                                                                                                                                                                     | Local stack only; contents not displayed                                                                |
+| Change | Path | Notes |
+| --- | --- | --- |
+| Created | `supabase/migrations/20261012131029_identity_and_roles.sql` | `private` schema, `profiles`, `user_roles`, signup trigger, `has_role` |
+| Created | `supabase/migrations/20261012131030_providers.sql` | Providers, members, private details, status events, lifecycle RPCs |
+| Created | `supabase/migrations/20261012131031_catalog.sql` | Destinations, experiences, publication rules |
+| Created | `supabase/seed.sql` | Local-only sample catalogue: 2 visible, 2 deliberately hidden experiences; no users or admins |
+| Created | `supabase/tests/{identity_and_roles,providers,catalog}.test.sql` | 87 pgTAP assertions |
+| Created | `src/proxy.ts`, `src/server/{auth/session,profiles/profiles,providers/providers,providers/status,catalog/catalog}.ts` |  |
+| Created | `src/lib/{validation,redirect,format}.ts`, `src/lib/supabase/{public,errors}.ts` |  |
+| Created | `src/features/{auth,account,providers,admin}/{schemas,actions}.ts` + `components/*` |  |
+| Created | `src/app/{sign-in,sign-up,account,explore,provider,admin/providers}/page.tsx`, `src/app/auth/confirm/route.ts`, `src/app/error.tsx` |  |
+| Created | `src/components/{site-header,page-shell,form-feedback}.tsx` |  |
+| Created | `src/types/database.ts` | Generated (`npm run db:types`), excluded from Prettier |
+| Created | `scripts/write-local-env.mjs` | Writes `.env.local` from `supabase status` (public values only, never printed) |
+| Created | `tests/unit/{session,provider-status,schemas,redirect,database-errors,format}.test.ts`, `tests/e2e/{explore,auth-and-provider}.spec.ts` |  |
+| Created | `docs/decisions/ADR-0002-AUTHORIZATION-MODEL.md`, this report |  |
+| Modified | `src/lib/supabase/{server,client}.ts` | `Database` generics; server client awaits `cookies()` then `io()` before reading env (see issues found) |
+| Modified | `src/lib/errors.ts` | `toLoggedFailure` |
+| Modified | `src/app/layout.tsx` | Site header |
+| Modified | `package.json` | Scripts `db:types`, `env:local` |
+| Modified | `supabase/config.toml` | Local `minimum_password_length = 8` |
+| Modified | `.github/workflows/ci.yml` | Job `database-build-e2e`: build without env, local Supabase, pgTAP, types drift check, E2E |
+| Modified | `.claude/settings.json`, `.prettierignore` | Allow `db:types`; ignore generated types |
+| Modified | `CLAUDE.md`, `README.md`, `docs/{decisions/README,security/AUTHORIZATION_AND_RLS,database/*,architecture/{SYSTEM_DESIGN,PROJECT_STRUCTURE},engineering/TESTING_STRATEGY,operations/ENVIRONMENTS,product/{MVP_SCOPE,ROADMAP}}.md` | Brought in line with the implementation |
+| Created (gitignored) | `.env.local` | Local stack only; contents not displayed |
 
 ## Architectural and database changes
 
@@ -76,24 +76,24 @@ admin-grant UI, destination-editing UI, experience field editing (create and sta
 
 ### Policy behaviour
 
-| Table                      | anon                                         | authenticated (non-member)          | provider member                                                                                                                                | admin                                          |
-| -------------------------- | -------------------------------------------- | ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
-| `profiles`                 | ✗ (no grant)                                 | own row; update `display_name` only | same                                                                                                                                           | read all                                       |
-| `user_roles`               | ✗                                            | own rows, read only                 | same                                                                                                                                           | read all; **no writes for anyone via the API** |
-| `providers`                | `verified` only                              | `verified` only                     | + own (any status); update `display_name`, `description`, `district`                                                                           | read all; status only via `review_provider`    |
-| `provider_private_details` | ✗                                            | ✗                                   | own; update contact fields                                                                                                                     | read all                                       |
-| `provider_members`         | ✗                                            | own memberships                     | own memberships                                                                                                                                | read all; no writes (created by RPC)           |
-| `provider_status_events`   | ✗                                            | ✗                                   | own provider's                                                                                                                                 | read all; written only by RPCs                 |
-| `destinations`             | `is_published` only                          | `is_published` only                 | same                                                                                                                                           | full CRUD                                      |
-| `experiences`              | published + verified + destination published | same                                | + own provider's (any status); insert/update but `published` only if verified and destination published; can't change `provider_id`; no delete | read all; update, with the same publish rule   |
+| Table | anon | authenticated (non-member) | provider member | admin |
+| --- | --- | --- | --- | --- |
+| `profiles` | ✗ (no grant) | own row; update `display_name` only | same | read all |
+| `user_roles` | ✗ | own rows, read only | same | read all; **no writes for anyone via the API** |
+| `providers` | `verified` only | `verified` only | + own (any status); update `display_name`, `description`, `district` | read all; status only via `review_provider` |
+| `provider_private_details` | ✗ | ✗ | own; update contact fields | read all |
+| `provider_members` | ✗ | own memberships | own memberships | read all; no writes (created by RPC) |
+| `provider_status_events` | ✗ | ✗ | own provider's | read all; written only by RPCs |
+| `destinations` | `is_published` only | `is_published` only | same | full CRUD |
+| `experiences` | published + verified + destination published | same | + own provider's (any status); insert/update but `published` only if verified and destination published; can't change `provider_id`; no delete | read all; update, with the same publish rule |
 
 ### RPCs
 
-| Function                      | Caller        | Checks                                                                                                      |
-| ----------------------------- | ------------- | ----------------------------------------------------------------------------------------------------------- |
-| `create_provider_application` | authenticated | Creates a draft provider, owner membership, private details and an audit row atomically                     |
-| `submit_provider_application` | owner         | `draft` or `rejected` → `pending_review`; non-owners get `P0002` (no existence leak)                        |
-| `review_provider`             | admin         | Valid transitions only; note required to reject or suspend; an admin can't review a provider they belong to |
+| Function | Caller | Checks |
+| --- | --- | --- |
+| `create_provider_application` | authenticated | Creates a draft provider, owner membership, private details and an audit row atomically |
+| `submit_provider_application` | owner | `draft` or `rejected` → `pending_review`; non-owners get `P0002` (no existence leak) |
+| `review_provider` | admin | Valid transitions only; note required to reject or suspend; an admin can't review a provider they belong to |
 
 ## Security and migration implications
 
@@ -114,25 +114,25 @@ admin-grant UI, destination-editing UI, experience field editing (create and sta
 
 ## Tests and commands executed
 
-| Command                                                                                                                    | Result (actual)                                                                                                                                                                       |
-| -------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `which docker` (first attempt)                                                                                             | Not found. **Stopped and reported** as instructed                                                                                                                                     |
-| `docker info` (after user install)                                                                                         | Daemon not running → `open -a Docker` → ready: Docker Desktop 29.8.2, 8 CPU, ~4 GB                                                                                                    |
-| `npx supabase start`                                                                                                       | All core services healthy; Postgres 17.11, pgTAP 1.3.3                                                                                                                                |
-| pgTAP smoke test (scratchpad)                                                                                              | PASS (1/1): runner confirmed before writing real tests                                                                                                                                |
-| `npx supabase db reset` (local only, several times)                                                                        | Success: migrations and seed applied                                                                                                                                                  |
-| `npm run db:test` (final, after a fresh reset)                                                                             | **PASS: 3 files, 87 tests**                                                                                                                                                           |
-| Mutation check: added a self-grant policy, an all-public experiences policy, and an `update(status)` grant to the local DB | **FAIL as expected**: 8 assertions failed across all 3 files; then `db reset` restored a clean state                                                                                  |
-| `npm run db:types` twice + `cmp`                                                                                           | Byte-identical (supports the CI drift check)                                                                                                                                          |
-| `npm run verify` (final)                                                                                                   | **Pass**, exit 0: format, lint, typecheck, 67 unit tests, build                                                                                                                       |
-| `npm run build` with `.env.local` moved aside                                                                              | First attempt **failed** (`EnvValidationError` prerendering `/_not-found`); fixed; re-run **pass**                                                                                    |
-| `npm run test:e2e` (final)                                                                                                 | **Pass: 5/5**; no prerender warnings in the server log                                                                                                                                |
-| One-off admin lifecycle E2E (scratchpad, not committed)                                                                    | **Pass**: runbook 1 row then 0; admin 404 before bootstrap; verify → publish → on `/explore` → suspend needs note → hidden → provider sees note, can't republish; audit trail correct |
-| Link/anchor audit                                                                                                          | 0 broken links or anchors                                                                                                                                                             |
-| Secret scan                                                                                                                | No key-like strings; `.env.local` is gitignored                                                                                                                                       |
-| `npm audit --omit=dev`                                                                                                     | 0 vulnerabilities                                                                                                                                                                     |
-| `npm audit`                                                                                                                | 5 high, the known dev-only ESLint chain (unchanged)                                                                                                                                   |
-| CI on GitHub                                                                                                               | **Not run**: no remote                                                                                                                                                                |
+| Command | Result (actual) |
+| --- | --- |
+| `which docker` (first attempt) | Not found. **Stopped and reported** as instructed |
+| `docker info` (after user install) | Daemon not running → `open -a Docker` → ready: Docker Desktop 29.8.2, 8 CPU, ~4 GB |
+| `npx supabase start` | All core services healthy; Postgres 17.11, pgTAP 1.3.3 |
+| pgTAP smoke test (scratchpad) | PASS (1/1): runner confirmed before writing real tests |
+| `npx supabase db reset` (local only, several times) | Success: migrations and seed applied |
+| `npm run db:test` (final, after a fresh reset) | **PASS: 3 files, 87 tests** |
+| Mutation check: added a self-grant policy, an all-public experiences policy, and an `update(status)` grant to the local DB | **FAIL as expected**: 8 assertions failed across all 3 files; then `db reset` restored a clean state |
+| `npm run db:types` twice + `cmp` | Byte-identical (supports the CI drift check) |
+| `npm run verify` (final) | **Pass**, exit 0: format, lint, typecheck, 67 unit tests, build |
+| `npm run build` with `.env.local` moved aside | First attempt **failed** (`EnvValidationError` prerendering `/_not-found`); fixed; re-run **pass** |
+| `npm run test:e2e` (final) | **Pass: 5/5**; no prerender warnings in the server log |
+| One-off admin lifecycle E2E (scratchpad, not committed) | **Pass**: runbook 1 row then 0; admin 404 before bootstrap; verify → publish → on `/explore` → suspend needs note → hidden → provider sees note, can't republish; audit trail correct |
+| Link/anchor audit | 0 broken links or anchors |
+| Secret scan | No key-like strings; `.env.local` is gitignored |
+| `npm audit --omit=dev` | 0 vulnerabilities |
+| `npm audit` | 5 high, the known dev-only ESLint chain (unchanged) |
+| CI on GitHub | **Not run**: no remote |
 
 ## Build, lint and type-check status
 
@@ -187,16 +187,16 @@ At your request I ran the read-only `security-reviewer` agent on all Phase 1 cha
 critical or high issues**. I reproduced each concrete finding myself against the local database (in
 rolled-back transactions) or in the library source before fixing it.
 
-| Finding                                                                     | Severity           | Reproduced                                     | Fix                                                                                                                       |
-| --------------------------------------------------------------------------- | ------------------ | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| M1: provider could republish an experience an admin unpublished or archived | Medium             | Yes: status went back to `published`           | `moderation_locked`, set by trigger on admin unpublish/archive; members can't publish locked rows or write the flag       |
-| M2: legal and contact details editable at any status                        | Medium             | Yes: a verified provider's legal name changed  | Private details editable only in `draft`/`rejected`; public profile frozen while `pending_review`                         |
-| L1: length checks bypassed with whitespace padding                          | Low–Med            | Yes: a 200,003-character `display_name` stored | `col = btrim(col)` constraints on all length-checked text                                                                 |
-| L2: `created_by` and `actor_id` user ids readable                           | Low                | Yes: `has_column_privilege` returned true      | Column-level select grants without them                                                                                   |
-| L3: default privileges on the audit-log sequence                            | Low                | Yes: `anon=rwU`                                | Revoked; trigger functions also lose `PUBLIC` execute                                                                     |
-| PKCE links rejected by `/auth/confirm`                                      | Bug                | Yes: `flowType: "pkce"` in the library         | Route accepts `code` (PKCE) and `token_hash`                                                                              |
-| S1: runbook selected the admin by email                                     | Medium (plausible) | n/a (process)                                  | Runbook selects by verified user id, requires confirmations on; `/account` shows the Account ID                           |
-| L6: `npx supabase status` auto-allowed; narrow `.env` deny list             | Low                | Yes (settings content)                         | Allow removed and `supabase status` denied; `.env` deny patterns widened (`.env.example` stays readable). Approved by you |
+| Finding | Severity | Reproduced | Fix |
+| --- | --- | --- | --- |
+| M1: provider could republish an experience an admin unpublished or archived | Medium | Yes: status went back to `published` | `moderation_locked`, set by trigger on admin unpublish/archive; members can't publish locked rows or write the flag |
+| M2: legal and contact details editable at any status | Medium | Yes: a verified provider's legal name changed | Private details editable only in `draft`/`rejected`; public profile frozen while `pending_review` |
+| L1: length checks bypassed with whitespace padding | Low–Med | Yes: a 200,003-character `display_name` stored | `col = btrim(col)` constraints on all length-checked text |
+| L2: `created_by` and `actor_id` user ids readable | Low | Yes: `has_column_privilege` returned true | Column-level select grants without them |
+| L3: default privileges on the audit-log sequence | Low | Yes: `anon=rwU` | Revoked; trigger functions also lose `PUBLIC` execute |
+| PKCE links rejected by `/auth/confirm` | Bug | Yes: `flowType: "pkce"` in the library | Route accepts `code` (PKCE) and `token_hash` |
+| S1: runbook selected the admin by email | Medium (plausible) | n/a (process) | Runbook selects by verified user id, requires confirmations on; `/account` shows the Account ID |
+| L6: `npx supabase status` auto-allowed; narrow `.env` deny list | Low | Yes (settings content) | Allow removed and `supabase status` denied; `.env` deny patterns widened (`.env.example` stays readable). Approved by you |
 
 **New migration:** `20261012133752_security_hardening`.
 

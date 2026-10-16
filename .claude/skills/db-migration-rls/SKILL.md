@@ -5,7 +5,7 @@ description: Create or review a Supabase Postgres migration with Row Level Secur
 
 # Database migration with RLS
 
-References: docs/database/DATABASE_DESIGN.md, docs/security/AUTHORIZATION_AND_RLS.md,
+References: docs/database/DATABASE_DESIGN.md, docs/security/SECURITY.md,
 docs/database/DATA_ACCESS_PATTERNS.md.
 
 ## Create

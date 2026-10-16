@@ -16,16 +16,16 @@ preferences (Zod, server-side) → kill switch → retrieve (deterministic, publ
       └─ fail → one repair attempt with the specific errors → re-check → else fail, nothing saved
 ```
 
-| Module           | Responsibility                                                                           |
-| ---------------- | ---------------------------------------------------------------------------------------- |
+| Module | Responsibility |
+| --- | --- |
 | `preferences.ts` | Trip preference schema (dates in IST, 1–14 days, 1–12 travellers, INR only, notes ≤ 500) |
-| `retrieval.ts`   | Candidate experiences, destinations, stays and transport (anonymous client; 40/10/20/20) |
-| `prompt.ts`      | Versioned system and user prompt, alias maps, repair prompt, size cap                    |
-| `schemas.ts`     | `itinerary.v2` model output schema; stored plan schema                                   |
-| `validate.ts`    | Deterministic grounding, date, capacity, multi-day and budget checks; cost estimate      |
-| `model/`         | `ItineraryModel` interface, AI Gateway adapter, deterministic mock, factory              |
-| `repository.ts`  | RPC calls, owner-scoped reads, current-version changes, delete                           |
-| `service.ts`     | Wires real dependencies into the pipeline                                                |
+| `retrieval.ts` | Candidate experiences, destinations, stays and transport (anonymous client; 40/10/20/20) |
+| `prompt.ts` | Versioned system and user prompt, alias maps, repair prompt, size cap |
+| `schemas.ts` | `itinerary.v2` model output schema; stored plan schema |
+| `validate.ts` | Deterministic grounding, date, capacity, multi-day and budget checks; cost estimate |
+| `model/` | `ItineraryModel` interface, AI Gateway adapter, deterministic mock, factory |
+| `repository.ts` | RPC calls, owner-scoped reads, current-version changes, delete |
+| `service.ts` | Wires real dependencies into the pipeline |
 
 ## Input
 

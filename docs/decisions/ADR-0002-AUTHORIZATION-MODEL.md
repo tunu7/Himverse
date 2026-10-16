@@ -47,7 +47,7 @@ Changes take effect on the caller's **next query**. No JWT refresh is needed.
   endpoint.**
 - The application never uses the Supabase secret key for this. Roles are granted only by the database
   owner running SQL directly. See the bootstrap runbook in
-  [AUTHORIZATION_AND_RLS](../security/AUTHORIZATION_AND_RLS.md#admin-bootstrap-runbook).
+  [SECURITY](../security/SECURITY.md).
 - Signup metadata is used only to prefill `profiles.display_name`. It never sets a role, membership or
   status.
 
@@ -60,11 +60,11 @@ draft ──submit──▶ pending_review ──review──▶ verified ◀─
                         └──resubmit── rejected ◀──review──(pending_review)
 ```
 
-| Function (RPC, `public`, `security definer`)   | Caller                 | Effect                                                                                                      |
-| ---------------------------------------------- | ---------------------- | ----------------------------------------------------------------------------------------------------------- |
-| `create_provider_application(...)`             | Any authenticated user | Creates a `draft` provider, the caller's `owner` membership and the private details, all in one transaction |
-| `submit_provider_application(provider_id)`     | Owner of that provider | `draft` or `rejected` → `pending_review`                                                                    |
-| `review_provider(provider_id, decision, note)` | Admin                  | `pending_review` → `verified` or `rejected`; `verified` → `suspended`; `suspended` → `verified`             |
+| Function (RPC, `public`, `security definer`) | Caller | Effect |
+| --- | --- | --- |
+| `create_provider_application(...)` | Any authenticated user | Creates a `draft` provider, the caller's `owner` membership and the private details, all in one transaction |
+| `submit_provider_application(provider_id)` | Owner of that provider | `draft` or `rejected` → `pending_review` |
+| `review_provider(provider_id, decision, note)` | Admin | `pending_review` → `verified` or `rejected`; `verified` → `suspended`; `suspended` → `verified` |
 
 - Each function checks `auth.uid()` and the allowed transition, and fails closed.
 - Each status change writes a `provider_status_events` row (from, to, actor, note, time).
@@ -76,15 +76,15 @@ draft ──submit──▶ pending_review ──review──▶ verified ◀─
 
 RLS filters rows, not columns, so data that should never be public is kept in separate tables.
 
-| Data                                                         | anon / other users                                       | Provider members           | Admin |
-| ------------------------------------------------------------ | -------------------------------------------------------- | -------------------------- | ----- |
-| `profiles`                                                   | ✗                                                        | own profile only           | read  |
-| `user_roles`                                                 | ✗                                                        | own rows (read)            | read  |
-| `providers` (public profile columns)                         | only `status = 'verified'`                               | own, any status            | read  |
-| `provider_private_details` (legal name, contact email/phone) | ✗                                                        | own                        | read  |
-| `provider_members`, `provider_status_events`                 | ✗                                                        | own provider               | read  |
-| `destinations`                                               | only `is_published`                                      | same as public             | all   |
-| `experiences`                                                | only if **all three** visibility conditions hold (below) | own provider's, any status | all   |
+| Data | anon / other users | Provider members | Admin |
+| --- | --- | --- | --- |
+| `profiles` | ✗ | own profile only | read |
+| `user_roles` | ✗ | own rows (read) | read |
+| `providers` (public profile columns) | only `status = 'verified'` | own, any status | read |
+| `provider_private_details` (legal name, contact email/phone) | ✗ | own | read |
+| `provider_members`, `provider_status_events` | ✗ | own provider | read |
+| `destinations` | only `is_published` | same as public | all |
+| `experiences` | only if **all three** visibility conditions hold (below) | own provider's, any status | all |
 
 An experience is publicly visible only when:
 
@@ -210,7 +210,7 @@ findings:
   `supabase/tests/privileges.test.sql` checks the whole catalog so future objects can't silently inherit
   Supabase's default grants.
 - **Admin bootstrap selects by verified user id,** not email, and requires email confirmations to be on
-  ([runbook](../security/AUTHORIZATION_AND_RLS.md#admin-bootstrap-runbook)).
+  ([runbook](../security/SECURITY.md)).
 
 ### Second review follow-ups (migration `20261012135457_review_followups`)
 

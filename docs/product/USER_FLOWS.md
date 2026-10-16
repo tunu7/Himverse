@@ -48,13 +48,13 @@ States: progress while generating; partial failure ("we couldn't fit X"); hard f
 ## T5 — View trip — implemented (itineraries and bookings)
 
 Traveler sees itineraries, booking statuses, provider contact details for confirmed bookings, and
-essential trip information (permit guidance scope is an open question in the [PRD](PRD.md#open-questions)).
+essential trip information (permit guidance scope is an open question in the [MVP_SCOPE](MVP_SCOPE.md)).
 
 ## P1 — Partner onboarding — implemented (Phase 1)
 
 Partner signs up in Tourism partner mode, submits profile and verification details, and lands in the
-partner portal; admin verifies (A1). Unverified partners cannot publish experiences.
-_(planned)_ TOTP 2-step sign-in; listing types guides, accommodation and transport.
+partner portal; admin verifies (A1). Unverified partners cannot publish listings. Partners use
+two-step login and can list experiences, guides, stays and transport (ADR-0008).
 
 ## P2 — Partner manages bookings — implemented (Phase 4)
 

@@ -5,7 +5,7 @@
 -- discovery, search and visibility rules, not real inventory.
 --
 -- Does NOT create users or admins (see the admin bootstrap runbook in
--- docs/security/AUTHORIZATION_AND_RLS.md). The sample providers have no members.
+-- docs/security/SECURITY.md). The sample providers have no members.
 --
 -- Deliberately hidden records (must never be discoverable anonymously):
 --   * destinations mechuka, anini            -> not published

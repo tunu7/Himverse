@@ -16,7 +16,7 @@ Launch scope: discovery, AI itineraries and booking **requests** (no online paym
 - [x] Secret scan of the repository and the browser bundle clean. (2026-10-15; only a deliberately
       fake value in `tests/unit/env.test.ts`.)
 
-## 2. Environments (Workstream B)
+## 2. Environments
 
 - [ ] Vercel project created, region `bom1`, Git integration on, preview → staging DB.
 - [ ] Supabase staging and production projects in `ap-south-1`; `pg_cron` enabled; migrations applied;

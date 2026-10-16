@@ -9,3 +9,7 @@ supabase/.temp/
 supabase/config.toml
 AGENTS.md
 src/types/database.ts
+# Docs keep compact tables (no alignment padding): Prettier would add ~25% whitespace,
+# which every agent read pays for. Write tables as `| a | b |` with `| --- | --- |`.
+docs/
+reports/

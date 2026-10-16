@@ -26,16 +26,16 @@ Deposits are **off** until an admin turns them on at `/admin/payments`. Without 
 
 ## 2. What happens automatically
 
-| When                                                              | What happens                                                                                                                                       | Where                                      |
-| ----------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
-| A partner confirms (or a traveller accepts a proposed price)      | Deposit = 50% of the confirmed total, due within 24 h or by the start                                                                              | `bookings_c_deposit_terms` trigger         |
-| The traveller pays                                                | Checkout → the server checks the signature and asks Razorpay → recorded as paid                                                                    | `completeDepositCheckout`                  |
-| Razorpay sends `payment.captured`                                 | Recorded once (deduplicated by event id); amount and currency must match                                                                           | `/api/webhooks/razorpay`                   |
-| The deposit is unpaid at the deadline                             | The booking is cancelled by the system and its date freed                                                                                          | pg_cron `himverse-unpaid-deposits`, 15 min |
-| A paid booking is cancelled                                       | A refund is queued (full ≥ 7 days, 50% 1–7 days, full for a partner or system cancellation), claimed once and sent with Razorpay's idempotency key | trigger + cancel action + daily cron       |
-| A payment arrives after cancellation, or a second payment arrives | It's refunded in full                                                                                                                              | `record_razorpay_payment`                  |
-| Daily                                                             | Sends queued refunds; completes sent refunds still pending after an hour; asks Razorpay about unpaid orders from the last 3 days (missed webhooks) | `/api/cron/payments`                       |
-| A checkout starts within 15 minutes of the deadline               | The booking gets 30 more minutes before it can be cancelled                                                                                        | `cancel_unpaid_bookings`                   |
+| When | What happens | Where |
+| --- | --- | --- |
+| A partner confirms (or a traveller accepts a proposed price) | Deposit = 50% of the confirmed total, due within 24 h or by the start | `bookings_c_deposit_terms` trigger |
+| The traveller pays | Checkout → the server checks the signature and asks Razorpay → recorded as paid | `completeDepositCheckout` |
+| Razorpay sends `payment.captured` | Recorded once (deduplicated by event id); amount and currency must match | `/api/webhooks/razorpay` |
+| The deposit is unpaid at the deadline | The booking is cancelled by the system and its date freed | pg_cron `himverse-unpaid-deposits`, 15 min |
+| A paid booking is cancelled | A refund is queued (full ≥ 7 days, 50% 1–7 days, full for a partner or system cancellation), claimed once and sent with Razorpay's idempotency key | trigger + cancel action + daily cron |
+| A payment arrives after cancellation, or a second payment arrives | It's refunded in full | `record_razorpay_payment` |
+| Daily | Sends queued refunds; completes sent refunds still pending after an hour; asks Razorpay about unpaid orders from the last 3 days (missed webhooks) | `/api/cron/payments` |
+| A checkout starts within 15 minutes of the deadline | The booking gets 30 more minutes before it can be cancelled | `cancel_unpaid_bookings` |
 
 ## 3. Paying partners
 

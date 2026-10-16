@@ -9,7 +9,7 @@ paths:
 # Supabase, data access and migrations
 
 Docs: docs/database/DATABASE_DESIGN.md, docs/database/DATA_ACCESS_PATTERNS.md,
-docs/security/AUTHORIZATION_AND_RLS.md. Use the `/db-migration-rls` skill for schema work.
+docs/security/SECURITY.md. Use the `/db-migration-rls` skill for schema work.
 
 - Schema changes only through new files from `npx supabase migration new <name>`. Never edit a migration
   that has been applied to a shared environment; write a forward migration.

@@ -118,7 +118,7 @@ webhooks and manual refunds; owner sign-off. **No live credentials before this p
 ## Consequences
 
 - New tables (`payments`, `payment_events`, refunds), a webhook route, a scheduled reconciliation job
-  and a CSP change. Each needs RLS, pgTAP and integration tests in Workstream C.
+  and a CSP change, each with RLS and tests (done; see the implementation line above).
 - Cancellation rules gain money consequences; BOOKING_POLICY questions 1–2 must be answered first.
 - Marketplace collection would add KYC, payouts and possibly regulatory requirements: decide before
   implementation.

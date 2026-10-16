@@ -60,17 +60,17 @@ Nits:
 
 ## Files
 
-| Change   | Path                                                                                                                                                           |
-| -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Created  | `supabase/migrations/20261014205730_bookable_experiences_and_trip_booking.sql`                                                                                 |
-| Created  | `supabase/tests/bookable.test.sql` (41 tests)                                                                                                                  |
-| Created  | `src/features/bookings/components/trip-booking.tsx`, `trip-booking-section.tsx`                                                                                |
-| Modified | `supabase/tests/privileges.test.sql`, `rate_limits.test.sql`                                                                                                   |
-| Modified | `src/server/bookings/repository.ts`, `src/features/bookings/{actions,schemas}.ts`, `components/{booking-forms,experience-booking}.tsx`                         |
-| Modified | `src/server/providers/providers.ts`, `src/features/providers/{actions,schemas}.ts`, `components/provider-forms.tsx`, `src/app/provider/page.tsx`               |
-| Modified | `src/server/itineraries/{retrieval,repository}.ts`, `src/server/catalog/catalog.ts`, `src/lib/booking-options.ts`                                              |
-| Modified | `src/app/(site)/experiences/[slug]/page.tsx`, `src/app/(site)/itineraries/[id]/page.tsx`, `src/types/database.ts`                                              |
-| Modified | `tests/unit/{bookings,actions,itinerary-retrieval}.test.ts`, `tests/e2e/{bookings,itineraries}.spec.ts`                                                        |
+| Change | Path |
+| --- | --- |
+| Created | `supabase/migrations/20261014205730_bookable_experiences_and_trip_booking.sql` |
+| Created | `supabase/tests/bookable.test.sql` (41 tests) |
+| Created | `src/features/bookings/components/trip-booking.tsx`, `trip-booking-section.tsx` |
+| Modified | `supabase/tests/privileges.test.sql`, `rate_limits.test.sql` |
+| Modified | `src/server/bookings/repository.ts`, `src/features/bookings/{actions,schemas}.ts`, `components/{booking-forms,experience-booking}.tsx` |
+| Modified | `src/server/providers/providers.ts`, `src/features/providers/{actions,schemas}.ts`, `components/provider-forms.tsx`, `src/app/provider/page.tsx` |
+| Modified | `src/server/itineraries/{retrieval,repository}.ts`, `src/server/catalog/catalog.ts`, `src/lib/booking-options.ts` |
+| Modified | `src/app/(site)/experiences/[slug]/page.tsx`, `src/app/(site)/itineraries/[id]/page.tsx`, `src/types/database.ts` |
+| Modified | `tests/unit/{bookings,actions,itinerary-retrieval}.test.ts`, `tests/e2e/{bookings,itineraries}.spec.ts` |
 | Modified | `docs/decisions/ADR-0004-BOOKING-LIFECYCLE.md` (amendment), `docs/product/BOOKING_POLICY.md`, `docs/database/DATABASE_DESIGN.md`, `docs/ai/AI_ARCHITECTURE.md` |
 
 ## Architectural and database changes
@@ -90,13 +90,13 @@ Nits:
 
 ## Tests and commands executed
 
-| Command                                                                                         | Result (actual)                                                                                                                                                                                                          |
-| ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `npm run verify`                                                                                | Pass. 303 unit tests; build OK                                                                                                                                                                                           |
-| `npm run test:e2e`                                                                              | Pass. 57 tests, including 4 new ones: any-date request, past date, partner switch, book whole trip                                                                                                                       |
-| `npm run test:integration`                                                                      | Pass. 4 tests                                                                                                                                                                                                            |
-| `npm run db:test` (local DB)                                                                    | 348 of 350. The 2 failures are pre-existing count-based tests (`admin can read all profiles`, `counts today's generations`) polluted by local E2E data (80 profiles, 22 generations). They are unrelated to this change. |
-| All 12 pgTAP files against a throwaway copy, migration applied from the file, test data cleared | 350 of 350 pass                                                                                                                                                                                                          |
+| Command | Result (actual) |
+| --- | --- |
+| `npm run verify` | Pass. 303 unit tests; build OK |
+| `npm run test:e2e` | Pass. 57 tests, including 4 new ones: any-date request, past date, partner switch, book whole trip |
+| `npm run test:integration` | Pass. 4 tests |
+| `npm run db:test` (local DB) | 348 of 350. The 2 failures are pre-existing count-based tests (`admin can read all profiles`, `counts today's generations`) polluted by local E2E data (80 profiles, 22 generations). They are unrelated to this change. |
+| All 12 pgTAP files against a throwaway copy, migration applied from the file, test data cleared | 350 of 350 pass |
 
 ## Build, lint and type-check status
 

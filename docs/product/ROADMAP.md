@@ -36,7 +36,7 @@ partner accept-bookings switch, "Book whole trip". 2026-10-15: online 50% deposi
 
 ## Phase 5 — Production readiness (in progress; "launch readiness" work 2026-10-15)
 
-Done: Workstream A (security hardening, health check, rate limits, AI kill switch), separate traveller
+Done: security hardening, health check, rate limits, AI kill switch, separate traveller
 site / partner portal / admin console, Vercel and Supabase production; 2026-10-15: automated WCAG 2.1 AA
 checks and fixes, self-serve account deletion and in-app booking alerts (ADR-0009), privacy and terms
 pages, dependency and secret audit, production page-weight baseline. Remaining

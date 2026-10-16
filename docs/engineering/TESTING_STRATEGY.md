@@ -4,14 +4,14 @@ Test what would hurt if it broke: business rules, authorization boundaries, and 
 
 ## Layers
 
-| Layer       | Tool                           | Location                          | What to test                                                                                                                                                                                                          |
-| ----------- | ------------------------------ | --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Unit        | Vitest                         | `tests/unit/`                     | Pure logic: schemas, pricing, state transitions, AI output validation, error mapping                                                                                                                                  |
-| Integration | Vitest + `pg` + local Supabase | `tests/integration/`              | Behaviour that needs parallel connections (booking concurrency, itinerary reservations); `npm run test:integration`, run in the CI database job. Guarded to the local database only (`tests/integration/local-db.ts`) |
-| Database    | pgTAP (`supabase test db`)     | `supabase/tests/`                 | RLS policies per role, constraints, triggers, DB functions                                                                                                                                                            |
-| E2E         | Playwright (Chromium)          | `tests/e2e/`                      | Critical journeys against a production build                                                                                                                                                                          |
-| A11y        | axe-core in Playwright         | `tests/e2e/accessibility.spec.ts` | WCAG 2.1 AA rules on every area, light and dark ([ACCESSIBILITY](ACCESSIBILITY.md))                                                                                                                                   |
-| Smoke       | Playwright (Chromium)          | `tests/smoke/`                    | Read-only checks of a deployed environment (`STAGING_BASE_URL=… npm run test:smoke`); never signs in or writes data                                                                                                   |
+| Layer | Tool | Location | What to test |
+| --- | --- | --- | --- |
+| Unit | Vitest | `tests/unit/` | Pure logic: schemas, pricing, state transitions, AI output validation, error mapping |
+| Integration | Vitest + `pg` + local Supabase | `tests/integration/` | Behaviour that needs parallel connections (booking concurrency, itinerary reservations); `npm run test:integration`, run in the CI database job. Guarded to the local database only (`tests/integration/local-db.ts`) |
+| Database | pgTAP (`supabase test db`) | `supabase/tests/` | RLS policies per role, constraints, triggers, DB functions |
+| E2E | Playwright (Chromium) | `tests/e2e/` | Critical journeys against a production build |
+| A11y | axe-core in Playwright | `tests/e2e/accessibility.spec.ts` | WCAG 2.1 AA rules on every area, light and dark ([ACCESSIBILITY](ACCESSIBILITY.md)) |
+| Smoke | Playwright (Chromium) | `tests/smoke/` | Read-only checks of a deployed environment (`STAGING_BASE_URL=… npm run test:smoke`); never signs in or writes data |
 
 ## Requirements
 

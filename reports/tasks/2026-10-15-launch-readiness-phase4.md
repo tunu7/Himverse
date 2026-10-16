@@ -64,21 +64,21 @@ Acceptance criteria:
 
 ## Files
 
-| Change   | Path                                                                                                                                                                                                                                                                                                                                  | Notes                           |
-| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
-| Created  | `supabase/migrations/20261015123702_account_deletion.sql`, `supabase/migrations/20261015125458_booking_alerts.sql`                                                                                                                                                                                                                    | Deletion, anonymisation, alerts |
-| Created  | `supabase/tests/account_deletion.test.sql` (24), `supabase/tests/booking_alerts.test.sql` (10)                                                                                                                                                                                                                                        | pgTAP                           |
-| Created  | `src/server/auth/account-deletion.ts`, `src/server/bookings/alerts.ts`                                                                                                                                                                                                                                                                | Server logic                    |
-| Created  | `src/features/account/components/delete-account-form.tsx`, `src/features/bookings/components/{mark-bookings-seen,partner-alert-bar}.tsx`, `src/features/legal/components/legal-page.tsx`                                                                                                                                              | UI                              |
-| Created  | `src/app/(site)/{account-deleted,privacy,terms}/page.tsx`                                                                                                                                                                                                                                                                             | Pages                           |
-| Created  | `tests/e2e/{accessibility,account-deletion,booking-alerts}.spec.ts`, `tests/unit/account-deletion.test.ts`                                                                                                                                                                                                                            | Tests                           |
-| Created  | `docs/decisions/ADR-0009-ACCOUNT-DELETION-AND-ALERTS.md`, `docs/engineering/ACCESSIBILITY.md`, this report                                                                                                                                                                                                                            | Docs                            |
-| Modified | `src/server/auth/passwords.ts` (`verifyCurrentPassword`, `reauthenticateWithPassword`), `src/server/bookings/repository.ts` (partner list keeps anonymised bookings), `src/features/account/*`, `src/features/bookings/{actions.ts,components/booking-detail.tsx}`, `src/app/(site)/bookings/page.tsx`, `src/app/provider/layout.tsx` | Features                        |
-| Modified | `src/components/{site-header,account-menu,site-footer}.tsx`, `src/features/portal/components/{portal-nav,portal-shell}.tsx`, `src/app/(auth)/layout.tsx`, `src/app/admin/providers/page.tsx`, `src/app/(site)/experiences/[slug]/page.tsx`, `src/features/auth/components/auth-forms.tsx`                                             | Alerts, accessibility, legal    |
-| Modified | `src/lib/env.ts`, `.env.example`, `src/types/database.ts`, `package.json`/`package-lock.json` (`@axe-core/playwright` 4.13.0, dev only)                                                                                                                                                                                               | Config                          |
-| Modified | `supabase/tests/privileges.test.sql`, `tests/e2e/support.ts` (`currentTotp`)                                                                                                                                                                                                                                                          | Tests                           |
-| Modified | `CLAUDE.md`, `docs/{product/ROADMAP,product/BOOKING_POLICY,operations/RELEASE_CHECKLIST,operations/ENVIRONMENTS,engineering/OBSERVABILITY,engineering/TESTING_STRATEGY,architecture/TECH_STACK,database/DATABASE_DESIGN}.md`, `docs/decisions/README.md`                                                                              | Docs                            |
-| Deleted  | None                                                                                                                                                                                                                                                                                                                                  |                                 |
+| Change | Path | Notes |
+| --- | --- | --- |
+| Created | `supabase/migrations/20261015123702_account_deletion.sql`, `supabase/migrations/20261015125458_booking_alerts.sql` | Deletion, anonymisation, alerts |
+| Created | `supabase/tests/account_deletion.test.sql` (24), `supabase/tests/booking_alerts.test.sql` (10) | pgTAP |
+| Created | `src/server/auth/account-deletion.ts`, `src/server/bookings/alerts.ts` | Server logic |
+| Created | `src/features/account/components/delete-account-form.tsx`, `src/features/bookings/components/{mark-bookings-seen,partner-alert-bar}.tsx`, `src/features/legal/components/legal-page.tsx` | UI |
+| Created | `src/app/(site)/{account-deleted,privacy,terms}/page.tsx` | Pages |
+| Created | `tests/e2e/{accessibility,account-deletion,booking-alerts}.spec.ts`, `tests/unit/account-deletion.test.ts` | Tests |
+| Created | `docs/decisions/ADR-0009-ACCOUNT-DELETION-AND-ALERTS.md`, `docs/engineering/ACCESSIBILITY.md`, this report | Docs |
+| Modified | `src/server/auth/passwords.ts` (`verifyCurrentPassword`, `reauthenticateWithPassword`), `src/server/bookings/repository.ts` (partner list keeps anonymised bookings), `src/features/account/*`, `src/features/bookings/{actions.ts,components/booking-detail.tsx}`, `src/app/(site)/bookings/page.tsx`, `src/app/provider/layout.tsx` | Features |
+| Modified | `src/components/{site-header,account-menu,site-footer}.tsx`, `src/features/portal/components/{portal-nav,portal-shell}.tsx`, `src/app/(auth)/layout.tsx`, `src/app/admin/providers/page.tsx`, `src/app/(site)/experiences/[slug]/page.tsx`, `src/features/auth/components/auth-forms.tsx` | Alerts, accessibility, legal |
+| Modified | `src/lib/env.ts`, `.env.example`, `src/types/database.ts`, `package.json`/`package-lock.json` (`@axe-core/playwright` 4.13.0, dev only) | Config |
+| Modified | `supabase/tests/privileges.test.sql`, `tests/e2e/support.ts` (`currentTotp`) | Tests |
+| Modified | `CLAUDE.md`, `docs/{product/ROADMAP,product/BOOKING_POLICY,operations/RELEASE_CHECKLIST,operations/ENVIRONMENTS,engineering/OBSERVABILITY,engineering/TESTING_STRATEGY,architecture/TECH_STACK,database/DATABASE_DESIGN}.md`, `docs/decisions/README.md` | Docs |
+| Deleted | None |  |
 
 ## Architectural and database changes
 
@@ -127,15 +127,15 @@ alerts functions).
 
 ## Tests and commands executed
 
-| Command                                        | Result (actual)                                                      |
-| ---------------------------------------------- | -------------------------------------------------------------------- |
-| `npx supabase db reset` then `npm run db:test` | PASS: 19 files, 485 tests                                            |
-| `npm run verify`                               | PASS: format, lint, typecheck, 358 unit tests, build                 |
-| `npx playwright test --workers=1`              | PASS: 74 tests (includes 34 axe scans)                               |
-| `npm audit --omit=dev` / `npm audit`           | 0 production advisories / 5 high in dev-only lint tooling (accepted) |
-| Secret scan (repository, `.next/static`)       | Clean (one deliberately fake value in a unit test)                   |
-| Production page weight (curl)                  | About 180–215 KB JS, 14 KB CSS, 0.40–0.56 s TTFB                     |
-| security-reviewer agent                        | 1 blocker and 5 should-fixes, all fixed (above)                      |
+| Command | Result (actual) |
+| --- | --- |
+| `npx supabase db reset` then `npm run db:test` | PASS: 19 files, 485 tests |
+| `npm run verify` | PASS: format, lint, typecheck, 358 unit tests, build |
+| `npx playwright test --workers=1` | PASS: 74 tests (includes 34 axe scans) |
+| `npm audit --omit=dev` / `npm audit` | 0 production advisories / 5 high in dev-only lint tooling (accepted) |
+| Secret scan (repository, `.next/static`) | Clean (one deliberately fake value in a unit test) |
+| Production page weight (curl) | About 180–215 KB JS, 14 KB CSS, 0.40–0.56 s TTFB |
+| security-reviewer agent | 1 blocker and 5 should-fixes, all fixed (above) |
 
 ## Build, lint and type-check status
 

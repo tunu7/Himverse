@@ -83,10 +83,10 @@ the owner, covered all three dashboards.
 
 ## Tests and commands executed
 
-| Command                           | Result                                                                                                                                                                                                                 |
-| --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `npm run db:test`                 | 401 passed (15 files)                                                                                                                                                                                                  |
-| `npm run typecheck`, `eslint`     | Clean                                                                                                                                                                                                                  |
+| Command | Result |
+| --- | --- |
+| `npm run db:test` | 401 passed (15 files) |
+| `npm run typecheck`, `eslint` | Clean |
 | `npm run test:e2e -- --workers=1` | See the addendum. The first parallel runs were invalid: the 8 GB machine hit load average 37 and ~66 MB free memory, so they timed out. Leftover data from a timed-out run (a console fixture) also had to be removed. |
 
 ## Known issues, limitations, unverified assumptions

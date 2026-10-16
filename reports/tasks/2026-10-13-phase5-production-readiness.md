@@ -34,22 +34,22 @@
 
 ## Verification (actually run)
 
-| Check                                                                  | Result                                                                                                    |
-| ---------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| pgTAP (`npm run db:test`) after the review migration                   | **PASS: 11 files, 307 assertions**                                                                        |
-| Integration (`npm run test:integration`)                               | **4/4** (15 parallel reservations → exactly 10 succeed, 5 × `54000`)                                      |
-| Mutation: advisory lock removed                                        | Integration test failed (15 succeeded); DB reset restored                                                 |
-| Mutation: `upgrade-insecure-requests` restored                         | CSP E2E failed on `https://localhost` redirects; config restored                                          |
-| Integration guard vs crafted URLs                                      | All 3 rejected (one passed the old regex)                                                                 |
-| Format / lint / typecheck (final tree)                                 | Pass                                                                                                      |
-| Unit tests (final tree)                                                | **236/236** in 19 files                                                                                   |
-| Build with env                                                         | Pass (final tree)                                                                                         |
-| E2E, CI-like, after the review fixes (before logger/health/CSP tweak)  | **48/48**                                                                                                 |
-| Health + security-header E2E after adding `/api/health`                | Pass; DB paused → 503 `degraded` in 3 s, then 200 after unpause                                           |
-| Staging smoke suite against local `next start` (localhost)             | 5/5 after the CSP fix                                                                                     |
+| Check | Result |
+| --- | --- |
+| pgTAP (`npm run db:test`) after the review migration | **PASS: 11 files, 307 assertions** |
+| Integration (`npm run test:integration`) | **4/4** (15 parallel reservations → exactly 10 succeed, 5 × `54000`) |
+| Mutation: advisory lock removed | Integration test failed (15 succeeded); DB reset restored |
+| Mutation: `upgrade-insecure-requests` restored | CSP E2E failed on `https://localhost` redirects; config restored |
+| Integration guard vs crafted URLs | All 3 rejected (one passed the old regex) |
+| Format / lint / typecheck (final tree) | Pass |
+| Unit tests (final tree) | **236/236** in 19 files |
+| Build with env | Pass (final tree) |
+| E2E, CI-like, after the review fixes (before logger/health/CSP tweak) | **48/48** |
+| Health + security-header E2E after adding `/api/health` | Pass; DB paused → 503 `degraded` in 3 s, then 200 after unpause |
+| Staging smoke suite against local `next start` (localhost) | 5/5 after the CSP fix |
 | Performance at ~5k experiences / 100k dates / 50k bookings / 100k logs | Pages 13–30 ms; listing/search 120–150 ms (linear RLS cost, documented threshold); hot SQL paths 0.2–9 ms |
-| Backup/restore drill (local)                                           | Counts + checksum identical; found and documented a `pg_dump --schema/--table` pitfall                    |
-| Monitoring SQL in OBSERVABILITY                                        | All 8 queries run locally                                                                                 |
+| Backup/restore drill (local) | Counts + checksum identical; found and documented a `pg_dump --schema/--table` pitfall |
+| Monitoring SQL in OBSERVABILITY | All 8 queries run locally |
 
 ## Not verified on the final tree
 

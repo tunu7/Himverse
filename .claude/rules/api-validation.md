@@ -10,7 +10,7 @@ paths:
 
 # API, validation and error handling
 
-Docs: docs/api/API_CONTRACTS.md, docs/api/VALIDATION.md, docs/engineering/ERROR_HANDLING.md.
+Docs: docs/api/API_CONTRACTS.md.
 
 - Treat every argument of a Server Action or Route Handler as `unknown`; parse with Zod `safeParse` first.
 - Bound everything: string lengths, array sizes, numeric ranges. Prefer `z.strictObject` for inputs.

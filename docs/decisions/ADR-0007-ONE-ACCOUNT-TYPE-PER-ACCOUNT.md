@@ -21,7 +21,7 @@ provider. That meant:
 
 The owner called the mix "messed up". They asked for separated role interfaces, following current
 marketplace practice: one account per role, enforced in the database and not only in the UI
-([MVP_SCOPE](../product/MVP_SCOPE.md#roles-and-terminology)).
+([MVP_SCOPE](../product/MVP_SCOPE.md#roles)).
 
 ## Decision
 
@@ -91,9 +91,8 @@ marketplace practice: one account per role, enforced in the database and not onl
   - sign-up sends `account_type`;
   - session and landing read it (`src/server/auth/session.ts`, `landing.ts`);
   - hide booking and planning actions for non-travellers.
-- Update [AUTHORIZATION_AND_RLS](../security/AUTHORIZATION_AND_RLS.md) and the admin bootstrap runbook. The
+- Update [SECURITY](../security/SECURITY.md) and the admin bootstrap runbook. The
   runbook must use an account created for admin only.
-- When this lands, move "one role per account" from _(planned)_ to **built** in MVP_SCOPE and ROADMAP.
 
 ## Implementation notes (2026-10-15)
 

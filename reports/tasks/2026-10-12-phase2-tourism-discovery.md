@@ -27,14 +27,14 @@ tools.
 
 ## Acceptance criteria
 
-| #   | Criterion                                                                                                                                              | Status                                                                                                                                                                                                          |
-| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | Browse, search, filter (region, category, budget, duration), sort and page experiences and destinations; every state reproducible from the URL         | **Met**: E2E covers each filter, a combination, sorts, pagination, and the form → URL → reload round-trip                                                                                                       |
-| 2   | Detail pages show all available fields; unknown or hidden slugs show a not-found page with `noindex`                                                   | **Met**: returns HTTP 200 + `noindex` (see limitations)                                                                                                                                                         |
-| 3   | No anonymous discovery of draft destinations, unpublished experiences or suspended/unverified providers' inventory via search, filters, counts or URLs | **Met**: pgTAP (`discovery.test.sql`, mutation-checked) and E2E (search, counts, five hidden experience URLs, two hidden destination URLs)                                                                      |
-| 4   | Malformed parameters never error; results always bounded                                                                                               | **Met**: invalid values dropped with a notice; 12 per page, page ≤ 50, `q` ≤ 100 chars                                                                                                                          |
-| 5   | Responsive, accessible, all UI states                                                                                                                  | **Met**: 375 px test (no horizontal overflow); labelled `search` landmarks and nav; `role="status"` result summaries; empty, out-of-range, ignored-parameter, not-found and loading states; root error boundary |
-| 6   | Quality gate, DB and E2E tests pass; no new dependencies; no secret key                                                                                | **Met**: see results                                                                                                                                                                                            |
+| # | Criterion | Status |
+| --- | --- | --- |
+| 1 | Browse, search, filter (region, category, budget, duration), sort and page experiences and destinations; every state reproducible from the URL | **Met**: E2E covers each filter, a combination, sorts, pagination, and the form → URL → reload round-trip |
+| 2 | Detail pages show all available fields; unknown or hidden slugs show a not-found page with `noindex` | **Met**: returns HTTP 200 + `noindex` (see limitations) |
+| 3 | No anonymous discovery of draft destinations, unpublished experiences or suspended/unverified providers' inventory via search, filters, counts or URLs | **Met**: pgTAP (`discovery.test.sql`, mutation-checked) and E2E (search, counts, five hidden experience URLs, two hidden destination URLs) |
+| 4 | Malformed parameters never error; results always bounded | **Met**: invalid values dropped with a notice; 12 per page, page ≤ 50, `q` ≤ 100 chars |
+| 5 | Responsive, accessible, all UI states | **Met**: 375 px test (no horizontal overflow); labelled `search` landmarks and nav; `role="status"` result summaries; empty, out-of-range, ignored-parameter, not-found and loading states; root error boundary |
+| 6 | Quality gate, DB and E2E tests pass; no new dependencies; no secret key | **Met**: see results |
 
 ## Summary of implementation
 
@@ -68,25 +68,25 @@ tools.
 
 ## Files
 
-| Change   | Path                                                                                                                                                                                                                                                                                                                                                    | Notes                                                |
-| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
-| Created  | `supabase/migrations/20261012142919_discovery_search.sql`                                                                                                                                                                                                                                                                                               | Search columns, GIN and filter indexes, column grant |
-| Created  | `supabase/tests/discovery.test.sql`                                                                                                                                                                                                                                                                                                                     | 12 assertions                                        |
-| Created  | `src/server/catalog/search-options.ts`                                                                                                                                                                                                                                                                                                                  | Shared vocabulary                                    |
-| Created  | `src/features/discovery/search-params.ts`, `src/features/discovery/components/{experience-card,destination-card,filter-forms,pagination,results-summary}.tsx`                                                                                                                                                                                           |                                                      |
-| Created  | `src/app/experiences/{page,[slug]/page,[slug]/not-found}.tsx`, `src/app/destinations/{page,[slug]/page,[slug]/not-found}.tsx`                                                                                                                                                                                                                           |                                                      |
-| Created  | `tests/unit/{search-params,catalog-queries}.test.ts`, `tests/e2e/discovery.spec.ts`                                                                                                                                                                                                                                                                     |                                                      |
-| Modified | `src/server/catalog/catalog.ts`                                                                                                                                                                                                                                                                                                                         | Discovery queries; `listPublicExperiences` removed   |
-| Modified | `src/features/providers/schemas.ts`, `src/server/providers/providers.ts`                                                                                                                                                                                                                                                                                | Import categories from `search-options`              |
-| Modified | `src/lib/format.ts`                                                                                                                                                                                                                                                                                                                                     | `formatCategory`                                     |
-| Modified | `src/components/site-header.tsx`, `src/app/page.tsx`                                                                                                                                                                                                                                                                                                    | Nav (`aria-label="Main"`), home links                |
-| Modified | `next.config.ts`                                                                                                                                                                                                                                                                                                                                        | `/explore` → `/experiences` (308)                    |
-| Modified | `playwright.config.ts`                                                                                                                                                                                                                                                                                                                                  | `discovery` project runs before data-creating specs  |
-| Modified | `supabase/seed.sql`                                                                                                                                                                                                                                                                                                                                     | Expanded local sample data                           |
-| Modified | `supabase/tests/privileges.test.sql`                                                                                                                                                                                                                                                                                                                    | Column snapshot includes `search_vector`             |
-| Modified | `src/types/database.ts`                                                                                                                                                                                                                                                                                                                                 | Regenerated                                          |
-| Modified | `docs/product/{ROADMAP,USER_FLOWS}.md`, `docs/architecture/{SYSTEM_DESIGN,PROJECT_STRUCTURE}.md`, `docs/database/{DATABASE_DESIGN,DATA_ACCESS_PATTERNS}.md`, `docs/api/API_CONTRACTS.md`, `docs/{security/SECURITY,operations/INCIDENT_RESPONSE,ai/AI_ARCHITECTURE,ai/AI_EVALUATION,ai/ITINERARY_GENERATION,engineering/OBSERVABILITY}.md`, `README.md` | Discovery documentation; phase renumbering           |
-| Deleted  | `src/app/explore/page.tsx`, `tests/e2e/explore.spec.ts`                                                                                                                                                                                                                                                                                                 | Replaced by `/experiences` and `discovery.spec.ts`   |
+| Change | Path | Notes |
+| --- | --- | --- |
+| Created | `supabase/migrations/20261012142919_discovery_search.sql` | Search columns, GIN and filter indexes, column grant |
+| Created | `supabase/tests/discovery.test.sql` | 12 assertions |
+| Created | `src/server/catalog/search-options.ts` | Shared vocabulary |
+| Created | `src/features/discovery/search-params.ts`, `src/features/discovery/components/{experience-card,destination-card,filter-forms,pagination,results-summary}.tsx` |  |
+| Created | `src/app/experiences/{page,[slug]/page,[slug]/not-found}.tsx`, `src/app/destinations/{page,[slug]/page,[slug]/not-found}.tsx` |  |
+| Created | `tests/unit/{search-params,catalog-queries}.test.ts`, `tests/e2e/discovery.spec.ts` |  |
+| Modified | `src/server/catalog/catalog.ts` | Discovery queries; `listPublicExperiences` removed |
+| Modified | `src/features/providers/schemas.ts`, `src/server/providers/providers.ts` | Import categories from `search-options` |
+| Modified | `src/lib/format.ts` | `formatCategory` |
+| Modified | `src/components/site-header.tsx`, `src/app/page.tsx` | Nav (`aria-label="Main"`), home links |
+| Modified | `next.config.ts` | `/explore` → `/experiences` (308) |
+| Modified | `playwright.config.ts` | `discovery` project runs before data-creating specs |
+| Modified | `supabase/seed.sql` | Expanded local sample data |
+| Modified | `supabase/tests/privileges.test.sql` | Column snapshot includes `search_vector` |
+| Modified | `src/types/database.ts` | Regenerated |
+| Modified | `docs/product/{ROADMAP,USER_FLOWS}.md`, `docs/architecture/{SYSTEM_DESIGN,PROJECT_STRUCTURE}.md`, `docs/database/{DATABASE_DESIGN,DATA_ACCESS_PATTERNS}.md`, `docs/api/API_CONTRACTS.md`, `docs/{security/SECURITY,operations/INCIDENT_RESPONSE,ai/AI_ARCHITECTURE,ai/AI_EVALUATION,ai/ITINERARY_GENERATION,engineering/OBSERVABILITY}.md`, `README.md` | Discovery documentation; phase renumbering |
+| Deleted | `src/app/explore/page.tsx`, `tests/e2e/explore.spec.ts` | Replaced by `/experiences` and `discovery.spec.ts` |
 
 ## Architectural and database changes
 
@@ -115,19 +115,19 @@ tools.
 
 ## Tests and commands executed
 
-| Command                                                            | Result (actual)                                                                       |
-| ------------------------------------------------------------------ | ------------------------------------------------------------------------------------- |
-| `npx supabase db reset` + anon sanity query                        | 17 visible experiences, 6 destinations; "raft" → only the public trip                 |
-| `npm run db:test` (final, after fresh reset)                       | **PASS: 7 files, 176 assertions**                                                     |
-| Mutation: permissive anon policies on experiences and destinations | 7 discovery assertions failed as expected; reset restored                             |
-| `npm run db:types` + `cmp`                                         | Up to date                                                                            |
-| `npm test`                                                         | **140 tests in 12 files** pass (+34: URL contract, query mapping)                     |
-| `npm run build` with `.env.local` moved aside                      | **Pass**: no DB or env needed at build                                                |
-| `npm run verify`                                                   | **Pass**, exit 0                                                                      |
-| `npm run test:e2e` (CI-like: agent env vars stripped, `CI=1`)      | **37/37 pass**                                                                        |
-| `npm run test:e2e` (normal), twice in a row without reset          | **37/37** both times (repeatable on a used DB)                                        |
-| Link audit / secret scan / `npm audit --omit=dev`                  | 0 problems / clean / 0 vulnerabilities                                                |
-| GitHub CI                                                          | **Not run** for these uncommitted changes (the last pushed commit `3a503c4` is green) |
+| Command | Result (actual) |
+| --- | --- |
+| `npx supabase db reset` + anon sanity query | 17 visible experiences, 6 destinations; "raft" → only the public trip |
+| `npm run db:test` (final, after fresh reset) | **PASS: 7 files, 176 assertions** |
+| Mutation: permissive anon policies on experiences and destinations | 7 discovery assertions failed as expected; reset restored |
+| `npm run db:types` + `cmp` | Up to date |
+| `npm test` | **140 tests in 12 files** pass (+34: URL contract, query mapping) |
+| `npm run build` with `.env.local` moved aside | **Pass**: no DB or env needed at build |
+| `npm run verify` | **Pass**, exit 0 |
+| `npm run test:e2e` (CI-like: agent env vars stripped, `CI=1`) | **37/37 pass** |
+| `npm run test:e2e` (normal), twice in a row without reset | **37/37** both times (repeatable on a used DB) |
+| Link audit / secret scan / `npm audit --omit=dev` | 0 problems / clean / 0 vulnerabilities |
+| GitHub CI | **Not run** for these uncommitted changes (the last pushed commit `3a503c4` is green) |
 
 ## Build, lint and type-check status
 

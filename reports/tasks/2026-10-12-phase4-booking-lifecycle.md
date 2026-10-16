@@ -69,21 +69,21 @@ documented as open questions in [BOOKING_POLICY](../../docs/product/BOOKING_POLI
 
 ## Files
 
-| Change   | Path                                                                                                                                                                                                                   | Notes                                                           |
-| -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
-| Created  | `supabase/migrations/20261012180243_bookings.sql`                                                                                                                                                                      | Tables, RLS, functions, cron schedule                           |
-| Created  | `supabase/tests/bookings.test.sql`                                                                                                                                                                                     | 59 assertions                                                   |
-| Created  | `tests/integration/booking-concurrency.test.ts`, `vitest.integration.config.mts`                                                                                                                                       | Parallel connections                                            |
-| Created  | `src/lib/booking-options.ts`, `src/server/bookings/repository.ts`, `src/features/bookings/{schemas,actions}.ts`, `src/features/bookings/components/{booking-forms,booking-status,experience-booking}.tsx`              |                                                                 |
-| Created  | `src/app/bookings/{page,[id]/page,[id]/not-found}.tsx`, `src/app/provider/bookings/page.tsx`                                                                                                                           |                                                                 |
-| Created  | `tests/unit/bookings.test.ts`, `tests/e2e/bookings.spec.ts`, `tests/e2e/support.ts`                                                                                                                                    |                                                                 |
-| Created  | `docs/decisions/ADR-0004-BOOKING-LIFECYCLE.md`, `docs/product/BOOKING_POLICY.md`, this report                                                                                                                          |                                                                 |
-| Modified | `src/app/experiences/[slug]/page.tsx`, `src/app/provider/page.tsx`, `src/proxy.ts`, `src/components/site-header.tsx`, `src/lib/format.ts`                                                                              | Booking section, date management, protection, nav, `formatSlot` |
-| Modified | `supabase/seed.sql`                                                                                                                                                                                                    | Bookable dates                                                  |
-| Modified | `supabase/tests/{privileges,catalog,discovery,providers,security_review,system_roles,itineraries}.test.sql`                                                                                                            | Snapshot; truncate the new tables                               |
-| Modified | `vitest.config.mts`, `package.json`, `package-lock.json`, `.github/workflows/ci.yml`                                                                                                                                   | Unit/integration split; `pg` + `@types/pg` (dev); CI step       |
-| Modified | `src/types/database.ts`                                                                                                                                                                                                | Regenerated                                                     |
-| Modified | `docs/{database/DATABASE_DESIGN,security/AUTHORIZATION_AND_RLS,product/ROADMAP,product/USER_FLOWS,engineering/TESTING_STRATEGY,architecture/PROJECT_STRUCTURE,operations/DEPLOYMENT,decisions/README}.md`, `README.md` |                                                                 |
+| Change | Path | Notes |
+| --- | --- | --- |
+| Created | `supabase/migrations/20261012180243_bookings.sql` | Tables, RLS, functions, cron schedule |
+| Created | `supabase/tests/bookings.test.sql` | 59 assertions |
+| Created | `tests/integration/booking-concurrency.test.ts`, `vitest.integration.config.mts` | Parallel connections |
+| Created | `src/lib/booking-options.ts`, `src/server/bookings/repository.ts`, `src/features/bookings/{schemas,actions}.ts`, `src/features/bookings/components/{booking-forms,booking-status,experience-booking}.tsx` |  |
+| Created | `src/app/bookings/{page,[id]/page,[id]/not-found}.tsx`, `src/app/provider/bookings/page.tsx` |  |
+| Created | `tests/unit/bookings.test.ts`, `tests/e2e/bookings.spec.ts`, `tests/e2e/support.ts` |  |
+| Created | `docs/decisions/ADR-0004-BOOKING-LIFECYCLE.md`, `docs/product/BOOKING_POLICY.md`, this report |  |
+| Modified | `src/app/experiences/[slug]/page.tsx`, `src/app/provider/page.tsx`, `src/proxy.ts`, `src/components/site-header.tsx`, `src/lib/format.ts` | Booking section, date management, protection, nav, `formatSlot` |
+| Modified | `supabase/seed.sql` | Bookable dates |
+| Modified | `supabase/tests/{privileges,catalog,discovery,providers,security_review,system_roles,itineraries}.test.sql` | Snapshot; truncate the new tables |
+| Modified | `vitest.config.mts`, `package.json`, `package-lock.json`, `.github/workflows/ci.yml` | Unit/integration split; `pg` + `@types/pg` (dev); CI step |
+| Modified | `src/types/database.ts` | Regenerated |
+| Modified | `docs/{database/DATABASE_DESIGN,security/AUTHORIZATION_AND_RLS,product/ROADMAP,product/USER_FLOWS,engineering/TESTING_STRATEGY,architecture/PROJECT_STRUCTURE,operations/DEPLOYMENT,decisions/README}.md`, `README.md` |  |
 
 ## Security and migration implications
 
@@ -107,20 +107,20 @@ documented as open questions in [BOOKING_POLICY](../../docs/product/BOOKING_POLI
 
 ## Tests and commands executed
 
-| Command                                                                                             | Result (actual)                                                                                                                                                                                                                   |
-| --------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `npx supabase db reset`                                                                             | Migration applied; `himverse-booking-sweep` scheduled `*/15 * * * *`                                                                                                                                                              |
-| `npm run db:test` (final, fresh reset)                                                              | **PASS: 9 files, 284 assertions**                                                                                                                                                                                                 |
-| Mutation: providers read all bookings, per-slot unique index dropped, direct status updates allowed | 6 booking assertions failed as expected; reset restored                                                                                                                                                                           |
-| `npm run test:integration`                                                                          | **3/3 pass** (also 3× in a row earlier): 10 parallel same-key requests → 1 booking; 6 parallel different-key requests → 1 success + 5 × `23505`; 6 parallel confirmations on 3 seats → exactly 3 confirmed, `seats_confirmed = 3` |
-| `npm run verify` (final)                                                                            | **Pass**: **222 unit tests in 18 files**, build                                                                                                                                                                                   |
-| `npm run build` without `.env.local`                                                                | **Pass**                                                                                                                                                                                                                          |
-| Browser-bundle scan                                                                                 | Clean                                                                                                                                                                                                                             |
-| `npm run test:e2e`, CI-like, fresh DB                                                               | **46/46**                                                                                                                                                                                                                         |
-| `npm run test:e2e`, normal, 2× more on the used DB                                                  | **46/46** each time                                                                                                                                                                                                               |
-| `npm audit --omit=dev` / secret scan / links                                                        | 0 vulnerabilities / clean / 0 problems                                                                                                                                                                                            |
-| Layering checks                                                                                     | No client value imports from `src/server`; no `select("*")`; no `any`; `src/lib` imports nothing above it                                                                                                                         |
-| GitHub CI                                                                                           | **Not run** for these uncommitted changes                                                                                                                                                                                         |
+| Command | Result (actual) |
+| --- | --- |
+| `npx supabase db reset` | Migration applied; `himverse-booking-sweep` scheduled `*/15 * * * *` |
+| `npm run db:test` (final, fresh reset) | **PASS: 9 files, 284 assertions** |
+| Mutation: providers read all bookings, per-slot unique index dropped, direct status updates allowed | 6 booking assertions failed as expected; reset restored |
+| `npm run test:integration` | **3/3 pass** (also 3× in a row earlier): 10 parallel same-key requests → 1 booking; 6 parallel different-key requests → 1 success + 5 × `23505`; 6 parallel confirmations on 3 seats → exactly 3 confirmed, `seats_confirmed = 3` |
+| `npm run verify` (final) | **Pass**: **222 unit tests in 18 files**, build |
+| `npm run build` without `.env.local` | **Pass** |
+| Browser-bundle scan | Clean |
+| `npm run test:e2e`, CI-like, fresh DB | **46/46** |
+| `npm run test:e2e`, normal, 2× more on the used DB | **46/46** each time |
+| `npm audit --omit=dev` / secret scan / links | 0 vulnerabilities / clean / 0 problems |
+| Layering checks | No client value imports from `src/server`; no `select("*")`; no `any`; `src/lib` imports nothing above it |
+| GitHub CI | **Not run** for these uncommitted changes |
 
 ## Build, lint and type-check status
 

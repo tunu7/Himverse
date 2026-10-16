@@ -1,53 +1,91 @@
-# MVP Scope
+# MVP scope and requirements
 
-The single source of truth for what is in and out of the MVP. If another document disagrees, this file wins
-and the other document must be corrected. Last reviewed: 2026-10-15 (owner decisions folded in).
+The single source of truth for what is in and out of the MVP. If another document disagrees, this file
+wins and the other must be corrected. Last reviewed: 2026-10-16. Status: **built** = implemented and
+tested; _(planned)_ = decided by the owner, not built yet. Flows: [USER_FLOWS](USER_FLOWS.md); phases:
+[ROADMAP](ROADMAP.md).
 
-Status key: **built** = implemented and tested in this repo · _(planned)_ = decided by the owner, not built yet.
+## Problem and vision
 
-## Roles and terminology
+Planning a trip to Arunachal Pradesh is hard. Reliable information on experiences, local partners,
+travel times and permits is scattered, and generic AI chatbots invent places, prices and availability.
+Local partners (homestays, guides, operators) have no trusted way to reach travellers.
 
-Three account types, **one per account, fixed at creation** _(planned: enforced in the database; today
-roles come from `user_roles` and provider membership per [ADR-0002](../decisions/ADR-0002-AUTHORIZATION-MODEL.md),
-superseded in part by [ADR-0007](../decisions/ADR-0007-ONE-ACCOUNT-TYPE-PER-ACCOUNT.md))_:
+Himverse.AI is a trusted planning and booking platform. Every recommendation comes from a curated,
+verified database, and AI only **composes and personalises** itineraries from that data; it never
+invents them.
 
-| Role      | In code                          | Can                                                        | Cannot                         |
-| --------- | -------------------------------- | ---------------------------------------------------------- | ------------------------------ |
-| Traveller | signed-in, no role or membership | Browse, plan itineraries, request bookings                 | Use the partner portal/console |
-| Partner   | row in `provider_members`        | Manage listings and booking requests in the partner portal | Book, or act as a traveller    |
-| Admin     | `admin` in `user_roles`          | Verify partners, curate catalogue, oversee bookings        | Book, or apply as a partner    |
+## Roles
 
-"Partner", "tourism partner" and "provider" mean the same thing; UI copy says partner, code says provider.
+Three account types, **one per account, fixed at creation and enforced in the database** (**built**,
+[ADR-0007](../decisions/ADR-0007-ONE-ACCOUNT-TYPE-PER-ACCOUNT.md)):
+
+| Role | In code | Can | Cannot |
+| --- | --- | --- | --- |
+| Traveller | `account_type = 'traveller'` | Browse, plan itineraries, book, pay deposits | Use the partner portal or console |
+| Partner | partner account + `provider_members` | Manage listings and bookings in `/provider` | Book or plan trips |
+| Admin | `admin` in `user_roles` | Verify partners, curate, moderate, oversee bookings and payments | Book or apply as a partner |
+
+"Partner", "tourism partner" and "provider" mean the same thing: the UI says partner, the code says
+provider.
 
 ## In scope
 
-| Area      | Included                                                                                                                                                                                                                                                                                                                        |
-| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Region    | Arunachal Pradesh only                                                                                                                                                                                                                                                                                                          |
-| Accounts  | **Built:** Supabase Auth email/password, email confirmation, Google sign-in, role-based landing. _(planned)_ password reset and change, resend confirmation, TOTP 2-step sign-in required for admins and partners                                                                                                               |
-| Areas     | **Built:** traveller site `(site)`, partner portal `/provider`, admin console `/admin`                                                                                                                                                                                                                                          |
-| Catalogue | **Built:** admin-curated destinations; experiences managed by partners, publishable only while the partner is verified; admins can unpublish; search, filter, detail pages                                                                                                                                                      |
-| Listings  | **Built:** experiences, guides (per group or per person per day), stays (one room type: nights + rooms), transport (vehicle hire: trip or day, route) — bookable with capacity per day ([ADR-0008](../decisions/ADR-0008-LISTING-TYPES.md)). Stays and transport are used in AI itineraries and booked with the whole trip (3b) |
-| Itinerary | **Built:** AI itinerary grounded in bookable catalogue items; refine, regenerate, saved versions. Model via Ollama (Cloud in production) or Vercel AI Gateway ([ADR-0006](../decisions/ADR-0006-SWITCHABLE-AI-PROVIDER-OLLAMA.md))                                                                                              |
-| Booking   | **Built:** requests for any future date or a published slot; "Book whole trip" from an itinerary; partner accept-bookings switch; confirm/decline with final price; cancellation; expiry ([BOOKING_POLICY](BOOKING_POLICY.md))                                                                                                  |
-| Trip view | **Built:** traveller's itineraries and bookings with status                                                                                                                                                                                                                                                                     |
-| Admin     | **Built:** overview, partner verification, destinations, experience moderation, bookings                                                                                                                                                                                                                                        |
+| Area | Included |
+| --- | --- |
+| Region | Arunachal Pradesh only |
+| Accounts | **Built:** email/password with confirmation and resend, Google sign-in, password reset and change, TOTP two-step login required for partners and admins, self-serve account deletion ([ADR-0009](../decisions/ADR-0009-ACCOUNT-DELETION-AND-ALERTS.md)) |
+| Areas | **Built:** traveller site, partner portal `/provider`, admin console `/admin` |
+| Catalogue | **Built:** admin-curated destinations; listings managed by partners, publishable only while verified; admin moderation; search, filters, detail pages |
+| Listings | **Built:** experiences, guides, stays (one room type), transport (vehicle hire), each with capacity per day ([ADR-0008](../decisions/ADR-0008-LISTING-TYPES.md)) |
+| Itinerary | **Built:** AI plans grounded in bookable listings (including stays and transport); refine, regenerate, versions; Ollama (Cloud in production) or AI Gateway ([ADR-0006](../decisions/ADR-0006-SWITCHABLE-AI-PROVIDER-OLLAMA.md)) |
+| Booking | **Built:** requests for any future date; "Book whole trip"; partner switch; confirm/decline with final price; cancellation; expiry; in-app alerts ([BOOKING_POLICY](BOOKING_POLICY.md)) |
+| Payments | **Built (Test Mode):** 50% online deposits via Razorpay after confirmation, refunds by cancellation timing, manual partner payouts; off until an admin turns them on ([ADR-0005](../decisions/ADR-0005-PAYMENTS-RAZORPAY.md)) |
+| Admin | **Built:** overview, partner verification, destinations, moderation, bookings, payments, users |
+| Legal | **Built:** privacy policy and terms pages (legal review pending) |
 
-## Out of scope for MVP
+## Out of scope for the MVP
 
-- Full online prepayment, automatic partner payouts (Razorpay Route) and commissions. _Added 2026-10-15 by the owner:_ online 50% deposits ([ADR-0005](../decisions/ADR-0005-PAYMENTS-RAZORPAY.md)), off until an admin turns them on
-- Reviews and ratings (planned next — see [ROADMAP](ROADMAP.md))
+- Full prepayment, automatic payouts (Razorpay Route), commissions, invoicing, dynamic pricing
+- Reviews and ratings; email or SMS notifications (needs a sending domain); real-time chat
 - Regions beyond Arunachal Pradesh
-- Third-party inventory: flights, trains, public buses, hotel aggregators or channel managers.
-  (Transport and stays offered **by verified local partners** are in scope as listing types.)
-- Native mobile apps, offline mode beyond graceful degradation
-- Partner payouts, invoicing, dynamic pricing
-- Notifications by email/SMS beyond Supabase auth emails (open question in [BOOKING_POLICY](BOOKING_POLICY.md))
-- Separate backend services (Python/FastAPI) — not until justified by an ADR
-- Real-time chat between travellers and partners
+- Third-party inventory (flights, trains, buses, hotel aggregators); partner-run stays and transport
+  are in scope
+- Native mobile apps; offline mode beyond graceful degradation
+- Separate backend services (Python/FastAPI) unless an ADR justifies one
 
-## Definition of done for the MVP
+## Quality requirements
 
-All in-scope flows in [USER_FLOWS](USER_FLOWS.md) work end-to-end in production with: RLS policy tests for
-every table, E2E tests for the critical journeys (browse → generate → refine → request booking → partner
-confirms), and no known high-severity security issues.
+- **Security:** RLS on all data, least privilege, server-only secrets ([SECURITY](../security/SECURITY.md)).
+- **Trust:** the traveller never sees "confirmed" or "paid" before authoritative confirmation, and
+  AI content is labelled as such.
+- **Reliability:** booking and payment operations are safe under retries and double submits.
+- **Performance:** catalogue pages use static shells with streamed personal sections. AI generation
+  shows progress, and pages degrade gracefully on slow networks.
+- **Accessibility:** WCAG 2.1 AA, with automated checks on every area
+  ([ACCESSIBILITY](../engineering/ACCESSIBILITY.md)).
+
+## Definition of done
+
+Every in-scope flow in [USER_FLOWS](USER_FLOWS.md) works end to end in production, with:
+
+- RLS tests for every table;
+- E2E tests for the critical journeys (browse → plan → refine → book → the partner confirms → pay the
+  deposit);
+- no known high-severity security issues.
+
+Initial success metrics (to validate):
+
+- the share of AI plans that are valid and grounded;
+- plans that lead to a booking request;
+- partner response time;
+- duplicate bookings (target: zero).
+
+## Open questions
+
+- **Provider verification:** what documents, whether field visits are needed, and who does it.
+- **Inner Line Permit:** information only, or assisted.
+- **AI cost:** a cost ceiling for Ollama Cloud.
+- **Languages and currency:** languages beyond English, and currency display (INR only today).
+- **Commission:** whether there is a platform commission, and confirming the deposit payout rule
+  ([PAYMENTS](../operations/PAYMENTS.md)).
