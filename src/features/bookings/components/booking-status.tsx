@@ -13,18 +13,25 @@ export function BookingStatusBadge({
   status,
   requestExpiresAt,
   now,
+  priceProposed = false,
 }: {
   status: BookingStatus;
   requestExpiresAt: string;
   now: Date;
+  /** A partner's total waits for the traveller's approval. */
+  priceProposed?: boolean;
 }) {
   const shown = effectiveStatus(status, requestExpiresAt, now);
+  const label =
+    shown === "requested" && priceProposed
+      ? "New price awaiting approval"
+      : BOOKING_STATUS_LABELS[shown];
   return (
     <span
       data-testid="booking-status"
       className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${TONE[shown]}`}
     >
-      {BOOKING_STATUS_LABELS[shown]}
+      {label}
     </span>
   );
 }

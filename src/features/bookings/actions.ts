@@ -9,6 +9,7 @@ import { parseInput } from "@/lib/validation";
 import { requireAccount } from "@/server/auth/session";
 import { markBookingsSeen } from "@/server/bookings/alerts";
 import {
+  acceptBookingPrice,
   cancelBooking,
   createSlot,
   requestBookingOnDate,
@@ -28,6 +29,7 @@ import {
 } from "@/server/payments/payments";
 
 import {
+  acceptPriceSchema,
   addSlotSchema,
   cancelSchema,
   depositBookingSchema,
@@ -44,6 +46,9 @@ import {
 // status themselves. Nothing here trusts client-supplied prices or ownership.
 
 export type BookingActionResult = ActionResult<{ done: true }> | null;
+export type RespondActionResult = ActionResult<{
+  outcome: "confirmed" | "declined" | "proposed";
+}> | null;
 
 export async function requestBookingAction(
   _prev: BookingActionResult,
@@ -129,22 +134,40 @@ export async function bookTripAction(
 }
 
 export async function respondToBookingAction(
-  _prev: BookingActionResult,
+  _prev: RespondActionResult,
   formData: FormData,
-): Promise<BookingActionResult> {
+): Promise<RespondActionResult> {
   try {
     const input = parseInput(respondSchema, formData);
     await requireAccount(["partner"]);
-    await respondToBooking(
+    const status = await respondToBooking(
       input.bookingId,
       input.decision,
       typeof input.finalTotalRupees === "number" ? input.finalTotalRupees * 100 : null,
       input.note,
     );
     refresh();
-    return ok({ done: true });
+    return ok({
+      outcome:
+        status === "requested" ? "proposed" : status === "declined" ? "declined" : "confirmed",
+    });
   } catch (error) {
     return toLoggedFailure("bookings.respond_failed", error);
+  }
+}
+
+export async function acceptBookingPriceAction(
+  _prev: BookingActionResult,
+  formData: FormData,
+): Promise<BookingActionResult> {
+  try {
+    const input = parseInput(acceptPriceSchema, formData);
+    await requireAccount(["traveller"]);
+    await acceptBookingPrice(input.bookingId, input.totalMinor);
+    refresh();
+    return ok({ done: true });
+  } catch (error) {
+    return toLoggedFailure("bookings.accept_price_failed", error);
   }
 }
 

@@ -124,7 +124,12 @@ async function BookingList({ searchParams }: PageProps<"/bookings">) {
                 {b.partySize} {b.partySize === 1 ? "person" : "people"} · {b.reference}
               </p>
             </div>
-            <BookingStatusBadge status={b.status} requestExpiresAt={b.requestExpiresAt} now={now} />
+            <BookingStatusBadge
+              status={b.status}
+              requestExpiresAt={b.requestExpiresAt}
+              now={now}
+              priceProposed={b.proposedTotalMinor !== null}
+            />
           </li>
         ))}
       </ul>

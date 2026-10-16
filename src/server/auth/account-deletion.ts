@@ -64,7 +64,11 @@ export async function reauthMethodFor(): Promise<ReauthMethod> {
  * requires a recent Google sign-in; the database checks that freshness itself,
  * cancels open bookings, anonymises the rest and removes the login.
  */
-export async function deleteMyAccount(input: { password?: string; code?: string }): Promise<void> {
+export async function deleteMyAccount(input: {
+  password?: string;
+  code?: string;
+  captchaToken?: string;
+}): Promise<void> {
   const user = await requireUser();
   const method = await reauthMethodFor();
   if (method === "code") {
@@ -75,7 +79,7 @@ export async function deleteMyAccount(input: { password?: string; code?: string 
     }
     await verifySecondStep(input.code);
   } else if (method === "password") {
-    await reauthenticateWithPassword(user, input.password ?? "");
+    await reauthenticateWithPassword(user, input.password ?? "", input.captchaToken);
   } else {
     const assurance = await getAssurance();
     if (!assurance || !signedInRecently(assurance.methods, RECENT_SIGN_IN_SECONDS)) {

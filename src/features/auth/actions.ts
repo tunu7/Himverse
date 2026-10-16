@@ -48,6 +48,7 @@ export async function signUp(_prev: SignUpResult, formData: FormData): Promise<S
       email: input.email,
       password: input.password,
       options: {
+        captchaToken: input.captchaToken,
         // display_name prefills the profile. account_type is the user's own
         // choice of traveller or partner; the database ignores anything else.
         data: { display_name: input.displayName, account_type: input.accountType },
@@ -75,6 +76,7 @@ export async function signIn(_prev: SignInResult, formData: FormData): Promise<S
     const { data, error } = await supabase.auth.signInWithPassword({
       email: input.email,
       password: input.password,
+      options: { captchaToken: input.captchaToken },
     });
     if (error) {
       throw signInError(error);
@@ -122,7 +124,7 @@ export async function requestPasswordResetAction(
 ): Promise<EmailSentResult> {
   try {
     const input = parseInput(emailOnlySchema, formData);
-    await requestPasswordReset(input.email);
+    await requestPasswordReset(input.email, input.captchaToken);
     return ok({ sent: true });
   } catch (error) {
     return toLoggedFailure("auth.password_reset_request_failed", error);
@@ -136,7 +138,7 @@ export async function resendConfirmationAction(
 ): Promise<EmailSentResult> {
   try {
     const input = parseInput(emailOnlySchema, formData);
-    await resendConfirmation(input.email);
+    await resendConfirmation(input.email, input.captchaToken);
     return ok({ sent: true });
   } catch (error) {
     return toLoggedFailure("auth.resend_confirmation_failed", error);
@@ -169,7 +171,7 @@ export async function changePasswordAction(
 ): Promise<PasswordResult> {
   try {
     const input = parseInput(changePasswordSchema, formData);
-    await changePassword(input.currentPassword, input.password);
+    await changePassword(input.currentPassword, input.password, input.captchaToken);
     return ok({ done: true });
   } catch (error) {
     return toLoggedFailure("auth.change_password_failed", error);

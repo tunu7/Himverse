@@ -32,8 +32,9 @@ Launch scope: discovery, AI itineraries and booking **requests** (no online paym
 - [ ] Supabase Auth: email confirmation on, leaked-password protection, minimum length 8.
 - [ ] **Custom SMTP** configured (Resend via Marketplace). The default Supabase mailer is rate limited
       and not for production.
-- [ ] **CAPTCHA** (hCaptcha or Turnstile) on sign-up and sign-in; CSP extended for its script/frame
-      origins and re-tested.
+- [ ] **CAPTCHA** (Turnstile, ADR-0010; code ready behind `NEXT_PUBLIC_TURNSTILE_SITE_KEY`): site key
+      deployed **first**, then CAPTCHA enabled in Supabase Auth ([ENVIRONMENTS](ENVIRONMENTS.md#captcha-turnstile));
+      sign-in, sign-up, forgot password, change password and delete account tested on production.
 - [ ] Site URL and redirect allow-list exact; confirmation email template set; tested end to end on
       staging (sign up → confirm → sign in) on a second device.
 - [ ] Google sign-in (if enabled): OAuth client in Google Cloud, provider enabled in Supabase,

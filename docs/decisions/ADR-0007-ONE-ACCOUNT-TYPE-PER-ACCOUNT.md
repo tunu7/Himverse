@@ -5,7 +5,7 @@
 - Deciders: Product owner
 - Supersedes: [ADR-0002](ADR-0002-AUTHORIZATION-MODEL.md) in part: the "one person can be both a traveller and
   a provider" premise, and "every authenticated user is a traveller". The rest of ADR-0002 stands.
-- Implementation: migration `20261014215750_account_types` and pgTAP updates (in progress, 2026-10-15).
+- Implementation: migration `20261014215750_account_types`, app changes and pgTAP tests (commit 381d6ba, 2026-10-15).
 
 ## Context
 

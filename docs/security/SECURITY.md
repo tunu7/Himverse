@@ -18,7 +18,7 @@ published before launch); never in public issues.
 | Secrets | Leak to browser or logs | `server-only` modules; no `NEXT_PUBLIC_` secrets; log redaction |
 | AI pipeline | Prompt injection | Output validation + grounding; no write tools ([AI_ARCHITECTURE](../ai/AI_ARCHITECTURE.md)) |
 | Google sign-in | Login CSRF, open redirect | PKCE cookie; `next` limited to internal paths |
-| Accounts | Credential stuffing, enumeration, lost authenticator | Supabase Auth limits; generic errors; per-account attempt limits; CAPTCHA before launch |
+| Accounts | Credential stuffing, enumeration, lost authenticator | Supabase Auth limits; generic errors; per-account attempt limits; Turnstile CAPTCHA verified by Supabase ([ADR-0010](../decisions/ADR-0010-CAPTCHA-TURNSTILE.md); on before launch) |
 | Resources | Spam; AI cost runaway | DB rate limits; per-user + platform AI caps; kill switch |
 
 ## Roles and authority

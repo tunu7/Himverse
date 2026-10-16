@@ -43,6 +43,8 @@ next-env.d.ts
 
 # claude code (local, per-developer)
 .claude/settings.local.json
+# Claude Code git worktrees (separate checkouts; never commit them)
+.claude/worktrees/
 
 # playwright
 /test-results/

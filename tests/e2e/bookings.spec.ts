@@ -115,6 +115,45 @@ test("request → provider confirms → traveller sees it → traveller cancels;
   await expect(status(page)).toHaveText("Cancelled");
 });
 
+test("a price more than 10% above the estimate waits for the traveller to accept", async ({
+  page,
+}) => {
+  test.setTimeout(150_000);
+  const travelerEmail = uniqueEmail("approver");
+  await signUp(page, travelerEmail, `Approver ${run}`);
+  await requestRafting(page, 12);
+  await page.getByRole("button", { name: "Request booking" }).click();
+  await expect(page).toHaveURL(/\/bookings\/[0-9a-f-]{36}$/);
+  const bookingUrl = page.url();
+
+  // Estimate ₹3,500: ₹5,000 is a proposal, not a confirmation.
+  await signUp(page, uniqueEmail("pricer"), "Pricing Guide", "partner");
+  addMember(DEMO_PROVIDER, await currentUserId(page, "partner"));
+  await page.goto(bookingUrl.replace("/bookings/", "/provider/bookings/"));
+  await page.getByLabel(/Final price/).fill("5000");
+  await page.getByLabel(/Message to the traveller/).fill("Peak-season permit fees");
+  await page.getByRole("button", { name: "Confirm booking" }).click();
+  await expect(status(page)).toHaveText("New price awaiting approval");
+  await expect(page.getByTestId("price-proposal").filter({ visible: true })).toContainText(
+    "You proposed ₹5,000",
+  );
+  await expect(page.getByRole("button", { name: "Confirm booking" })).toHaveCount(0);
+
+  // The traveller sees the proposal and accepts it.
+  await signIn(page, travelerEmail);
+  await page.goto(bookingUrl);
+  await expect(status(page)).toHaveText("New price awaiting approval");
+  const proposal = page.getByTestId("price-proposal").filter({ visible: true });
+  await expect(proposal).toContainText("₹5,000");
+  await expect(proposal).toContainText("your estimate was from ₹3,500");
+  await proposal.getByRole("button", { name: "Accept ₹5,000" }).click();
+  await expect(status(page)).toHaveText("Confirmed");
+  await expect(page.getByTestId("booking-price").filter({ visible: true })).toContainText(
+    "₹5,000 (confirmed by the provider)",
+  );
+  await expect(page.getByText("Provider's message: Peak-season permit fees")).toBeVisible();
+});
+
 test("providers must give a reason to decline", async ({ page }) => {
   test.setTimeout(120_000);
   const travelerEmail = uniqueEmail("declined");

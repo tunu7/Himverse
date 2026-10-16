@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { captchaTokenField } from "@/lib/captcha";
+
 /** Shared with the sign-in form, which offers "resend" for this case. */
 export const EMAIL_NOT_CONFIRMED_MESSAGE =
   "Please confirm your email address first. Check your inbox for the link.";
@@ -16,12 +18,14 @@ export const signUpSchema = z.strictObject({
   email: z.email("Enter a valid email address.").max(254),
   password: password.min(8, "Use at least 8 characters."),
   next: z.string().max(512).optional(),
+  captchaToken: captchaTokenField,
 });
 
 export const signInSchema = z.strictObject({
   email: z.email("Enter a valid email address.").max(254),
   password: password.min(1, "Enter your password."),
   next: z.string().max(512).optional(),
+  captchaToken: captchaTokenField,
 });
 
 export const chooseAccountTypeSchema = z.strictObject({
@@ -31,6 +35,7 @@ export const chooseAccountTypeSchema = z.strictObject({
 
 export const emailOnlySchema = z.strictObject({
   email: z.email("Enter a valid email address.").max(254),
+  captchaToken: captchaTokenField,
 });
 
 export const newPasswordSchema = z
@@ -46,6 +51,7 @@ export const newPasswordSchema = z
 export const changePasswordSchema = z
   .strictObject({
     currentPassword: password.min(1, "Enter your current password."),
+    captchaToken: captchaTokenField,
     password: password.min(8, "Use at least 8 characters."),
     confirmPassword: z.string().max(72),
   })

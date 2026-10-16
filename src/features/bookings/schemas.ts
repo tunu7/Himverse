@@ -59,6 +59,16 @@ export const respondSchema = z
     message: "Give the traveller a reason.",
   });
 
+export const acceptPriceSchema = z.strictObject({
+  bookingId: z.uuid(),
+  // The proposed total the traveller saw, in paise; the database refuses any other.
+  totalMinor: z
+    .string()
+    .regex(/^\d{1,10}$/, "Reload the booking and try again.")
+    .transform(Number)
+    .pipe(z.number().int().max(1_000_000_000)),
+});
+
 export const cancelSchema = z.strictObject({
   bookingId: z.uuid(),
   reason: z.string().trim().max(500).default(""),

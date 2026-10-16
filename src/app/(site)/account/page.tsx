@@ -94,6 +94,7 @@ async function Overview() {
                 status={next.status}
                 requestExpiresAt={next.requestExpiresAt}
                 now={now}
+                priceProposed={next.proposedTotalMinor !== null}
               />
             </div>
           ) : (

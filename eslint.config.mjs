@@ -16,6 +16,8 @@ const eslintConfig = defineConfig([
     "playwright-report/**",
     "test-results/**",
     "blob-report/**",
+    // Other sessions' git worktrees (each is checked in its own folder).
+    ".claude/worktrees/**",
   ]),
 ]);
 

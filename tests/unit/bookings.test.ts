@@ -12,6 +12,7 @@ const repo = {
   requestItineraryBookings: vi.fn(),
   requestListingBooking: vi.fn(),
   respondToBooking: vi.fn(),
+  acceptBookingPrice: vi.fn(),
   cancelBooking: vi.fn(),
   createSlot: vi.fn(),
   updateSlot: vi.fn(),
@@ -21,6 +22,7 @@ vi.mock("@/server/bookings/repository", () => ({
   requestItineraryBookings: (...a: unknown[]) => repo.requestItineraryBookings(...a),
   requestListingBooking: (...a: unknown[]) => repo.requestListingBooking(...a),
   respondToBooking: (...a: unknown[]) => repo.respondToBooking(...a),
+  acceptBookingPrice: (...a: unknown[]) => repo.acceptBookingPrice(...a),
   cancelBooking: (...a: unknown[]) => repo.cancelBooking(...a),
   createSlot: (...a: unknown[]) => repo.createSlot(...a),
   updateSlot: (...a: unknown[]) => repo.updateSlot(...a),
@@ -69,6 +71,7 @@ describe("account types (ADR-0007)", () => {
       { versionId: ID, contactPhone: "+91 98765 43210", idempotencyKey: KEY },
     ],
     ["respondToBookingAction", ["partner"], { bookingId: ID, decision: "declined", note: "Full" }],
+    ["acceptBookingPriceAction", ["traveller"], { bookingId: ID, totalMinor: "360000" }],
     ["cancelBookingAction", ["traveller", "partner"], { bookingId: ID }],
     ["addSlotAction", ["partner"], { experienceId: ID, startsOn: future, capacity: "4" }],
     ["setSlotStatusAction", ["partner"], { slotId: ID, status: "closed" }],
@@ -338,6 +341,50 @@ describe("respondToBookingAction", () => {
       form({ bookingId: ID, decision: "confirmed", finalTotalRupees: "3600", note: "" }),
     );
     expect(repo.respondToBooking).toHaveBeenCalledWith(ID, "confirmed", 360_000, "");
+  });
+
+  it.each([
+    ["confirmed", "confirmed"],
+    ["requested", "proposed"],
+    ["declined", "declined"],
+  ] as const)("reports a %s result as %s", async (status, outcome) => {
+    repo.respondToBooking.mockResolvedValue(status);
+    const result = await actions.respondToBookingAction(
+      null,
+      form({ bookingId: ID, decision: "confirmed", finalTotalRupees: "5000", note: "" }),
+    );
+    expect(result).toEqual({ ok: true, data: { outcome } });
+  });
+});
+
+describe("acceptBookingPriceAction (price approval)", () => {
+  it("passes the proposed total in paise to the database", async () => {
+    const result = await actions.acceptBookingPriceAction(
+      null,
+      form({ bookingId: ID, totalMinor: "360000" }),
+    );
+    expect(repo.acceptBookingPrice).toHaveBeenCalledWith(ID, 360_000);
+    expect(result).toEqual({ ok: true, data: { done: true } });
+  });
+
+  it("rejects a malformed total before calling the database", async () => {
+    for (const totalMinor of ["", "-1", "12.5", "abc"]) {
+      const result = await actions.acceptBookingPriceAction(
+        null,
+        form({ bookingId: ID, totalMinor }),
+      );
+      expect(result).toMatchObject({ ok: false, error: { code: "VALIDATION_FAILED" } });
+    }
+    expect(repo.acceptBookingPrice).not.toHaveBeenCalled();
+  });
+
+  it("passes a changed or expired proposal through as an error", async () => {
+    repo.acceptBookingPrice.mockRejectedValue(
+      new AppError("CONFLICT", "This price proposal has expired."),
+    );
+    expect(
+      await actions.acceptBookingPriceAction(null, form({ bookingId: ID, totalMinor: "360000" })),
+    ).toMatchObject({ ok: false, error: { code: "CONFLICT" } });
   });
 });
 

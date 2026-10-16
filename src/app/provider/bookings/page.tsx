@@ -57,6 +57,7 @@ function Group({
                 status={b.status}
                 requestExpiresAt={b.requestExpiresAt}
                 now={now}
+                priceProposed={b.proposedTotalMinor !== null}
               />
             </li>
           ))}
@@ -68,6 +69,7 @@ function Group({
 
 const VIEWS = {
   "needs-response": { label: "Needs response", title: "Awaiting your response" },
+  "price-sent": { label: "Price sent", title: "Waiting for the traveller to accept your price" },
   upcoming: { label: "Upcoming", title: "Confirmed and upcoming" },
   past: { label: "Past and closed", title: "Past and closed" },
   all: { label: "All", title: "All requests" },
@@ -84,7 +86,8 @@ async function ProviderBookings({ searchParams }: PageProps<"/provider/bookings"
   const by = (...statuses: BookingStatus[]) =>
     bookings.filter((b) => statuses.includes(effectiveStatus(b.status, b.requestExpiresAt, now)));
   const groups: Record<View, ProviderBooking[]> = {
-    "needs-response": by("requested"),
+    "needs-response": by("requested").filter((b) => b.proposedTotalMinor === null),
+    "price-sent": by("requested").filter((b) => b.proposedTotalMinor !== null),
     upcoming: by("confirmed"),
     past: by("completed", "declined", "cancelled", "expired"),
     all: bookings,

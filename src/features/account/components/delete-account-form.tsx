@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 
+import { CaptchaField } from "@/components/captcha-field";
 import { FieldError, fieldErrorsOf, FormAlert, inputClass } from "@/components/form-feedback";
 import { PendingLabel } from "@/components/ui";
 
@@ -87,6 +88,7 @@ export function DeleteAccountForm({
             />
             <FieldError errors={fieldErrorsOf(state, "confirm")} />
           </label>
+          {reauth === "password" ? <CaptchaField resetKey={state} /> : null}
           <FormAlert state={state} />
           <button
             type="submit"

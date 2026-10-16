@@ -8,7 +8,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 import { getAssurance, recentRecovery } from "./assurance";
 import { assertAttemptAllowed, recordFailedAttempt } from "./attempts";
-import type { AuthErrorLike } from "./auth-errors";
+import { type AuthErrorLike, captchaError, isCaptchaFailure } from "./auth-errors";
 import { requireUser } from "./session";
 
 /** Reset links are single-use and short-lived; the form must be used soon after. */
@@ -62,12 +62,15 @@ function passwordUpdateError(error: AuthErrorLike): AppError {
  * used to sign someone else into an attacker's account). Never reveals whether
  * the address has an account.
  */
-export async function requestPasswordReset(email: string): Promise<void> {
+export async function requestPasswordReset(email: string, captchaToken?: string): Promise<void> {
   const supabase = await createSupabaseServerClient();
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: `${getPublicEnv().NEXT_PUBLIC_SITE_URL}/auth/reset`,
+    captchaToken,
   });
   if (error) {
+    // Checked before the token is spent on the address, so it reveals nothing.
+    if (isCaptchaFailure(error)) throw captchaError(error);
     if (isRateLimited(error) && !isPerAddressEmailLimit(error)) {
       throw new AppError("RATE_LIMITED", RATE_LIMITED, { cause: error });
     }
@@ -105,6 +108,7 @@ export async function verifyCurrentPassword(
   user: { id: string; email: string | null },
   currentPassword: string,
   field = "currentPassword",
+  captchaToken?: string,
 ): Promise<void> {
   if (!user.email || !(await hasPasswordSignIn())) {
     throw new AppError("FORBIDDEN", "This account signs in with Google and has no password.");
@@ -114,8 +118,11 @@ export async function verifyCurrentPassword(
   const { error: checkError } = await checker.auth.signInWithPassword({
     email: user.email,
     password: currentPassword,
+    options: { captchaToken },
   });
   if (checkError) {
+    // Not a wrong password: don't count it against the account.
+    if (isCaptchaFailure(checkError)) throw captchaError(checkError);
     if (isRateLimited(checkError)) {
       throw new AppError("RATE_LIMITED", RATE_LIMITED, { cause: checkError });
     }
@@ -138,13 +145,19 @@ export async function verifyCurrentPassword(
 export async function reauthenticateWithPassword(
   user: { id: string; email: string | null },
   password: string,
+  captchaToken?: string,
 ): Promise<void> {
   if (!user.email) {
     throw new AppError("FORBIDDEN", "This account signs in with Google and has no password.");
   }
   await assertAttemptAllowed("current_password");
   const supabase = await createSupabaseServerClient();
-  const { data, error } = await supabase.auth.signInWithPassword({ email: user.email, password });
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email: user.email,
+    password,
+    options: { captchaToken },
+  });
+  if (error && isCaptchaFailure(error)) throw captchaError(error);
   if (error || data.user?.id !== user.id) {
     if (error && isRateLimited(error)) {
       throw new AppError("RATE_LIMITED", RATE_LIMITED, { cause: error });
@@ -161,14 +174,18 @@ export async function reauthenticateWithPassword(
  * Changes the password of a signed-in account after checking the current one.
  * Signs out every other session.
  */
-export async function changePassword(currentPassword: string, password: string): Promise<void> {
+export async function changePassword(
+  currentPassword: string,
+  password: string,
+  captchaToken?: string,
+): Promise<void> {
   const user = await requireUser();
   // Accounts with two-step login change passwords only after the second step.
   const assurance = await getAssurance();
   if (!assurance || (assurance.hasVerifiedTotp && assurance.aal !== "aal2")) {
     throw new AppError("FORBIDDEN", "Verify your two-step login first.");
   }
-  await verifyCurrentPassword(user, currentPassword);
+  await verifyCurrentPassword(user, currentPassword, "currentPassword", captchaToken);
 
   const supabase = await createSupabaseServerClient();
   const { error } = await supabase.auth.updateUser({ password });
@@ -188,14 +205,18 @@ export async function hasPasswordSignIn(): Promise<boolean> {
 }
 
 /** Re-sends the sign-up confirmation email. Never reveals whether the address exists. */
-export async function resendConfirmation(email: string): Promise<void> {
+export async function resendConfirmation(email: string, captchaToken?: string): Promise<void> {
   const supabase = await createSupabaseServerClient();
   const { error } = await supabase.auth.resend({
     type: "signup",
     email,
-    options: { emailRedirectTo: `${getPublicEnv().NEXT_PUBLIC_SITE_URL}/auth/confirm` },
+    options: {
+      emailRedirectTo: `${getPublicEnv().NEXT_PUBLIC_SITE_URL}/auth/confirm`,
+      captchaToken,
+    },
   });
   if (error) {
+    if (isCaptchaFailure(error)) throw captchaError(error);
     if (isRateLimited(error) && !isPerAddressEmailLimit(error)) {
       throw new AppError("RATE_LIMITED", RATE_LIMITED, { cause: error });
     }

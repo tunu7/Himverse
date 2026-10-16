@@ -2,6 +2,12 @@ import type { NextConfig } from "next";
 
 const isDev = process.env.NODE_ENV === "development";
 
+// Cloudflare Turnstile (ADR-0010): its script and iframe are allowed only when a
+// site key is configured. NEXT_PUBLIC_* values are fixed at build time, like this header.
+const turnstile = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
+  ? " https://challenges.cloudflare.com"
+  : "";
+
 /**
  * Content Security Policy without nonces (docs/security/SECURITY.md).
  *
@@ -23,13 +29,14 @@ function contentSecurityPolicy(razorpay: boolean): string {
   const rzp = razorpay ? " https://checkout.razorpay.com" : "";
   return [
     "default-src 'self'",
-    `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}${rzp}`,
+    `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}${turnstile}${rzp}`,
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob:" + (razorpay ? " https://*.razorpay.com" : ""),
     "font-src 'self'",
     `connect-src 'self'${isDev ? " ws:" : ""}` +
       (razorpay ? " https://api.razorpay.com https://lumberjack.razorpay.com" : ""),
-    ...(razorpay ? ["frame-src https://api.razorpay.com https://checkout.razorpay.com"] : []),
+    `frame-src 'self'${turnstile}` +
+      (razorpay ? " https://api.razorpay.com https://checkout.razorpay.com" : ""),
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",

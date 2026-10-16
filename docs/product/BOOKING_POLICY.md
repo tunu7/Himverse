@@ -18,6 +18,7 @@ bookings migration and `src/lib/booking-options.ts` together.
 | Seats | Counted on confirmation only; a date can't be overbooked | `respond_to_booking` + check constraint |
 | Response window | 48 hours after the request, or the slot start if sooner; then **expired** | Functions + `pg_cron` sweep |
 | Price | Estimate at request (per-person price × party); **the provider confirms the final total** | `request_booking`, `respond_to_booking` |
+| Price approval | A final total more than **10% above the estimate**, or any total when there was no estimate, is a proposal: the booking stays a request until the traveller accepts (48 h, or until the start). Declining = cancelling the request (the partner can also decline); no answer = expired. One proposal per request, so a request stays open at most ~96 h. A deposit, when required, is due after acceptance | `respond_to_booking`, `accept_booking_price`, sweep |
 | Decline | Provider must give a reason | `respond_to_booking` |
 | Traveller cancellation | A request any time; a confirmed booking up to **24 hours** before the start | `cancel_booking` |
 | Provider cancellation | Confirmed bookings only, with a reason (requests are declined instead) | `cancel_booking` |
@@ -37,10 +38,9 @@ bookings migration and `src/lib/booking-options.ts` together.
 7. **Time slots:** a date plus an optional start time; multi-session days aren't modelled.
 8. **Provider suspension with confirmed bookings:** confirmed bookings stay as they are. Should
    travellers be notified or offered alternatives?
-9. **Final price vs estimate:** the provider can confirm any total up to INR 1 crore (a database cap),
-   even far above the estimate, and the traveller only sees it after confirmation. Should a large
-   increase need the traveller's acceptance, or be capped relative to the estimate? (Security review
-   L1, Phase 5.)
+9. **Final price vs estimate:** _Answered 2026-10-15 (owner):_ up to 10% above the estimate confirms
+   directly; more than that, or any total without an estimate, needs the traveller's acceptance
+   (see "Price approval" above and the ADR-0004 amendment). (Security review L1, Phase 5.)
 10. **Contact phone retention:** the phone number given at booking stays on the booking indefinitely and
     is visible to the provider's members. How long should it be kept after the trip, and should it be
     hidden once the booking is closed? Needs the DPDP review. (Security review L3, Phase 5.)

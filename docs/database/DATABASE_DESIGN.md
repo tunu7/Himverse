@@ -37,11 +37,11 @@ Phase 1 tables are **implemented** (migrations `20261012131029_identity_and_role
 | `destinations` | Admin-curated places (district, summary); coordinates/seasonality later | 1 ✅ |
 | `experiences` | Provider offerings; draft/published/archived; price in paise; `accepts_bookings` partner switch | 1 ✅ |
 | `itineraries` | Owner-private trip; current version pointer (composite FK, same itinerary) | 3 ✅ |
-| `itinerary_versions` | Immutable validated generations: preferences, plan (`itinerary.v2`), DB-computed total | 3 ✅ |
+| `itinerary_versions` | Immutable validated generations: preferences, plan (`itinerary.v3`), DB-computed total | 3 ✅ |
 | `itinerary_items` | Immutable plan items (`item_kind` activity/stay/transport/guide, `units`) with DB snapshots | 3 ✅ |
 | `itinerary_generations` | Generation log for rate limits and observability (no prompt text) | 3 ✅ |
 | `availability_slots` | Provider-managed dates with capacity; `seats_confirmed <= capacity` constraint | 4 ✅ |
-| `bookings` | Requests and lifecycle; idempotency key (unique per traveller); one active booking per slot, or per experience and date when there's no slot (`slot_id` is optional); price and date snapshots; `traveler_id` is nulled and personal details cleared when the traveller deletes their account (ADR-0009) | 4 ✅ |
+| `bookings` | Requests and lifecycle; idempotency key (unique per traveller); one active booking per slot, or per experience and date when there's no slot (`slot_id` is optional); price, date and `listing_type` snapshots (the type is copied by trigger and never changes); `traveler_id` is nulled and personal details cleared when the traveller deletes their account (ADR-0009) | 4 ✅ |
 | `platform_settings` | One row: `deposits_required` (admin switch, ADR-0005) | 5 ✅ |
 | `payments` | One row per Razorpay order (checkout attempt); amount, status, refunded; at most one captured per booking; written only by system functions | 5 ✅ |
 | `refunds` | One per captured payment, queued by cancellation rules; the row id is Razorpay's receipt | 5 ✅ |

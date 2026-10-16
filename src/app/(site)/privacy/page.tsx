@@ -67,9 +67,10 @@ export default function PrivacyPage() {
             <strong>Service providers</strong> that run the platform for us: Supabase (database and
             sign-in, hosted in Mumbai, India), Vercel (website hosting), our AI model provider
             (receives your trip preferences and notes to plan a trip, never your name, email or
-            phone), Google (only if you sign in with Google), Sentry (error reports) and Razorpay
-            (deposit payments: Razorpay handles your card, UPI or bank details; we only keep payment
-            and refund references and amounts).
+            phone), Google (only if you sign in with Google), Cloudflare Turnstile (the security
+            check on sign-in and sign-up forms, which sees your IP address and browser), Sentry
+            (error reports) and Razorpay (deposit payments: Razorpay handles your card, UPI or bank
+            details; we only keep payment and refund references and amounts).
           </li>
         </ul>
         <p>

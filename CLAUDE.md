@@ -20,7 +20,7 @@ building; anything not listed there needs the owner's approval. Status and next 
   notifications (needs a domain), CAPTCHA, staging, legal review, sample content removal.
 - **Payments:** 50% online deposits via Razorpay (ADR-0005), off until an admin turns them on; Test Mode
   until the go-live gate ([PAYMENTS](docs/operations/PAYMENTS.md)).
-- **Not in MVP:** reviews, email notifications, other regions.
+- **Not in MVP:** reviews, email/SMS notifications, other regions.
 
 ## Roles and terms
 

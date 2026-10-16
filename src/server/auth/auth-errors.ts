@@ -17,6 +17,17 @@ function isUpstreamFailure(error: AuthErrorLike): boolean {
 }
 
 const RATE_LIMITED = "Too many attempts. Please wait a few minutes and try again.";
+
+/** Supabase Auth refused the CAPTCHA token (missing, expired or reused; ADR-0010). */
+export function isCaptchaFailure(error: AuthErrorLike): boolean {
+  return error.code === "captcha_failed";
+}
+
+export function captchaError(error: AuthErrorLike): AppError {
+  return new AppError("VALIDATION_FAILED", "Please complete the security check and try again.", {
+    cause: error,
+  });
+}
 const UNAVAILABLE = "We can't reach the sign-in service right now. Please try again shortly.";
 
 /**
@@ -25,6 +36,7 @@ const UNAVAILABLE = "We can't reach the sign-in service right now. Please try ag
  * reported (and logged) as such instead of looking like a wrong password.
  */
 export function signInError(error: AuthErrorLike): AppError {
+  if (isCaptchaFailure(error)) return captchaError(error);
   if (isRateLimited(error)) {
     return new AppError("RATE_LIMITED", RATE_LIMITED, { cause: error });
   }
@@ -40,6 +52,7 @@ export function signInError(error: AuthErrorLike): AppError {
 
 /** Sign-up failures. Never reveals whether an email is already registered. */
 export function signUpError(error: AuthErrorLike): AppError {
+  if (isCaptchaFailure(error)) return captchaError(error);
   if (isRateLimited(error)) {
     return new AppError("RATE_LIMITED", RATE_LIMITED, { cause: error });
   }

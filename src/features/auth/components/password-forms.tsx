@@ -10,6 +10,7 @@ import {
   inputClass,
   secondaryButtonClass,
 } from "@/components/form-feedback";
+import { CaptchaField } from "@/components/captcha-field";
 import { PasswordField } from "@/components/password-field";
 import { PendingLabel } from "@/components/ui";
 
@@ -41,6 +42,7 @@ export function ForgotPasswordForm() {
         <input name="email" type="email" autoComplete="email" required className={inputClass} />
         <FieldError errors={fieldErrorsOf(state, "email")} />
       </label>
+      <CaptchaField resetKey={state} />
       <FormAlert state={state} />
       <button type="submit" disabled={pending} className={`${buttonClass} w-full py-3`}>
         <PendingLabel pending={pending} busy="Sending…" idle="Send reset link" />
@@ -108,6 +110,7 @@ export function ChangePasswordForm() {
         autoComplete="new-password"
       />
       <FieldError errors={fieldErrorsOf(state, "confirmPassword")} />
+      <CaptchaField resetKey={state} />
       <FormAlert
         state={state}
         successMessage="Password changed. Other devices have been signed out."
@@ -146,6 +149,7 @@ export function ResendConfirmation({ email }: { email: string }) {
   return (
     <form action={action} className="flex flex-col gap-2">
       <input type="hidden" name="email" value={email} />
+      <CaptchaField resetKey={state} />
       <button
         type="submit"
         disabled={pending || wait > 0}

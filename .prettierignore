@@ -13,3 +13,4 @@ src/types/database.ts
 # which every agent read pays for. Write tables as `| a | b |` with `| --- | --- |`.
 docs/
 reports/
+.claude/worktrees/

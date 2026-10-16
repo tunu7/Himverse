@@ -39,7 +39,7 @@ provider.
 | Catalogue | **Built:** admin-curated destinations; listings managed by partners, publishable only while verified; admin moderation; search, filters, detail pages |
 | Listings | **Built:** experiences, guides, stays (one room type), transport (vehicle hire), each with capacity per day ([ADR-0008](../decisions/ADR-0008-LISTING-TYPES.md)) |
 | Itinerary | **Built:** AI plans grounded in bookable listings: experiences, stays, transport and guides, each only while its partner accepts bookings; refine, regenerate, versions; Ollama (Cloud in production) or AI Gateway ([ADR-0006](../decisions/ADR-0006-SWITCHABLE-AI-PROVIDER-OLLAMA.md)) |
-| Booking | **Built:** requests for any future date; "Book whole trip"; partner switch; confirm/decline with final price; cancellation; expiry; in-app alerts ([BOOKING_POLICY](BOOKING_POLICY.md)) |
+| Booking | **Built:** requests for any future date; "Book whole trip"; partner switch; confirm/decline with final price (more than 10% above the estimate needs the traveller's acceptance); cancellation; expiry; in-app alerts ([BOOKING_POLICY](BOOKING_POLICY.md)) |
 | Payments | **Built (Test Mode):** 50% online deposits via Razorpay after confirmation, refunds by cancellation timing, manual partner payouts; off until an admin turns them on ([ADR-0005](../decisions/ADR-0005-PAYMENTS-RAZORPAY.md)) |
 | Admin | **Built:** overview, partner verification, destinations, moderation, bookings, payments, users |
 | Legal | **Built:** privacy policy and terms pages (legal review pending) |

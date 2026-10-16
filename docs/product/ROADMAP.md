@@ -41,7 +41,7 @@ site / partner portal / admin console, Vercel and Supabase production; 2026-10-1
 checks and fixes, self-serve account deletion and in-app booking alerts (ADR-0009), privacy and terms
 pages, dependency and secret audit, production page-weight baseline. Remaining
 ([RELEASE_CHECKLIST](../operations/RELEASE_CHECKLIST.md)): staging Supabase project for previews, error
-tracking and alerting, custom SMTP, CAPTCHA, accessibility audit, slow-network performance, remove sample
+tracking and alerting, custom SMTP, switching on CAPTCHA (Turnstile code ready, ADR-0010), accessibility audit, slow-network performance, remove sample
 content before launch.
 
 ## Phase 6 — Accounts and partner listings ✅ (2026-10-15)

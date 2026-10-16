@@ -183,15 +183,19 @@ function sentence(message: string): string {
   return message.charAt(0).toUpperCase() + message.slice(1) + ".";
 }
 
+/**
+ * Partner response. Returns "requested" when the total was more than 10% above
+ * the estimate (or there was none) and now waits for the traveller's approval.
+ */
 export async function respondToBooking(
   bookingId: string,
   decision: "confirmed" | "declined",
   finalTotalMinor: number | null,
   note: string,
-): Promise<void> {
+): Promise<BookingStatus> {
   await requireUser();
   const supabase = await createSupabaseServerClient();
-  const { error } = await supabase.rpc("respond_to_booking", {
+  const { data, error } = await supabase.rpc("respond_to_booking", {
     p_booking_id: bookingId,
     p_decision: decision,
     // Nullable in SQL (required only when confirming); generated types mark it non-null.
@@ -199,6 +203,18 @@ export async function respondToBooking(
     p_note: note,
   });
   if (error) throw bookingError(error, "Could not update this booking.");
+  return data;
+}
+
+/** Traveller accepts the partner's proposed total (must equal what they saw). */
+export async function acceptBookingPrice(bookingId: string, totalMinor: number): Promise<void> {
+  await requireUser();
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase.rpc("accept_booking_price", {
+    p_booking_id: bookingId,
+    p_total_minor: totalMinor,
+  });
+  if (error) throw bookingError(error, "Could not accept this price.");
 }
 
 export async function cancelBooking(bookingId: string, reason: string): Promise<void> {
@@ -223,19 +239,21 @@ export type BookingSummary = {
   endsOn: string | null;
   /** Rooms, vehicles or guides. */
   units: number;
-  /** Null when the caller can no longer see the listing (archived or hidden). */
-  listingType: ListingType | null;
+  /** Copied onto the booking, so it survives the listing being archived or hidden. */
+  listingType: ListingType;
   /** The online deposit when one is required (ADR-0005): amount, deadline, when paid. */
   deposit: { amountMinor: number; dueAt: string; paidAt: string | null } | null;
   partySize: number;
   estimatedTotalMinor: number | null;
   confirmedTotalMinor: number | null;
+  /** Set while a partner's total waits for the traveller's approval. */
+  proposedTotalMinor: number | null;
   requestExpiresAt: string;
   createdAt: string;
 };
 
 const SUMMARY_COLUMNS =
-  "id, reference, status, experience_title, experience_id, slot_starts_on, slot_start_time, ends_on, units, party_size, estimated_total_minor, confirmed_total_minor, request_expires_at, created_at, deposit_minor, payment_due_at, deposit_paid_at, listing:experiences!bookings_experience_id_fkey(listing_type)";
+  "id, reference, status, experience_title, experience_id, slot_starts_on, slot_start_time, ends_on, units, party_size, estimated_total_minor, confirmed_total_minor, proposed_total_minor, request_expires_at, created_at, listing_type, deposit_minor, payment_due_at, deposit_paid_at";
 
 type SummaryRow = {
   id: string;
@@ -247,7 +265,7 @@ type SummaryRow = {
   slot_start_time: string | null;
   ends_on: string | null;
   units: number;
-  listing: { listing_type: ListingType } | null;
+  listing_type: ListingType;
   deposit_minor: number | null;
   payment_due_at: string | null;
   deposit_paid_at: string | null;
@@ -255,6 +273,7 @@ type SummaryRow = {
   party_size: number | null;
   estimated_total_minor: number | null;
   confirmed_total_minor: number | null;
+  proposed_total_minor: number | null;
   request_expires_at: string;
   created_at: string;
 };
@@ -270,7 +289,7 @@ function toSummary(row: SummaryRow): BookingSummary {
     slotStartTime: row.slot_start_time,
     endsOn: row.ends_on,
     units: row.units,
-    listingType: row.listing?.listing_type ?? null,
+    listingType: row.listing_type,
     deposit:
       row.deposit_minor !== null && row.payment_due_at !== null
         ? { amountMinor: row.deposit_minor, dueAt: row.payment_due_at, paidAt: row.deposit_paid_at }
@@ -278,6 +297,7 @@ function toSummary(row: SummaryRow): BookingSummary {
     partySize: row.party_size ?? 0,
     estimatedTotalMinor: row.estimated_total_minor,
     confirmedTotalMinor: row.confirmed_total_minor,
+    proposedTotalMinor: row.proposed_total_minor,
     requestExpiresAt: row.request_expires_at,
     createdAt: row.created_at,
   };

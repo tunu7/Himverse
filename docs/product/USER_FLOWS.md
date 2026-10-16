@@ -44,6 +44,8 @@ States: progress while generating; partial failure ("we couldn't fit X"); hard f
 3. Status shows **Requested — awaiting provider confirmation**.
 4. Provider confirms or declines (P2). Traveler is notified and sees the updated status.
    Requests not answered within 48 h (or by the start, if sooner) expire.
+5. If the provider's final total is more than 10% above the estimate (or there was no estimate), the
+   traveller sees **New price awaiting approval** and accepts it, or cancels the request, within 48 h.
 
 ## T5 — View trip — implemented (itineraries and bookings)
 

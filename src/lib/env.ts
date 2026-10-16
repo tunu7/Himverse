@@ -238,6 +238,19 @@ export function getSupportEmail(): string | undefined {
   return parsed.success ? parsed.data : undefined;
 }
 
+/**
+ * The Cloudflare Turnstile site key (ADR-0010), on its own like the support
+ * address: auth forms render on prerendered pages and in client bundles. Unset
+ * means no CAPTCHA widget; the matching secret lives only in Supabase Auth.
+ */
+export function getTurnstileSiteKey(): string | undefined {
+  const parsed = z
+    .string()
+    .regex(/^[0-9A-Za-z_-]{8,128}$/)
+    .safeParse(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY);
+  return parsed.success ? parsed.data : undefined;
+}
+
 /** Safe to call from client and server code. */
 export function getPublicEnv(): PublicEnv {
   cachedPublicEnv ??= parsePublicEnv({

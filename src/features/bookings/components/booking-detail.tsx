@@ -12,7 +12,7 @@ import { formatPriceFrom, formatBookingDates } from "@/lib/format";
 import { type ListingType, unitCount } from "@/lib/listing-options";
 import { getBooking } from "@/server/bookings/repository";
 
-import { CancelBookingForm, RespondForm } from "./booking-forms";
+import { AcceptPriceForm, CancelBookingForm, RespondForm } from "./booking-forms";
 import { BookingStatusBadge } from "./booking-status";
 import { DepositPanel } from "./deposit-panel";
 
@@ -22,8 +22,8 @@ import { DepositPanel } from "./deposit-panel";
  * booking that isn't the viewer's in that role is "not found" there.
  */
 /** " · 2 rooms" for listings booked by the unit; nothing for experiences. */
-function unitsText(listingType: ListingType | null, units: number): string {
-  if (listingType && listingType !== "experience") return ` · ${unitCount(listingType, units)}`;
+function unitsText(listingType: ListingType, units: number): string {
+  if (listingType !== "experience") return ` · ${unitCount(listingType, units)}`;
   return units > 1 ? ` · quantity ${units}` : "";
 }
 
@@ -45,6 +45,11 @@ export async function BookingDetail({
   const startsAt = slotStartsAt(booking.slotStartsOn, booking.slotStartTime);
   const estimate = formatPriceFrom(booking.estimatedTotalMinor);
   const confirmed = formatPriceFrom(booking.confirmedTotalMinor);
+  // A partner's total above the threshold, waiting for the traveller (ADR-0004 amendment).
+  const proposedMinor = status === "requested" ? booking.proposedTotalMinor : null;
+  const deadline = new Date(booking.requestExpiresAt).toLocaleString("en-IN", {
+    timeZone: "Asia/Kolkata",
+  });
 
   return (
     <div className="flex flex-col gap-6">
@@ -63,6 +68,7 @@ export async function BookingDetail({
           status={booking.status}
           requestExpiresAt={booking.requestExpiresAt}
           now={now}
+          priceProposed={proposedMinor !== null}
         />
       </header>
 
@@ -111,12 +117,10 @@ export async function BookingDetail({
         ) : null}
         {status === "requested" ? (
           <div>
-            <dt className="text-xs font-medium tracking-wide text-subtle uppercase">Respond by</dt>
-            <dd className="font-medium">
-              {new Date(booking.requestExpiresAt).toLocaleString("en-IN", {
-                timeZone: "Asia/Kolkata",
-              })}
-            </dd>
+            <dt className="text-xs font-medium tracking-wide text-subtle uppercase">
+              {proposedMinor !== null ? "Price open until" : "Respond by"}
+            </dt>
+            <dd className="font-medium">{deadline}</dd>
           </div>
         ) : null}
       </dl>
@@ -135,6 +139,24 @@ export async function BookingDetail({
       ) : null}
       <DepositPanel booking={booking} now={now} />
 
+      {booking.isTraveler && proposedMinor !== null ? (
+        <section
+          className="flex flex-col gap-3 rounded-2xl border border-warning/30 bg-warning-soft p-5"
+          aria-labelledby="proposal-heading"
+          data-testid="price-proposal"
+        >
+          <h2 id="proposal-heading" className="text-lg font-semibold text-warning-soft-fg">
+            New price to approve
+          </h2>
+          <p className="text-sm text-warning-soft-fg">
+            The provider can take this booking for <strong>{formatPriceFrom(proposedMinor)}</strong>{" "}
+            in total
+            {estimate ? ` (your estimate was from ${estimate})` : ""}. Nothing is confirmed until
+            you accept, by {deadline}. To decline, cancel the request below.
+          </p>
+          <AcceptPriceForm bookingId={booking.id} totalMinor={proposedMinor} />
+        </section>
+      ) : null}
       {booking.isTraveler &&
       travelerCanCancel(booking.status, startsAt, booking.requestExpiresAt, now) ? (
         <CancelBookingForm bookingId={booking.id} requireReason={false} />
@@ -146,7 +168,17 @@ export async function BookingDetail({
           Less than 24 hours to go: please contact the provider directly to cancel.
         </p>
       ) : null}
-      {!booking.isTraveler && status === "requested" ? (
+      {!booking.isTraveler && proposedMinor !== null ? (
+        <section className="flex flex-col gap-2" aria-label="Proposed price">
+          <p className="text-sm text-muted" data-testid="price-proposal">
+            You proposed {formatPriceFrom(proposedMinor)}. Waiting for the traveller to accept by{" "}
+            {deadline}; if they don&apos;t, the request expires. If the price was a mistake, decline
+            with a message and the traveller can request again.
+          </p>
+          <RespondForm bookingId={booking.id} suggestedTotalRupees={null} declineOnly />
+        </section>
+      ) : null}
+      {!booking.isTraveler && status === "requested" && proposedMinor === null ? (
         <section className="flex flex-col gap-2" aria-label="Respond">
           <h2 className="text-lg font-semibold">Respond</h2>
           <RespondForm

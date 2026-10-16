@@ -31,6 +31,7 @@ apply only to new deployments.
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Public | Publishable key; RLS applies |
 | `NEXT_PUBLIC_AUTH_GOOGLE_ENABLED` | Public | `false` (default); `true` shows "Continue with Google" once the provider is set up |
 | `NEXT_PUBLIC_SUPPORT_EMAIL` | Public | Optional; shown on `/privacy` and `/terms` |
+| `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Public | Optional; shows the Turnstile check on auth forms (ADR-0010). The secret goes in Supabase, never here |
 | `SUPABASE_SECRET_KEY` | Secret | Bypasses RLS. Used only by the payments system path ([SECURITY](../security/SECURITY.md)) |
 | `RAZORPAY_KEY_ID` | Server | Optional (`rzp_test_…`); with the next two, enables deposits ([PAYMENTS](PAYMENTS.md)) |
 | `RAZORPAY_KEY_SECRET` | Secret | API auth and Checkout signature |
@@ -83,7 +84,7 @@ refuses to overwrite without `--force`.
    - email confirmations on; minimum password length 8; leaked-password protection;
    - an exact Site URL and redirect allow-list: `<site>/auth/confirm`, `<site>/auth/callback` and
      `<site>/auth/reset`;
-   - CAPTCHA and custom SMTP. The built-in sender allows only a few emails per hour; Resend needs a
+   - CAPTCHA (see [CAPTCHA](#captcha-turnstile) below) and custom SMTP. The built-in sender allows only a few emails per hour; Resend needs a
      verified domain. Raise the email rate limit afterwards.
 5. **TOTP:** Authentication → Multi-Factor → enable TOTP. Partners and admins must enrol before their
    area opens.
@@ -101,6 +102,24 @@ refuses to overwrite without `--force`.
 8. **First admin:** use the bootstrap runbook in [SECURITY](../security/SECURITY.md#admin-bootstrap-runbook).
 9. **Payments (optional):** follow [PAYMENTS](PAYMENTS.md) §1.
 10. **Branch protection on `main`:** require CI and one review.
+
+## CAPTCHA (Turnstile)
+
+Turn it on in this order. Enabling CAPTCHA in Supabase before the widget is live refuses every password
+sign-in.
+
+1. Cloudflare dashboard → Turnstile → Add widget: add the production domain (and preview domains if
+   wanted), mode **Managed**. Copy the **site key** and **secret key**.
+2. Vercel → Production: set `NEXT_PUBLIC_TURNSTILE_SITE_KEY=<site key>` and redeploy. The check now
+   appears on sign-in, sign-up, forgot password, change password and delete account; tokens are sent but
+   not yet enforced.
+3. Supabase → Authentication → Attack Protection → **Enable CAPTCHA protection**: provider Turnstile,
+   paste the **secret key**. Supabase now refuses password sign-ins and sign-ups without a valid token.
+4. Test each form on production. To roll back, turn CAPTCHA off in Supabase first, then unset the key.
+
+For manual testing, Cloudflare's always-pass test keys work locally: site key `1x00000000000000000000AA`
+in `.env.local`, and the secret `1x0000000000000000000000000000000AA` under `[auth.captcha]` in
+`supabase/config.toml` (then restart Supabase). Leave both off for E2E.
 
 ## Sample content (pre-launch)
 

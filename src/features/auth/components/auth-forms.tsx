@@ -11,6 +11,7 @@ import {
   inputClass,
 } from "@/components/form-feedback";
 
+import { CaptchaField } from "@/components/captcha-field";
 import { PasswordField } from "@/components/password-field";
 import { PendingLabel } from "@/components/ui";
 
@@ -49,6 +50,7 @@ export function SignInForm({ next }: { next: string }) {
           Forgot password?
         </Link>
       </div>
+      <CaptchaField resetKey={state} />
       <FormAlert state={state} />
       <button type="submit" disabled={pending} className={`${buttonClass} w-full py-3`}>
         <PendingLabel pending={pending} busy="Signing in…" idle="Sign in" />
@@ -143,6 +145,7 @@ export function SignUpForm({
         />
         <FieldError errors={fieldErrorsOf(state, "password")} />
       </div>
+      <CaptchaField resetKey={state} />
       <FormAlert state={state} />
       <button type="submit" disabled={pending} className={`${buttonClass} w-full py-3`}>
         <PendingLabel pending={pending} busy="Creating account…" idle="Create account" />

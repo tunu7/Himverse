@@ -159,3 +159,23 @@ capacity` therefore still holds for every published date.
   provider switches requests off later, an item in an existing plan fails with a clear reason when the
   trip is booked. Any version of an itinerary the traveller owns can be booked.
 - `request_booking` (by slot) is kept for compatibility. The app now uses date requests.
+
+## Amendment (2026-10-15): traveller approval for large price increases
+
+Owner decision; answers BOOKING_POLICY question 9 (security review L1). Migration
+`20261016140720_booking_price_approval`.
+
+- **Threshold:** `private.price_needs_approval(estimate, final)` is true when the final total is more than
+  10% above the estimate (integer comparison `final × 10 > estimate × 11`), or when there was no estimate.
+- **Proposal, not a new status:** above the threshold, `respond_to_booking(..., 'confirmed', total)` keeps
+  the booking `requested`, stores `proposed_total_minor` and `price_proposed_at`, resets
+  `request_expires_at` to 48 hours (or the start, if sooner) and returns `requested`. No capacity is taken.
+  Keeping the status means the request limits, one-active-booking indexes and sweep apply unchanged.
+- **While a proposal is open** the partner can only decline. Partner alerts don't count it as waiting.
+- **Acceptance:** `accept_booking_price(booking, total)` (traveller only; `total` must equal the
+  proposal) re-checks the provider, listing, date and capacity through `private.confirm_booking`, which
+  both paths now share, and confirms at the proposed total. A retry after success returns `confirmed`.
+- **Declining** is the existing traveller cancellation of a request. **No answer** expires through the
+  sweep, with its own event note.
+- Bookings also store `listing_type` (migration `20261016140505_booking_listing_type`), copied by trigger
+  at insert and immutable, so labels survive a hidden listing.

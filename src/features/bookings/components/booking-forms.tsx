@@ -14,6 +14,7 @@ import { MAX_PARTY_SIZE } from "@/lib/booking-options";
 import { formatPriceFrom } from "@/lib/format";
 
 import {
+  acceptBookingPriceAction,
   addSlotAction,
   cancelBookingAction,
   requestBookingAction,
@@ -132,42 +133,55 @@ export function BookingRequestForm({
 export function RespondForm({
   bookingId,
   suggestedTotalRupees,
+  declineOnly = false,
 }: {
   bookingId: string;
   suggestedTotalRupees: number | null;
+  /** While a proposed price waits for the traveller, the partner can only decline. */
+  declineOnly?: boolean;
 }) {
   const [state, action, pending] = useActionState(respondToBookingAction, null);
   const errors = (field: string) => fieldErrorsOf(state, field);
   return (
     <form action={action} className="flex flex-col gap-3" noValidate>
       <input type="hidden" name="bookingId" value={bookingId} />
-      <label className="flex flex-col gap-1">
-        <span className="text-sm font-medium">Final price for the whole booking (₹)</span>
-        <input
-          type="number"
-          name="finalTotalRupees"
-          min={0}
-          defaultValue={suggestedTotalRupees ?? ""}
-          className={inputClass}
-        />
-        <FieldError errors={errors("finalTotalRupees")} />
-      </label>
+      {declineOnly ? null : (
+        <label className="flex flex-col gap-1">
+          <span className="text-sm font-medium">Final price for the whole booking (₹)</span>
+          <input
+            type="number"
+            name="finalTotalRupees"
+            min={0}
+            defaultValue={suggestedTotalRupees ?? ""}
+            className={inputClass}
+          />
+          <FieldError errors={errors("finalTotalRupees")} />
+        </label>
+      )}
       <label className="flex flex-col gap-1">
         <span className="text-sm font-medium">Message to the traveller (required to decline)</span>
         <textarea name="note" rows={2} maxLength={500} className={inputClass} />
         <FieldError errors={errors("note")} />
       </label>
+      {declineOnly ? null : (
+        <p className="text-xs text-muted">
+          More than 10% above the estimate (or with no estimate) goes to the traveller to accept
+          first.
+        </p>
+      )}
       <FormAlert state={state} />
       <div className="flex flex-wrap gap-3">
-        <button
-          type="submit"
-          name="decision"
-          value="confirmed"
-          disabled={pending}
-          className={buttonClass}
-        >
-          Confirm booking
-        </button>
+        {declineOnly ? null : (
+          <button
+            type="submit"
+            name="decision"
+            value="confirmed"
+            disabled={pending}
+            className={buttonClass}
+          >
+            Confirm booking
+          </button>
+        )}
         <button
           type="submit"
           name="decision"
@@ -178,6 +192,31 @@ export function RespondForm({
           Decline
         </button>
       </div>
+    </form>
+  );
+}
+
+/** Traveller accepts a partner's proposed total; declining is cancelling the request. */
+export function AcceptPriceForm({
+  bookingId,
+  totalMinor,
+}: {
+  bookingId: string;
+  totalMinor: number;
+}) {
+  const [state, action, pending] = useActionState(acceptBookingPriceAction, null);
+  return (
+    <form action={action} className="flex flex-col gap-2" noValidate>
+      <input type="hidden" name="bookingId" value={bookingId} />
+      <input type="hidden" name="totalMinor" value={totalMinor} />
+      <FormAlert state={state} successMessage="Price accepted. Your booking is confirmed." />
+      <button type="submit" disabled={pending} className={`${buttonClass} self-start`}>
+        <PendingLabel
+          pending={pending}
+          idle={`Accept ${formatPriceFrom(totalMinor)}`}
+          busy="Accepting…"
+        />
+      </button>
     </form>
   );
 }
