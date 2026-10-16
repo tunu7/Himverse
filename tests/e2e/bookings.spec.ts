@@ -272,8 +272,11 @@ test("providers can stop and resume booking requests for an experience", async (
     .getByTestId("listing-row")
     .filter({ visible: true })
     .filter({ hasText: "Sangti" });
-  await row.getByRole("button", { name: "Stop booking requests" }).click();
-  await expect(row.getByTestId("booking-requests-state")).toHaveText(/Not accepting/);
+  const toggle = row.getByRole("switch", { name: /Take booking requests for/ });
+  await expect(toggle).toHaveAttribute("aria-checked", "true");
+  await toggle.click();
+  await expect(toggle).toHaveAttribute("aria-checked", "false");
+  await expect(row.getByTestId("booking-requests-state")).toHaveText(/Offline: not accepting/);
 
   await page.goto("/experiences/demo-sangti-birding");
   await expect(page.getByText(/isn.t taking booking requests/)).toBeVisible();
@@ -281,6 +284,7 @@ test("providers can stop and resume booking requests for an experience", async (
 
   // Restore: the local seed is shared across runs.
   await page.goto("/provider/listings");
-  await row.getByRole("button", { name: "Accept booking requests" }).click();
-  await expect(row.getByTestId("booking-requests-state")).toHaveText(/Accepting/);
+  await toggle.click();
+  await expect(toggle).toHaveAttribute("aria-checked", "true");
+  await expect(row.getByTestId("booking-requests-state")).toHaveText(/Online: accepting/);
 });

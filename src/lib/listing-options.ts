@@ -1,3 +1,4 @@
+import { formatDuration, formatPriceFrom } from "@/lib/format";
 import type { Database } from "@/types/database";
 
 /** Partner listing types and how each is priced (ADR-0008). */
@@ -93,4 +94,39 @@ export function estimateTotalMinor(
     case "per_vehicle_trip":
       return priceMinor * units;
   }
+}
+
+export type ListingSummaryInput = {
+  listingType: ListingType;
+  priceUnit: PriceUnit;
+  priceFromMinor: number | null;
+  durationMinutes: number;
+  dailyCapacity: number | null;
+  languages: readonly string[];
+  destinationName: string | null;
+  routeToName: string | null;
+};
+
+/**
+ * The facts a partner checks at a glance, in each type's own terms: rooms for
+ * stays, guides and languages for guides, the route and vehicles for transport,
+ * duration for experiences. What was listed, never live availability.
+ */
+export function listingSummaryParts(l: ListingSummaryInput): string[] {
+  const place = l.destinationName ?? "destination not published";
+  const price = formatPriceFrom(l.priceFromMinor);
+  const priced = price ? `${price} ${PRICE_UNIT_LABELS[l.priceUnit]}` : null;
+  const units =
+    l.listingType !== "experience" && l.dailyCapacity !== null
+      ? capacityText(l.listingType, l.dailyCapacity)
+      : null;
+  const parts: (string | null)[] =
+    l.listingType === "stay"
+      ? [place, units, priced]
+      : l.listingType === "guide"
+        ? [place, units, l.languages.length > 0 ? l.languages.join(", ") : null, priced]
+        : l.listingType === "transport"
+          ? [l.routeToName ? `${place} → ${l.routeToName}` : place, units, priced]
+          : [place, formatDuration(l.durationMinutes), priced ? `from ${priced}` : null];
+  return parts.filter((p): p is string => p !== null);
 }

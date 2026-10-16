@@ -17,6 +17,7 @@ import {
   applyAsProvider,
   changeExperienceAcceptsBookings,
   changeExperienceStatus,
+  changeListingTypeAcceptsBookings,
   submitForReview,
 } from "../actions";
 import { LISTING_TYPE_LABELS, LISTING_TYPES, type ListingType } from "@/lib/listing-options";
@@ -119,22 +120,34 @@ export function SubmitForReviewForm({ providerId }: { providerId: string }) {
 export function NewExperienceForm({
   providerId,
   destinations,
+  initialType = "experience",
 }: {
   providerId: string;
   destinations: readonly PublicDestination[];
+  initialType?: ListingType;
 }) {
   const [state, action, pending] = useActionState(addExperience, null);
-  const [listingType, setListingType] = useState<ListingType>("experience");
+  const [listingType, setListingType] = useState<ListingType>(initialType);
+  // React resets the form after a successful save; the browser then shows the
+  // type select's first option while the chosen type (and its fields) stay.
+  // Remounting the select on reset keeps it showing the chosen type.
+  const [resets, setResets] = useState(0);
   const errors = (field: string) => fieldErrorsOf(state, field);
   if (destinations.length === 0) {
     return <p className="text-sm text-muted">No destinations are published yet.</p>;
   }
   return (
-    <form action={action} className="flex max-w-xl flex-col gap-4" noValidate>
+    <form
+      action={action}
+      onReset={() => setResets((n) => n + 1)}
+      className="flex max-w-xl flex-col gap-4"
+      noValidate
+    >
       <input type="hidden" name="providerId" value={providerId} />
       <label className="flex flex-col gap-1">
         <span className="text-sm font-medium">What are you listing?</span>
         <select
+          key={resets}
           value={listingType}
           onChange={(e) => setListingType(e.target.value as ListingType)}
           className={inputClass}
@@ -227,23 +240,89 @@ export function ExperienceStatusForm({
   );
 }
 
-/** Partner switch: whether travellers can request this experience. */
+/**
+ * Partner switch: whether travellers can request this listing (and AI trip
+ * plans can use it). Online = bookable; offline listings stay published but
+ * take no requests.
+ */
 export function AcceptsBookingsForm({
   experienceId,
   acceptsBookings,
+  title,
 }: {
   experienceId: string;
   acceptsBookings: boolean;
+  title: string;
 }) {
   const [state, action, pending] = useActionState(changeExperienceAcceptsBookings, null);
   return (
     <form action={action} className="inline-flex flex-col gap-1">
       <input type="hidden" name="experienceId" value={experienceId} />
       <input type="hidden" name="acceptsBookings" value={acceptsBookings ? "false" : "true"} />
-      <button type="submit" disabled={pending} className={secondaryButtonClass}>
-        {acceptsBookings ? "Stop booking requests" : "Accept booking requests"}
-      </button>
+      <OnlineSwitch
+        on={acceptsBookings}
+        pending={pending}
+        label={`Take booking requests for ${title}`}
+      />
       <FormAlert state={state} />
+    </form>
+  );
+}
+
+/** A submit button styled and announced as an on/off switch. */
+function OnlineSwitch({ on, pending, label }: { on: boolean; pending: boolean; label: string }) {
+  return (
+    <button
+      type="submit"
+      role="switch"
+      aria-checked={on}
+      aria-label={label}
+      disabled={pending}
+      className="inline-flex items-center gap-2 rounded-full border border-line bg-surface px-3 py-1.5 text-sm font-medium text-fg transition hover:border-line-strong disabled:opacity-60"
+    >
+      <span
+        aria-hidden="true"
+        className={`relative inline-flex h-5 w-9 shrink-0 rounded-full transition ${
+          on ? "bg-accent" : "bg-line-strong"
+        }`}
+      >
+        <span
+          className={`absolute top-0.5 size-4 rounded-full bg-surface shadow transition-all ${
+            on ? "left-[1.125rem]" : "left-0.5"
+          }`}
+        />
+      </span>
+      <span aria-hidden="true">{on ? "Online" : "Offline"}</span>
+    </button>
+  );
+}
+
+/** Takes every listing of one type online or offline at once. */
+export function ListingTypeBookingsForm({
+  listingType,
+  allOnline,
+}: {
+  listingType: ListingType;
+  allOnline: boolean;
+}) {
+  const [state, action, pending] = useActionState(changeListingTypeAcceptsBookings, null);
+  const many = LISTING_TYPE_LABELS[listingType].many.toLowerCase();
+  const changed = state?.ok ? state.data.changed : 0;
+  return (
+    <form action={action} className="inline-flex flex-col items-end gap-1">
+      <input type="hidden" name="listingType" value={listingType} />
+      <input type="hidden" name="acceptsBookings" value={allOnline ? "false" : "true"} />
+      <button type="submit" disabled={pending} className={secondaryButtonClass}>
+        <PendingLabel
+          pending={pending}
+          busy="Updating…"
+          idle={allOnline ? `Take all ${many} offline` : `Put all ${many} online`}
+        />
+      </button>
+      <FormAlert
+        state={state}
+        successMessage={changed === 0 ? "Nothing to change." : `${changed} updated.`}
+      />
     </form>
   );
 }

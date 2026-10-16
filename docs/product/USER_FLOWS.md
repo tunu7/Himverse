@@ -58,10 +58,19 @@ Partner signs up in Tourism partner mode, submits profile and verification detai
 partner portal; admin verifies (A1). Unverified partners cannot publish listings. Partners use
 two-step login and can list experiences, guides, stays and transport (ADR-0008).
 
+The dashboard adapts to what the business offers. Before any listing it asks "What do you offer?" and
+opens the add form on that type. Afterwards it shows one card per type offered: listings taking
+requests, published, total, and confirmed bookings in the next 30 days. The listings page groups
+listings by type and describes each in its own terms (rooms, guides and languages, route and
+vehicles, duration).
+
 ## P2 — Partner manages bookings — implemented (Phase 4)
 
 Provider sees incoming requests for their experiences only, confirms or declines with optional note,
-manages availability, and can switch booking requests off.
+manages availability, and switches each listing **online or offline** (online = taking booking
+requests and usable in AI trip plans; offline listings stay published but take no new requests).
+A per-type switch takes every stay, guide, transport or experience listing offline or online at once,
+for example a homestay closed for the season. Existing bookings are unaffected.
 
 ## A1 — Admin verification and curation — implemented (admin console)
 

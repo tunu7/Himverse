@@ -50,6 +50,7 @@ async function EditListing({ params }: PageProps<"/provider/listings/[id]">) {
           <AcceptsBookingsForm
             experienceId={listing.id}
             acceptsBookings={listing.acceptsBookings}
+            title={listing.title}
           />
           {listing.status !== "published" && verified && !listing.moderationLocked ? (
             <ExperienceStatusForm experienceId={listing.id} status="published" label="Publish" />

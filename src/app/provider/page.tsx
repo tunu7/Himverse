@@ -10,9 +10,10 @@ import {
   SubmitForReviewForm,
 } from "@/features/providers/components/provider-forms";
 import { formatPriceFrom } from "@/lib/format";
+import { LISTING_TYPE_LABELS, LISTING_TYPES, type ListingType } from "@/lib/listing-options";
 import { requireAccountForPage } from "@/server/auth/session";
 import { getPartnerPaymentSummary } from "@/server/payments/admin";
-import { getMyBusiness, getPartnerOverview } from "@/server/providers/partner";
+import { getMyBusiness, getPartnerOverview, type ServiceSummary } from "@/server/providers/partner";
 import { canSubmitForReview, PROVIDER_STATUS_LABELS } from "@/server/providers/status";
 
 function Apply() {
@@ -46,6 +47,72 @@ function Apply() {
         </ol>
       </aside>
     </div>
+  );
+}
+
+/** Dashboard copy for each kind of service a partner offers. */
+const SERVICE_COPY: Record<ListingType, { offer: string; upcoming: string }> = {
+  stay: { offer: "Homestays and rooms, booked by the night.", upcoming: "check-ins" },
+  guide: { offer: "Local guides, booked by the day.", upcoming: "guided trips" },
+  transport: { offer: "Vehicle hire, by the trip or the day.", upcoming: "trips" },
+  experience: { offer: "Treks, tours, workshops and other activities.", upcoming: "experiences" },
+};
+
+/** One card per service the partner offers: what's live, what's online, what's coming up. */
+function Services({ services }: { services: readonly ServiceSummary[] }) {
+  if (services.length === 0) {
+    return (
+      <Panel title="What do you offer?">
+        <p className="text-sm text-muted">
+          Pick what to list first. You can offer more than one kind of service.
+        </p>
+        <ul className="grid gap-3 sm:grid-cols-2">
+          {LISTING_TYPES.map((type) => (
+            <li key={type}>
+              <Link
+                href={`/provider/listings?type=${type}#add-listing`}
+                className="flex h-full flex-col gap-1 rounded-xl border border-line p-4 transition hover:border-accent hover:bg-accent-soft"
+              >
+                <span className="font-semibold text-fg">{LISTING_TYPE_LABELS[type].many}</span>
+                <span className="text-sm text-muted">{SERVICE_COPY[type].offer}</span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </Panel>
+    );
+  }
+  return (
+    <Panel title="Your services">
+      <ul className="grid gap-3 sm:grid-cols-2" data-testid="partner-services">
+        {services.map((s) => {
+          const offline = s.live - s.bookable;
+          return (
+            <li key={s.listingType}>
+              <Link
+                href="/provider/listings"
+                className="flex h-full flex-col gap-1 rounded-xl border border-line p-4 transition hover:border-accent"
+              >
+                <span className="font-semibold text-fg">
+                  {LISTING_TYPE_LABELS[s.listingType].many}
+                </span>
+                <span className="text-sm text-fg-soft">
+                  {s.bookable} taking requests · {s.live} published · {s.listings} total
+                </span>
+                <span className="text-sm text-muted">
+                  {s.upcoming} upcoming {SERVICE_COPY[s.listingType].upcoming} (30 days)
+                </span>
+                {offline > 0 ? (
+                  <span className="text-sm text-warning-soft-fg">
+                    {offline} published but offline: not taking requests
+                  </span>
+                ) : null}
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+    </Panel>
   );
 }
 
@@ -114,6 +181,8 @@ async function Overview() {
         />
       </StatGrid>
 
+      <Services services={overview.byType} />
+
       {payments.collectedMinor > 0 || payments.paidOutMinor > 0 ? (
         <Panel title="Online deposits">
           <p className="text-sm text-fg-soft" data-testid="partner-deposits">
@@ -160,8 +229,8 @@ async function Overview() {
                 href: "/provider/listings",
               },
               {
-                label: "Open dates or accept requests for any date",
-                done: overview.openDates > 0 || overview.liveListings > 0,
+                label: "Put a listing online for booking requests",
+                done: overview.byType.some((s) => s.bookable > 0),
                 href: "/provider/listings",
               },
             ]}

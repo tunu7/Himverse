@@ -55,7 +55,8 @@ async function signIn(page: Page, email: string, landing: RegExp) {
 
 async function visitExploreAnonymously(page: Page) {
   await page.context().clearCookies();
-  await page.goto("/explore");
+  // Newest first: the default order is by id, so a new listing can land on page 2.
+  await page.goto("/experiences?sort=newest");
 }
 
 test.afterAll(() => {

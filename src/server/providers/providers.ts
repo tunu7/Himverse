@@ -28,6 +28,10 @@ export type ProviderExperience = {
   moderationLocked: boolean;
   acceptsBookings: boolean;
   listingType: ListingType;
+  priceUnit: PriceUnit;
+  dailyCapacity: number | null;
+  languages: string[];
+  routeToName: string | null; // transport: the far end of the route
 };
 
 export type MyProvider = {
@@ -48,7 +52,7 @@ export async function listMyProviders(): Promise<MyProvider[]> {
   const { data, error } = await supabase
     .from("provider_members")
     .select(
-      "provider:providers(id, slug, display_name, district, status, experiences(id, title, status, category, duration_minutes, price_from_minor, moderation_locked, accepts_bookings, listing_type, destination:destinations!experiences_destination_id_fkey(name)))",
+      "provider:providers(id, slug, display_name, district, status, experiences(id, title, status, category, duration_minutes, price_from_minor, moderation_locked, accepts_bookings, listing_type, price_unit, daily_capacity, languages, destination:destinations!experiences_destination_id_fkey(name), route_to:destinations!experiences_route_to_destination_id_fkey(name)))",
     )
     .eq("user_id", user.id);
   if (error) {
@@ -91,6 +95,10 @@ export async function listMyProviders(): Promise<MyProvider[]> {
       moderationLocked: e.moderation_locked,
       acceptsBookings: e.accepts_bookings,
       listingType: e.listing_type,
+      priceUnit: e.price_unit,
+      dailyCapacity: e.daily_capacity,
+      languages: e.languages,
+      routeToName: e.route_to?.name ?? null,
     })),
   }));
 }
@@ -333,4 +341,30 @@ export async function setExperienceAcceptsBookings(
   if (data.length !== 1) {
     throw new AppError("NOT_FOUND", "We couldn't find that experience.");
   }
+}
+
+/**
+ * Puts every non-archived listing of one type online or offline at once (a
+ * homestay closing for the season). Returns how many changed; re-running is a
+ * no-op. RLS limits the update to the provider's members.
+ */
+export async function setListingTypeAcceptsBookings(
+  providerId: string,
+  listingType: ListingType,
+  acceptsBookings: boolean,
+): Promise<number> {
+  await requireUser();
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("experiences")
+    .update({ accepts_bookings: acceptsBookings })
+    .eq("provider_id", providerId)
+    .eq("listing_type", listingType)
+    .neq("status", "archived")
+    .neq("accepts_bookings", acceptsBookings)
+    .select("id");
+  if (error) {
+    throw toAppError(error, "Could not update your listings.");
+  }
+  return data.length;
 }

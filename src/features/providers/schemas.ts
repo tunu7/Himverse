@@ -142,6 +142,12 @@ export const acceptsBookingsSchema = z.strictObject({
   acceptsBookings: z.enum(["true", "false"]).transform((v) => v === "true"),
 });
 
+/** Online/offline for every listing of one type; the business comes from the session. */
+export const listingTypeBookingsSchema = z.strictObject({
+  listingType: z.enum(LISTING_TYPES),
+  acceptsBookings: z.enum(["true", "false"]).transform((v) => v === "true"),
+});
+
 export const businessProfileSchema = z.strictObject({
   providerId: z.uuid(),
   displayName: z.string().trim().min(2, "Enter your business name.").max(120),

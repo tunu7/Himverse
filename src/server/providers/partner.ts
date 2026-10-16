@@ -3,6 +3,7 @@ import "server-only";
 import { istDate } from "@/lib/booking-options";
 import type { ExperienceCategory } from "@/lib/catalog-options";
 import { AppError } from "@/lib/errors";
+import { LISTING_TYPES, type ListingType } from "@/lib/listing-options";
 import { toAppError } from "@/lib/supabase/errors";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { requireUser } from "@/server/auth/session";
@@ -135,6 +136,18 @@ export type PartnerOverview = {
   liveListings: number;
   draftListings: number;
   openDates: number;
+  /** One entry per listing type the partner offers (non-archived), in LISTING_TYPES order. */
+  byType: ServiceSummary[];
+};
+
+export type ServiceSummary = {
+  listingType: ListingType;
+  listings: number;
+  live: number;
+  /** Published and taking requests: what travellers and AI plans can actually use. */
+  bookable: number;
+  /** Confirmed, starting in the next 30 days. */
+  upcoming: number;
 };
 
 /** Headline numbers for the partner overview (dates and months in India time). */
@@ -148,13 +161,13 @@ export async function getPartnerOverview(providerId: string, now: Date): Promise
   const [bookings, listings, slots] = await Promise.all([
     supabase
       .from("bookings")
-      .select("status, request_expires_at, slot_starts_on, confirmed_total_minor")
+      .select("status, request_expires_at, slot_starts_on, confirmed_total_minor, listing_type")
       .eq("provider_id", providerId)
       .or(`status.eq.requested,slot_starts_on.gte.${monthStart}`)
       .limit(2000),
     supabase
       .from("experiences")
-      .select("status, accepts_bookings")
+      .select("status, accepts_bookings, listing_type")
       .eq("provider_id", providerId)
       .limit(500),
     supabase
@@ -176,12 +189,28 @@ export async function getPartnerOverview(providerId: string, now: Date): Promise
   const confirmed = bookings.data.filter(
     (b) => b.status === "confirmed" || b.status === "completed",
   );
+  const upcoming = confirmed.filter(
+    (b) => b.status === "confirmed" && b.slot_starts_on >= today && b.slot_starts_on <= in30,
+  );
+  const current = listings.data.filter((e) => e.status !== "archived");
+  const byType = LISTING_TYPES.flatMap((type): ServiceSummary[] => {
+    const mine = current.filter((e) => e.listing_type === type);
+    if (mine.length === 0) return [];
+    const live = mine.filter((e) => e.status === "published");
+    return [
+      {
+        listingType: type,
+        listings: mine.length,
+        live: live.length,
+        bookable: live.filter((e) => e.accepts_bookings).length,
+        upcoming: upcoming.filter((b) => b.listing_type === type).length,
+      },
+    ];
+  });
   return {
     needsResponse: pending.length,
     soonestDeadline: soonest,
-    upcomingConfirmed: confirmed.filter(
-      (b) => b.status === "confirmed" && b.slot_starts_on >= today && b.slot_starts_on <= in30,
-    ).length,
+    upcomingConfirmed: upcoming.length,
     revenueThisMonthMinor: confirmed
       .filter(
         (b) => b.slot_starts_on >= monthStart && b.slot_starts_on.slice(0, 7) === today.slice(0, 7),
@@ -190,6 +219,7 @@ export async function getPartnerOverview(providerId: string, now: Date): Promise
     liveListings: listings.data.filter((e) => e.status === "published").length,
     draftListings: listings.data.filter((e) => e.status === "draft").length,
     openDates: slots.count ?? 0,
+    byType,
   };
 }
 

@@ -35,7 +35,7 @@ provider.
 | --- | --- |
 | Region | Arunachal Pradesh only |
 | Accounts | **Built:** email/password with confirmation and resend, Google sign-in, password reset and change, TOTP two-step login required for partners and admins, self-serve account deletion ([ADR-0009](../decisions/ADR-0009-ACCOUNT-DELETION-AND-ALERTS.md)) |
-| Areas | **Built:** traveller site, partner portal `/provider`, admin console `/admin` |
+| Areas | **Built:** traveller site, partner portal `/provider` (dashboard and listings adapt to the types a partner offers; online/offline per listing and per type), admin console `/admin` |
 | Catalogue | **Built:** admin-curated destinations; listings managed by partners, publishable only while verified; admin moderation; search, filters, detail pages |
 | Listings | **Built:** experiences, guides, stays (one room type), transport (vehicle hire), each with capacity per day ([ADR-0008](../decisions/ADR-0008-LISTING-TYPES.md)) |
 | Itinerary | **Built:** AI plans grounded in bookable listings: experiences, stays, transport and guides, each only while its partner accepts bookings; refine, regenerate, versions; Ollama (Cloud in production) or AI Gateway ([ADR-0006](../decisions/ADR-0006-SWITCHABLE-AI-PROVIDER-OLLAMA.md)) |

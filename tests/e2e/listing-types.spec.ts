@@ -47,7 +47,8 @@ test("stays: partner lists a room type, traveller requests nights, partner confi
   await add.getByLabel(/Indicative price from/).fill("2500");
   await add.getByRole("button", { name: "Save as draft" }).click();
   const row = page.getByTestId("listing-row").filter({ visible: true }).filter({ hasText: title });
-  await expect(row).toContainText("Stay");
+  await expect(page.getByTestId("listing-group-stay")).toContainText(title);
+  await expect(row).toContainText("2 rooms of this type");
   await row.getByRole("button", { name: "Publish", exact: true }).click();
   await expect(row).toContainText("published");
 

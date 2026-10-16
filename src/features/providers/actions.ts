@@ -2,18 +2,20 @@
 
 import { refresh } from "next/cache";
 
-import { type ActionResult, ok, toLoggedFailure } from "@/lib/errors";
+import { type ActionResult, AppError, ok, toLoggedFailure } from "@/lib/errors";
 import { parseInput } from "@/lib/validation";
 import { requireAccount } from "@/server/auth/session";
 import {
   createExperience,
   createProviderApplication,
   setExperienceAcceptsBookings,
+  setListingTypeAcceptsBookings,
   setExperienceStatus,
   submitProviderApplication,
 } from "@/server/providers/providers";
 
 import {
+  getMyBusiness,
   updateBusinessDetails,
   updateBusinessProfile,
   updateListing,
@@ -24,6 +26,7 @@ import {
   businessDetailsSchema,
   businessProfileSchema,
   listingSchema,
+  listingTypeBookingsSchema,
   experienceStatusSchema,
   newExperienceSchema,
   providerApplicationSchema,
@@ -122,6 +125,32 @@ export async function changeExperienceAcceptsBookings(
     return ok({ done: true });
   } catch (error) {
     return toLoggedFailure("providers.change_accepts_bookings_failed", error);
+  }
+}
+
+export type ListingTypeBookingsResult = ActionResult<{ changed: number }> | null;
+
+/** Puts all of the partner's listings of one type online or offline. */
+export async function changeListingTypeAcceptsBookings(
+  _prev: ListingTypeBookingsResult,
+  formData: FormData,
+): Promise<ListingTypeBookingsResult> {
+  try {
+    const input = parseInput(listingTypeBookingsSchema, formData);
+    await requireAccount(["partner"]);
+    const business = await getMyBusiness();
+    if (!business) {
+      throw new AppError("NOT_FOUND", "Set up your business first.");
+    }
+    const changed = await setListingTypeAcceptsBookings(
+      business.id,
+      input.listingType,
+      input.acceptsBookings,
+    );
+    refresh();
+    return ok({ changed });
+  } catch (error) {
+    return toLoggedFailure("providers.change_type_accepts_bookings_failed", error);
   }
 }
 
