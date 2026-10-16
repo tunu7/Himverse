@@ -4,7 +4,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(12);
+select plan(17);
 
 insert into auth.users (id, email, aud, role, raw_user_meta_data) values
   ('9a111111-1111-4111-8111-111111111111', 'ig.traveller@example.test', 'authenticated', 'authenticated', '{"account_type":"traveller"}');
@@ -108,6 +108,48 @@ select results_eq(
        (select v.id from public.itinerary_versions v join public.itineraries i on i.id = v.itinerary_id where i.title = 'Ziro with a guide'),
        '+91 98765 43210', 'Trip', '9af00000-0000-4000-8000-000000000001') $$,
   $$ values (4::bigint, true) $$, 'a retry replays both requests');
+
+-- Grouping edge cases: same guide on days 1 and 3 with another on day 2 (no merge across
+-- the gap), and a change in the number of guides (no merge either). 5 travellers on day 1-2
+-- need 2 group guides; on day 3 one per-person guide, then the group guide again on day 4.
+select lives_ok(
+  $$ select * from public.save_itinerary_version(public.begin_itinerary_generation(null, 100), null, 'Guide gaps', 'generate',
+       jsonb_build_object('startDate', (private.today_ist() + 50)::text, 'adults', 5, 'children', 0), '{"days":[{},{},{},{}]}',
+       'itinerary.v3', 'itinerary-v4', 'mock', 5, '[]',
+       '[{"day_number":1,"position":9,"item_kind":"guide","units":2,"experience_id":"9ae00000-0000-4000-8000-000000000002","destination_id":"9ad00000-0000-4000-8000-000000000001","time_of_day":"full_day"},
+         {"day_number":2,"position":9,"item_kind":"guide","units":2,"experience_id":"9ae00000-0000-4000-8000-000000000002","destination_id":"9ad00000-0000-4000-8000-000000000001","time_of_day":"full_day"},
+         {"day_number":3,"position":9,"item_kind":"guide","units":1,"experience_id":"9ae00000-0000-4000-8000-000000000003","destination_id":"9ad00000-0000-4000-8000-000000000001","time_of_day":"full_day"},
+         {"day_number":4,"position":9,"item_kind":"guide","units":2,"experience_id":"9ae00000-0000-4000-8000-000000000002","destination_id":"9ad00000-0000-4000-8000-000000000001","time_of_day":"full_day"}]') $$,
+  'a plan with guide gaps saves');
+reset role;
+select is((select v.estimated_total_minor from public.itinerary_versions v join public.itineraries i on i.id = v.itinerary_id
+           where i.title = 'Guide gaps'),
+  -- group guide 2500 x 2 guides x 3 days + per-person guide 800 x 5 travellers
+  1500000::bigint + 400000, 'a per-group guide multiplies by the number of guides');
+set local role authenticated;
+select results_eq(
+  $$ select count(distinct booking_id) from public.request_itinerary_bookings(
+       (select v.id from public.itinerary_versions v join public.itineraries i on i.id = v.itinerary_id where i.title = 'Guide gaps'),
+       '+91 98765 43210', 'Gaps', '9af00000-0000-4000-8000-000000000002') $$,
+  $$ values (3::bigint) $$, 'days 1-2, day 3 and day 4 are three separate guide bookings');
+
+select throws_ok(
+  $$ select * from public.save_itinerary_version(public.begin_itinerary_generation(null, 100), null, 'Room as guide', 'generate',
+       jsonb_build_object('startDate', (private.today_ist() + 30)::text, 'adults', 1, 'children', 0), '{"days":[{},{}]}',
+       'itinerary.v3', 'itinerary-v4', 'mock', 1, '[]',
+       '[{"day_number":1,"position":9,"item_kind":"guide","units":1,"experience_id":"9ae00000-0000-4000-8000-000000000001","destination_id":"9ad00000-0000-4000-8000-000000000001","time_of_day":"full_day"}]') $$,
+  '55000', null, 'another listing type passed off as a guide is refused');
+
+reset role;
+insert into auth.users (id, email, aud, role, raw_user_meta_data) values
+  ('9a222222-2222-4222-8222-222222222222', 'ig.other@example.test', 'authenticated', 'authenticated', '{"account_type":"traveller"}');
+set local role authenticated;
+select set_config('request.jwt.claims', '{"sub":"9a222222-2222-4222-8222-222222222222","role":"authenticated","aal":"aal1"}', true);
+select throws_ok(
+  $$ select * from public.request_itinerary_bookings(
+       (select v.id from public.itinerary_versions v join public.itineraries i on i.id = v.itinerary_id where i.title = 'Guide gaps'),
+       '+91 98765 43210', 'Not mine', gen_random_uuid()) $$,
+  'P0002', null, 'another traveller cannot book someone else''s plan');
 
 select * from finish();
 rollback;

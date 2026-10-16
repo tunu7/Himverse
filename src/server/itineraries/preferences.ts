@@ -72,7 +72,9 @@ function preferencesSchema(startDate: z.ZodType<string>) {
       includeStays: z.boolean().default(true),
       includeTransport: z.boolean().default(true),
       // Guides (owner decision 2026-10-16): suggested by default, optionally by language.
-      includeGuide: z.boolean().default(true),
+      // Default false so plans saved before guides existed don't gain them on refine;
+      // the trip form always sends the checkbox (on by default there).
+      includeGuide: z.boolean().default(false),
       guideLanguage: z
         .string()
         .trim()

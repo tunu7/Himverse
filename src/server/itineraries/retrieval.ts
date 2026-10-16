@@ -62,6 +62,8 @@ export async function retrieveCandidates(prefs: TripPreferences): Promise<Candid
 export const MAX_CANDIDATE_STAYS = 20;
 export const MAX_CANDIDATE_TRANSPORT = 20;
 export const MAX_CANDIDATE_GUIDES = 20;
+/** Guides fetched before the language and group-size filters, so a match isn't cut off. */
+const GUIDE_FETCH_LIMIT = 200;
 
 /** Bookable stays at the candidate destinations with room for the whole group. */
 async function queryStays(
@@ -187,10 +189,10 @@ async function queryGuides(
     .in("destination_id", destinationIds)
     .order("price_from_minor", { ascending: true, nullsFirst: false })
     .order("id", { ascending: true })
-    .limit(MAX_CANDIDATE_GUIDES);
+    .limit(GUIDE_FETCH_LIMIT);
   if (error) throw toAppError(error, "Could not load guides for your trip.");
   const wanted = language.trim().toLowerCase();
-  return data.flatMap((g) =>
+  const guides = data.flatMap((g) =>
     g.max_guests &&
     g.daily_capacity &&
     g.max_guests * g.daily_capacity >= travellers &&
@@ -210,4 +212,5 @@ async function queryGuides(
         ]
       : [],
   );
+  return guides.slice(0, MAX_CANDIDATE_GUIDES);
 }
