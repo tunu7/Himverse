@@ -128,6 +128,10 @@ listings (not bookable)". The provider has no dates and isn't bookable, the scri
 it's kept outside the migrations. Applied to production on 2026-10-13. Remove it before launch with
 `npx supabase db query --linked -f supabase/sample-content/remove.sql`.
 
+To start from an empty catalogue, run `remove-all.sql` the same way. It deletes every destination,
+listing (all types), saved itinerary and booking, plus the sample provider; accounts and partners
+stay. It refuses to run once any payment or refund exists.
+
 ## Migrations
 
 Migrations are forward-only and must stay compatible with the code currently deployed (expand →
