@@ -48,6 +48,8 @@ writeFileSync(
     `NEXT_PUBLIC_SITE_URL=http://localhost:${port}`,
     `NEXT_PUBLIC_SUPABASE_URL=${status.API_URL}`,
     `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=${status.PUBLISHABLE_KEY}`,
+    // supabase/config.toml enables phone sign-in locally with fixed test codes (ADR-0011).
+    "NEXT_PUBLIC_AUTH_PHONE_ENABLED=true",
     ...(secretKey ? [`SUPABASE_SECRET_KEY=${secretKey}`] : []),
     "",
   ].join("\n"),

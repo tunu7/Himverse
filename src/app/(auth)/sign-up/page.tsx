@@ -5,6 +5,7 @@ import { Suspense } from "react";
 import { LoadingBlock } from "@/components/page-shell";
 import { SignUpForm } from "@/features/auth/components/auth-forms";
 import { GoogleSignIn } from "@/features/auth/components/google-sign-in";
+import { PhoneSignIn } from "@/features/auth/components/phone-forms";
 import { safeRedirectPath } from "@/lib/redirect";
 
 export const metadata: Metadata = { title: "Create your account · Himverse.AI" };
@@ -56,6 +57,7 @@ async function SignUpContent({ searchParams }: PageProps<"/sign-up">) {
         next={`/welcome?as=${audience}${destination ? `&next=${encodeURIComponent(destination)}` : ""}`}
       />
       <SignUpForm next={destination} accountType={audience} />
+      <PhoneSignIn next={destination} accountType={audience} />
     </div>
   );
 }

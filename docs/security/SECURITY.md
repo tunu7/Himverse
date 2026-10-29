@@ -2,7 +2,8 @@
 
 Decisions: [ADR-0002](../decisions/ADR-0002-AUTHORIZATION-MODEL.md) (authority in the database),
 [ADR-0007](../decisions/ADR-0007-ONE-ACCOUNT-TYPE-PER-ACCOUNT.md) (one account type),
-[ADR-0009](../decisions/ADR-0009-ACCOUNT-DELETION-AND-ALERTS.md) (account deletion). Behaviour is pinned
+[ADR-0009](../decisions/ADR-0009-ACCOUNT-DELETION-AND-ALERTS.md) (account deletion),
+[ADR-0011](../decisions/ADR-0011-PHONE-SIGN-IN-AND-REQUEST-LIMITS.md) (phone sign-in, request limits). Behaviour is pinned
 by `supabase/tests/*.test.sql`. Report vulnerabilities privately to the maintainers (contact to be
 published before launch); never in public issues.
 
@@ -18,7 +19,8 @@ published before launch); never in public issues.
 | Secrets | Leak to browser or logs | `server-only` modules; no `NEXT_PUBLIC_` secrets; log redaction |
 | AI pipeline | Prompt injection | Output validation + grounding; no write tools ([AI_ARCHITECTURE](../ai/AI_ARCHITECTURE.md)) |
 | Google sign-in | Login CSRF, open redirect | PKCE cookie; `next` limited to internal paths |
-| Accounts | Credential stuffing, enumeration, lost authenticator | Supabase Auth limits; generic errors; per-account attempt limits; Turnstile CAPTCHA verified by Supabase ([ADR-0010](../decisions/ADR-0010-CAPTCHA-TURNSTILE.md); on before launch) |
+| Accounts | Credential stuffing, enumeration, lost authenticator | Supabase Auth limits; per-IP and per-email request limits (ADR-0011); generic errors; per-account attempt limits; Turnstile CAPTCHA verified by Supabase ([ADR-0010](../decisions/ADR-0010-CAPTCHA-TURNSTILE.md); on before launch) |
+| Phone sign-in | SMS pumping and cost; code guessing; taking over a number | Supabase OTP (hashed, expiring); per-number, per-IP and daily SMS limits that fail closed; per-number code-check limits; a number is attached only with the code sent to it; off until configured (ADR-0011) |
 | Resources | Spam; AI cost runaway | DB rate limits; per-user + platform AI caps; kill switch |
 
 ## Roles and authority
@@ -93,7 +95,8 @@ Every table has pgTAP tests impersonating each role, asserting allowed **and** d
    `db push`, `link` and `git diff --no-index`.
 2. **Least privilege:** the user-context client by default. The **secret key** is used only by the
    payments system path (`src/server/payments/system-db.ts`, payment RPCs only) for webhooks, the
-   payments cron and server-verified checkout.
+   payments cron and server-verified checkout, and by the request limiter
+   (`src/server/auth/limiter-db.ts`, `hit_rate_limit` only).
 3. **Authorisation in depth:** RLS **and** checks in every Server Action and Route Handler (they are
    public endpoints). `src/proxy.ts` only redirects optimistically.
 4. **Validate input** at every boundary ([API_CONTRACTS](../api/API_CONTRACTS.md)).
@@ -124,7 +127,12 @@ Every table has pgTAP tests impersonating each role, asserting allowed **and** d
 - **Wrong two-step codes or current passwords:** limited to 5 per account per 15 minutes
   (`auth_attempt_limits`). The guessed values are never logged.
 - **No account enumeration:** forgot-password and resend always answer the same; sign-in has one
-  message for a wrong email or password.
+  message for a wrong email or password; phone sign-in and sign-up are one flow, so it never says
+  whether a number is registered.
+- **Phone sign-in** (ADR-0011, off until an SMS provider is set up): Supabase Auth's SMS OTP; we never
+  see or log codes. A number is added to an existing account only with the code sent to it, after the
+  second step if enrolled, and never if another account has it. Phone details are identity, never
+  authorization.
 - **Account deletion** (ADR-0009):
   - needs a sign-in within 15 minutes, which the **database** checks from the JWT `amr`;
   - bookings are anonymised by a trigger on every deletion path.
@@ -146,8 +154,11 @@ path is covered). They raise `54000`, which the app shows as `RATE_LIMITED`. The
 | Platform AI | `AI_DAILY_GENERATION_LIMIT` per IST day (default 300) | `begin_itinerary_generation` |
 | Confirmed booking total | INR 1 crore | check constraint |
 
-Sign-in and sign-up aren't limited here: an anonymous-callable limiter would let anyone exhaust
-another person's quota. They rely on Supabase Auth's limits plus CAPTCHA before launch.
+**Sign-in, sign-up, emails and SMS** are limited per visitor IP and per email or phone number by
+`hit_rate_limit` (ADR-0011 has the table). Only the server's privileged path can count, so nobody can
+exhaust another person's budget from a browser. Keys are hashed. Sign-in, sign-up and email limits fail
+open if the counter is down (logged); SMS and code checks fail closed. Supabase Auth's own limits and the
+CAPTCHA still apply on top.
 
 ## Personal data
 
@@ -160,5 +171,7 @@ another person's quota. They rely on Supabase Auth's limits plus CAPTCHA before 
 - **First-time two-step setup needs only the password**, so an attacker who already knows it could
   enrol first. Mitigation: admins enrol in a controlled bootstrap, and partners are told to enrol
   promptly. Follow-up: an email code before enrolment.
-- **No per-IP limits of our own on sign-in, forgot-password and resend:** Supabase sees the server's
-  IP. Follow-up: CAPTCHA (Turnstile).
+- **Per-email sign-in limit:** someone who knows an address can delay that person's password sign-in
+  for up to 15 minutes. Short and never permanent; Google and phone sign-in are unaffected.
+- **IP limits only on Vercel:** elsewhere the forwarding header can't be trusted, so local and
+  self-hosted runs have per-email and per-number limits only.

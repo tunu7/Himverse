@@ -15,7 +15,8 @@ building; anything not listed there needs the owner's approval. Status and next 
   price (experiences on published dates only; whole trip; partner switch; unpriced listings stay
   requests — ADR-0004 amendment 2026-10-29), listing types (experience, guide, stay, transport — ADR-0008), one role per
   account (ADR-0007), password reset/change, TOTP for admins and partners, partner portal `/provider`,
-  admin console `/admin`, account deletion and in-app booking alerts (ADR-0009), privacy/terms pages,
+  admin console `/admin`, account deletion and in-app booking alerts (ADR-0009), per-visitor request
+  limits and phone sign-in with SMS codes (built, off until an SMS provider is set up — ADR-0011), privacy/terms pages,
   automated a11y checks. Production is live on Vercel + Supabase with sample content; no staging yet.
 - **Remaining for launch:** [RELEASE_CHECKLIST](docs/operations/RELEASE_CHECKLIST.md) — Sentry, email
   notifications (needs a domain), CAPTCHA, staging, legal review, sample content removal.

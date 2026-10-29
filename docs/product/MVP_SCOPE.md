@@ -34,7 +34,7 @@ provider.
 | Area | Included |
 | --- | --- |
 | Region | Arunachal Pradesh only |
-| Accounts | **Built:** email/password with confirmation and resend, Google sign-in, password reset and change, TOTP two-step login required for partners and admins, self-serve account deletion ([ADR-0009](../decisions/ADR-0009-ACCOUNT-DELETION-AND-ALERTS.md)) |
+| Accounts | **Built:** email/password with confirmation and resend, Google sign-in, password reset and change, TOTP two-step login required for partners and admins, self-serve account deletion ([ADR-0009](../decisions/ADR-0009-ACCOUNT-DELETION-AND-ALERTS.md)), per-visitor request limits; **phone sign-in with SMS codes built but off** until an SMS provider and DLT registration are in place ([ADR-0011](../decisions/ADR-0011-PHONE-SIGN-IN-AND-REQUEST-LIMITS.md); owner decision 2026-10-29) |
 | Areas | **Built:** traveller site, partner portal `/provider` (dashboard and listings adapt to the types a partner offers; online/offline per listing and per type), admin console `/admin` |
 | Catalogue | **Built:** admin-curated destinations; listings managed by partners, publishable only while verified; admin moderation; search, filters, detail pages |
 | Listings | **Built:** experiences, guides, stays (one room type), transport (vehicle hire), each with capacity per day ([ADR-0008](../decisions/ADR-0008-LISTING-TYPES.md)) |

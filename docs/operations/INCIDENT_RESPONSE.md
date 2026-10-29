@@ -27,6 +27,23 @@ Lightweight process for a small team; expand before launch.
 
 Rotate `SUPABASE_SECRET_KEY` in Supabase → update Vercel env → redeploy → audit Supabase logs for misuse.
 
+### Suspected account compromise
+
+1. Supabase → Authentication → Users: find the user and **sign them out of all sessions** (revokes
+   refresh tokens; access tokens expire within an hour).
+2. If the password may be known, send a password reset; if a phone number was added that the person
+   doesn't recognise, remove it from the user in Supabase.
+3. For partners and admins, delete their TOTP factor only after verifying the person out-of-band
+   ([SECURITY](../security/SECURITY.md#accounts-and-sign-in)).
+4. Review their bookings, listings and payouts for changes in the window, and the logs for
+   `auth.sms_code_sent`, `auth.phone_linked` and `security.rate_limited` around it.
+
+### SMS cost spike or SMS pumping
+
+Set `SMS_DAILY_LIMIT=0` in Vercel and redeploy, or disable the Phone provider in Supabase (immediate).
+Check the provider's per-country spend, tighten its geo-permissions, then restore a lower limit. Look for
+`security.rate_limited` with `sms_*` buckets in the logs.
+
 ### Suspected cross-user data access
 
 Identify the table/policy, hotfix the policy via migration, add a pgTAP test reproducing the leak,

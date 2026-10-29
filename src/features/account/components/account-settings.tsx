@@ -1,8 +1,10 @@
 import { cardClass } from "@/components/form-feedback";
 import { ChangePasswordForm } from "@/features/auth/components/password-forms";
+import { PhoneLinkForm } from "@/features/auth/components/phone-forms";
 import { reauthMethodFor } from "@/server/auth/account-deletion";
 import { getAssurance } from "@/server/auth/assurance";
 import { hasPasswordSignIn } from "@/server/auth/passwords";
+import { getMyPhone } from "@/server/auth/phone";
 import type { AccountType } from "@/server/auth/session";
 import { getMyProfile } from "@/server/profiles/profiles";
 
@@ -17,11 +19,12 @@ const TYPE_LABELS: Record<AccountType, string> = {
 
 /** Profile and sign-in settings, shared by every area's account page. */
 export async function AccountSettings({ accountType }: { accountType: AccountType }) {
-  const [profile, hasPassword, assurance, reauth] = await Promise.all([
+  const [profile, hasPassword, assurance, reauth, phone] = await Promise.all([
     getMyProfile(),
     hasPasswordSignIn(),
     getAssurance(),
     reauthMethodFor(),
+    getMyPhone(),
   ]);
   return (
     <>
@@ -38,7 +41,8 @@ export async function AccountSettings({ accountType }: { accountType: AccountTyp
           </span>
         </div>
         <p className="text-muted">
-          Signed in as <span className="font-medium text-fg">{profile.email}</span>
+          Signed in as{" "}
+          <span className="font-medium text-fg">{profile.email ?? phone ?? "your account"}</span>
         </p>
         <ProfileForm displayName={profile.displayName} />
         <p className="text-xs text-subtle">
@@ -67,9 +71,10 @@ export async function AccountSettings({ accountType }: { accountType: AccountTyp
           <ChangePasswordForm />
         ) : (
           <p className="text-sm text-muted">
-            You sign in with Google, so there&apos;s no Himverse password to change.
+            You sign in with Google or a phone code, so there&apos;s no Himverse password to change.
           </p>
         )}
+        <PhoneLinkForm current={phone} />
       </section>
 
       {accountType !== "admin" ? (

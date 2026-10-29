@@ -30,9 +30,11 @@ apply only to new deployments.
 | `NEXT_PUBLIC_SUPABASE_URL` | Public | Supabase API URL |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Public | Publishable key; RLS applies |
 | `NEXT_PUBLIC_AUTH_GOOGLE_ENABLED` | Public | `false` (default); `true` shows "Continue with Google" once the provider is set up |
+| `NEXT_PUBLIC_AUTH_PHONE_ENABLED` | Public | `false` (default); `true` shows phone sign-in once an SMS provider is set up ([below](#phone-sign-in-sms), ADR-0011) |
 | `NEXT_PUBLIC_SUPPORT_EMAIL` | Public | Optional; shown on `/privacy` and `/terms` |
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Public | Optional; shows the Turnstile check on auth forms (ADR-0010). The secret goes in Supabase, never here |
-| `SUPABASE_SECRET_KEY` | Secret | Bypasses RLS. Used only by the payments system path ([SECURITY](../security/SECURITY.md)) |
+| `SUPABASE_SECRET_KEY` | Secret | Bypasses RLS. Used only by the payments system path and the request limiter ([SECURITY](../security/SECURITY.md)). Without it, sign-in limits fail open and SMS is refused |
+| `SMS_DAILY_LIMIT` | Server | Platform-wide SMS codes per day (default 200; `0` stops SMS). Cost guard (ADR-0011) |
 | `RAZORPAY_KEY_ID` | Server | Optional (`rzp_test_…`); with the next two, enables deposits ([PAYMENTS](PAYMENTS.md)) |
 | `RAZORPAY_KEY_SECRET` | Secret | API auth and Checkout signature |
 | `RAZORPAY_WEBHOOK_SECRET` | Secret | Webhook signature check |
@@ -102,6 +104,28 @@ refuses to overwrite without `--force`.
 8. **First admin:** use the bootstrap runbook in [SECURITY](../security/SECURITY.md#admin-bootstrap-runbook).
 9. **Payments (optional):** follow [PAYMENTS](PAYMENTS.md) §1.
 10. **Branch protection on `main`:** require CI and one review.
+
+## Phone sign-in (SMS)
+
+Off until all of this is done (ADR-0011). Each SMS costs money.
+
+1. **Indian numbers:** register on a TRAI DLT portal (entity, an SMS sender ID and the OTP template, e.g.
+   `Your Himverse code is {#var#}`). Your SMS provider needs the DLT IDs. This can take days or weeks.
+2. **SMS provider:** create an account with one Supabase supports (Twilio or Twilio Verify, MessageBird,
+   Vonage or Textlocal). Use its geo-permissions to allow only the countries in `src/lib/phone.ts`.
+3. **Supabase → Authentication → Providers → Phone:** enable it and enter the provider credentials
+   (they stay in Supabase, never in Vercel). Set the SMS template to the DLT-approved text, OTP expiry
+   to 5 minutes, and the minimum interval between SMS to 60 seconds.
+4. **Supabase → Authentication → Rate Limits:** set the SMS-per-hour limit to match your budget.
+5. **Vercel:** set `SMS_DAILY_LIMIT` (e.g. 200) and `NEXT_PUBLIC_AUTH_PHONE_ENABLED=true`, then redeploy.
+6. Test on production with a real phone: sign up, sign in, add a number in settings. Watch the provider's
+   spend, and the `auth.sms_code_sent` and `security.rate_limited` logs, for a few days.
+
+To turn it off quickly, set `SMS_DAILY_LIMIT=0` (stops SMS at the next deployment) or disable the Phone
+provider in Supabase (immediate).
+
+Locally, `supabase/config.toml` enables phone sign-up with fixed test codes for `+91 9999 0000 01`–`03`
+(code `123456`); no SMS is sent. `npm run env:local` turns the flag on.
 
 ## CAPTCHA (Turnstile)
 

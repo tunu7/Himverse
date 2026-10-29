@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { EnvValidationError, parseAiEnv, parsePublicEnv, parseServerEnv } from "@/lib/env";
+import {
+  EnvValidationError,
+  parseAiEnv,
+  parseAuthLimitsEnv,
+  parsePublicEnv,
+  parseServerEnv,
+} from "@/lib/env";
 
 const validPublic = {
   NEXT_PUBLIC_SITE_URL: "http://localhost:3000",
@@ -13,7 +19,18 @@ describe("parsePublicEnv", () => {
     expect(parsePublicEnv(validPublic)).toEqual({
       ...validPublic,
       NEXT_PUBLIC_AUTH_GOOGLE_ENABLED: "false",
+      NEXT_PUBLIC_AUTH_PHONE_ENABLED: "false",
     });
+  });
+
+  it('keeps phone sign-in off unless explicitly "true"', () => {
+    expect(
+      parsePublicEnv({ ...validPublic, NEXT_PUBLIC_AUTH_PHONE_ENABLED: "true" })
+        .NEXT_PUBLIC_AUTH_PHONE_ENABLED,
+    ).toBe("true");
+    expect(() => parsePublicEnv({ ...validPublic, NEXT_PUBLIC_AUTH_PHONE_ENABLED: "1" })).toThrow(
+      EnvValidationError,
+    );
   });
 
   it('enables Google sign-in only with an explicit "true"', () => {
@@ -168,5 +185,13 @@ describe("parseAiEnv", () => {
       AI_ITINERARY_MODEL: "himverse-planner",
       AI_MODEL_TIMEOUT_MS: 180_000,
     });
+  });
+});
+
+describe("parseAuthLimitsEnv", () => {
+  it("defaults the daily SMS budget and bounds it", () => {
+    expect(parseAuthLimitsEnv({}).SMS_DAILY_LIMIT).toBe(200);
+    expect(parseAuthLimitsEnv({ SMS_DAILY_LIMIT: "0" }).SMS_DAILY_LIMIT).toBe(0);
+    expect(() => parseAuthLimitsEnv({ SMS_DAILY_LIMIT: "-1" })).toThrow(EnvValidationError);
   });
 });

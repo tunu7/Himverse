@@ -21,17 +21,28 @@ import {
   requestPasswordReset,
   resendConfirmation,
 } from "@/server/auth/passwords";
+import {
+  confirmPhoneLink,
+  sendSignInCode,
+  startPhoneLink,
+  verifySignInCode,
+} from "@/server/auth/phone";
+import { emailKey, enforceLimits, ipCheck, trustedClientIp } from "@/server/auth/request-limits";
 import { getCurrentAccount, homePathFor } from "@/server/auth/session";
 import { chooseMyAccountType } from "@/server/profiles/profiles";
 
 import {
   changePasswordSchema,
   chooseAccountTypeSchema,
+  confirmPhoneLinkSchema,
   confirmTotpSchema,
   emailOnlySchema,
   newPasswordSchema,
+  sendPhoneCodeSchema,
   signInSchema,
   signUpSchema,
+  startPhoneLinkSchema,
+  verifyPhoneCodeSchema,
   verifySecondStepSchema,
 } from "./schemas";
 
@@ -42,6 +53,7 @@ export async function signUp(_prev: SignUpResult, formData: FormData): Promise<S
   let destination: string;
   try {
     const input = parseInput(signUpSchema, formData);
+    await enforceLimits(ipCheck("sign_up_ip", await trustedClientIp()), { failClosed: false });
     const supabase = await createSupabaseServerClient();
     const next = safeRedirectPath(input.next);
     const { data, error } = await supabase.auth.signUp({
@@ -72,6 +84,13 @@ export async function signIn(_prev: SignInResult, formData: FormData): Promise<S
   let destination: string;
   try {
     const input = parseInput(signInSchema, formData);
+    await enforceLimits(
+      [
+        ...ipCheck("sign_in_ip", await trustedClientIp()),
+        { bucket: "sign_in_email", key: emailKey(input.email) },
+      ],
+      { failClosed: false },
+    );
     const supabase = await createSupabaseServerClient();
     const { data, error } = await supabase.auth.signInWithPassword({
       email: input.email,
@@ -117,6 +136,17 @@ export async function chooseAccountType(
 
 export type EmailSentResult = ActionResult<{ sent: true }> | null;
 
+/** Recovery and confirmation emails, per visitor and per address (ADR-0011). */
+async function enforceEmailSendLimits(email: string): Promise<void> {
+  await enforceLimits(
+    [
+      ...ipCheck("email_send_ip", await trustedClientIp()),
+      { bucket: "email_send_email", key: emailKey(email) },
+    ],
+    { failClosed: false },
+  );
+}
+
 /** "Forgot password": always the same answer, whether or not the address exists. */
 export async function requestPasswordResetAction(
   _prev: EmailSentResult,
@@ -124,6 +154,7 @@ export async function requestPasswordResetAction(
 ): Promise<EmailSentResult> {
   try {
     const input = parseInput(emailOnlySchema, formData);
+    await enforceEmailSendLimits(input.email);
     await requestPasswordReset(input.email, input.captchaToken);
     return ok({ sent: true });
   } catch (error) {
@@ -138,6 +169,7 @@ export async function resendConfirmationAction(
 ): Promise<EmailSentResult> {
   try {
     const input = parseInput(emailOnlySchema, formData);
+    await enforceEmailSendLimits(input.email);
     await resendConfirmation(input.email, input.captchaToken);
     return ok({ sent: true });
   } catch (error) {
@@ -226,4 +258,66 @@ export async function verifySecondStepAction(
     return toLoggedFailure("auth.mfa_verify_failed", error);
   }
   redirect(destination);
+}
+
+export type PhoneCodeSentResult = ActionResult<{ phone: string }> | null;
+export type PhoneVerifiedResult = ActionResult<never> | null;
+export type PhoneLinkedResult = ActionResult<{ phone: string; linked: boolean }> | null;
+
+/** Phone sign-in, step 1: text a code (ADR-0011). Returns the number in international form. */
+export async function sendSignInCodeAction(
+  _prev: PhoneCodeSentResult,
+  formData: FormData,
+): Promise<PhoneCodeSentResult> {
+  try {
+    const input = parseInput(sendPhoneCodeSchema, formData);
+    await sendSignInCode(input);
+    return ok({ phone: input.phone });
+  } catch (error) {
+    return toLoggedFailure("auth.sms_send_failed", error);
+  }
+}
+
+/** Phone sign-in, step 2: check the code, then land by role (or at `next`). */
+export async function verifySignInCodeAction(
+  _prev: PhoneVerifiedResult,
+  formData: FormData,
+): Promise<PhoneVerifiedResult> {
+  let destination: string;
+  try {
+    const input = parseInput(verifyPhoneCodeSchema, formData);
+    const landing = await verifySignInCode(input.phone, input.code);
+    destination = input.next ? safeRedirectPath(input.next) : landing;
+  } catch (error) {
+    return toLoggedFailure("auth.sms_verify_failed", error);
+  }
+  redirect(destination);
+}
+
+/** Account settings: add or change the phone number, step 1 (a code to the new number). */
+export async function startPhoneLinkAction(
+  _prev: PhoneLinkedResult,
+  formData: FormData,
+): Promise<PhoneLinkedResult> {
+  try {
+    const input = parseInput(startPhoneLinkSchema, formData);
+    await startPhoneLink(input.phone);
+    return ok({ phone: input.phone, linked: false });
+  } catch (error) {
+    return toLoggedFailure("auth.phone_link_start_failed", error);
+  }
+}
+
+/** Account settings: add or change the phone number, step 2 (the code attaches it). */
+export async function confirmPhoneLinkAction(
+  _prev: PhoneLinkedResult,
+  formData: FormData,
+): Promise<PhoneLinkedResult> {
+  try {
+    const input = parseInput(confirmPhoneLinkSchema, formData);
+    await confirmPhoneLink(input.phone, input.code);
+    return ok({ phone: input.phone, linked: true });
+  } catch (error) {
+    return toLoggedFailure("auth.phone_link_confirm_failed", error);
+  }
 }

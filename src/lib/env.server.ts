@@ -2,7 +2,9 @@ import "server-only";
 
 import {
   type AiEnv,
+  type AuthLimitsEnv,
   parseAiEnv,
+  parseAuthLimitsEnv,
   parsePaymentsEnv,
   parseServerEnv,
   type PaymentsEnv,
@@ -20,6 +22,16 @@ export function getServerEnv(): ServerEnv {
     SUPABASE_SECRET_KEY: process.env.SUPABASE_SECRET_KEY,
   });
   return cachedServerEnv;
+}
+
+let cachedAuthLimitsEnv: AuthLimitsEnv | undefined;
+
+/** Request-limit settings (ADR-0011). */
+export function getAuthLimitsEnv(): AuthLimitsEnv {
+  cachedAuthLimitsEnv ??= parseAuthLimitsEnv({
+    SMS_DAILY_LIMIT: process.env.SMS_DAILY_LIMIT || undefined,
+  });
+  return cachedAuthLimitsEnv;
 }
 
 let cachedAiEnv: AiEnv | undefined;

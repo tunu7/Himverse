@@ -494,6 +494,11 @@ isOneToOne: true
 "finish_payment_event":
 { Args: { "p_event_id": string,"p_result": string }; Returns: undefined
                            },
+"hit_rate_limit":
+{ Args: { "p_bucket": string,"p_key_hash": string,"p_limit": number,"p_window_seconds": number }; Returns: {
+              "allowed": boolean,"retry_after_seconds": number
+            }[]
+                           },
 "log_payment_event":
 { Args: { "p_event_id": string,"p_event_type": string,"p_summary": Json }; Returns: boolean
                            },

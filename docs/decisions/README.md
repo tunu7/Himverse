@@ -31,6 +31,7 @@ immutable once accepted — to change a decision, write a new ADR that supersede
 | [0008](ADR-0008-LISTING-TYPES.md) | Partner listing types (experiences, guides, stays, transport) | Accepted |
 | [0009](ADR-0009-ACCOUNT-DELETION-AND-ALERTS.md) | Self-serve account deletion and in-app booking alerts | Accepted |
 | [0010](ADR-0010-CAPTCHA-TURNSTILE.md) | CAPTCHA with Cloudflare Turnstile, verified by Supabase Auth | Accepted |
+| [0011](ADR-0011-PHONE-SIGN-IN-AND-REQUEST-LIMITS.md) | Phone sign-in with SMS codes, and request limits per visitor | Accepted |
 
 ## Template
 

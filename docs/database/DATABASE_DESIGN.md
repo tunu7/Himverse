@@ -48,6 +48,7 @@ Phase 1 tables are **implemented** (migrations `20261012131029_identity_and_role
 | `payment_events` | Webhook log, deduplicated by Razorpay event id; ids, amounts and statuses only (admin read) | 5 ✅ |
 | `partner_payouts` | Manual payouts to partners recorded by admins (bank reference) | 5 ✅ |
 | `booking_events` | Append-only booking history | 4 ✅ |
+| `private.request_rate_limits` | Request counters per bucket and hashed key (IP, email, phone), fixed windows, pruned after 2 days; not exposed through the API (ADR-0011) | 5 ✅ |
 | `audit_log` | General admin/sensitive actions (provider status uses `provider_status_events`) | later |
 
 ### Separation of trusted and AI-generated data

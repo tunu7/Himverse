@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { LoadingBlock } from "@/components/page-shell";
 import { SignInForm } from "@/features/auth/components/auth-forms";
 import { GoogleSignIn } from "@/features/auth/components/google-sign-in";
+import { PhoneSignIn } from "@/features/auth/components/phone-forms";
 import { safeRedirectPath } from "@/lib/redirect";
 
 export const metadata: Metadata = { title: "Sign in · Himverse.AI" };
@@ -32,6 +33,7 @@ async function SignInContent({ searchParams }: PageProps<"/sign-in">) {
       ) : null}
       <GoogleSignIn next={destination} />
       <SignInForm next={destination} />
+      <PhoneSignIn next={destination} />
     </div>
   );
 }

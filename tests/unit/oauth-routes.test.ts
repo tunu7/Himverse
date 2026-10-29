@@ -19,6 +19,14 @@ const env = {
   NEXT_PUBLIC_AUTH_GOOGLE_ENABLED: "true" as "true" | "false",
 };
 vi.mock("@/lib/env", () => ({ getPublicEnv: () => env }));
+const limit = {
+  value: { allowed: true } as { allowed: true } | { allowed: false; retryAfterSeconds: number },
+};
+vi.mock("@/server/auth/request-limits", () => ({
+  checkLimits: async () => limit.value,
+  ipCheck: () => [],
+  trustedClientIp: async () => "203.0.113.9",
+}));
 
 const { GET: startGoogle } = await import("@/app/auth/google/route");
 const { GET: callback } = await import("@/app/auth/callback/route");
@@ -27,6 +35,7 @@ const req = (path: string) => new NextRequest(`https://himverse.example${path}`)
 const location = (response: Response) => response.headers.get("location");
 
 beforeEach(() => {
+  limit.value = { allowed: true };
   env.NEXT_PUBLIC_AUTH_GOOGLE_ENABLED = "true";
   auth.signInWithOAuth.mockReset();
   auth.exchangeCodeForSession.mockReset();
@@ -35,6 +44,14 @@ beforeEach(() => {
 });
 
 describe("GET /auth/google", () => {
+  it("answers 429 with Retry-After when the visitor is over the limit", async () => {
+    limit.value = { allowed: false, retryAfterSeconds: 120 };
+    const response = await startGoogle(req("/auth/google"));
+    expect(response.status).toBe(429);
+    expect(response.headers.get("retry-after")).toBe("120");
+    expect(auth.signInWithOAuth).not.toHaveBeenCalled();
+  });
+
   it("does nothing but return to sign-in when Google is disabled", async () => {
     env.NEXT_PUBLIC_AUTH_GOOGLE_ENABLED = "false";
     const response = await startGoogle(req("/auth/google"));

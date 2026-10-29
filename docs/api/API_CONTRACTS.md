@@ -16,7 +16,8 @@ Route Handlers today:
 - `api/health`;
 - `api/webhooks/razorpay`;
 - `api/cron/payments` (bearer `CRON_SECRET`);
-- `auth/{callback,confirm,google,reset}`.
+- `auth/{callback,confirm,google,reset}`. `auth/google` answers 429 with `Retry-After` when the visitor
+  is over the request limit (ADR-0011).
 
 ## Server Actions
 
@@ -80,7 +81,7 @@ response never says "confirmed" or "paid" unless the stored state says so.
 | `FORBIDDEN` | 403 | Signed in but not allowed |
 | `NOT_FOUND` | 404 | Missing **or** not visible to the caller (don't leak existence) |
 | `CONFLICT` | 409 | State conflict (already confirmed, slot taken, deposit not due) |
-| `RATE_LIMITED` | 429 | Throttled (DB limits raise `54000`) |
+| `RATE_LIMITED` | 429 | Throttled (DB limits raise `54000`; request limits from `hit_rate_limit`, ADR-0011) |
 | `UPSTREAM_UNAVAILABLE` | 503 | AI, Razorpay or other dependency failed |
 | `INTERNAL` | 500 | Anything unexpected (generic message) |
 

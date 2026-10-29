@@ -16,12 +16,21 @@ const publicEnvSchema = z.object({
   // Shows "Continue with Google". Enable only after the Google provider is
   // configured in Supabase Auth (docs/operations/ENVIRONMENTS.md).
   NEXT_PUBLIC_AUTH_GOOGLE_ENABLED: z.enum(["true", "false"]).default("false"),
+  // Shows phone-number sign-in with SMS codes (ADR-0011). Enable only after an SMS
+  // provider is configured in Supabase Auth (docs/operations/ENVIRONMENTS.md).
+  NEXT_PUBLIC_AUTH_PHONE_ENABLED: z.enum(["true", "false"]).default("false"),
   // Shown on the privacy and terms pages when set.
   NEXT_PUBLIC_SUPPORT_EMAIL: z.email().optional(),
 });
 
 const serverEnvSchema = z.object({
   SUPABASE_SECRET_KEY: z.string().min(1),
+});
+
+// Request limits (ADR-0011). Platform-wide cap on SMS codes sent per day (UTC):
+// a cost guard against SMS pumping. 0 stops all SMS sends.
+const authLimitsEnvSchema = z.object({
+  SMS_DAILY_LIMIT: z.coerce.number().int().min(0).max(100_000).default(200),
 });
 
 // AI settings (ADR-0003, ADR-0006). Kept separate from serverEnvSchema so AI code
@@ -192,6 +201,7 @@ export type PublicEnv = z.infer<typeof publicEnvSchema>;
 export type PaymentsEnv = z.output<typeof paymentsEnvSchema>;
 export type AiEnv = z.output<typeof aiEnvSchema>;
 export type ServerEnv = z.infer<typeof serverEnvSchema>;
+export type AuthLimitsEnv = z.output<typeof authLimitsEnvSchema>;
 
 export class EnvValidationError extends Error {
   override readonly name = "EnvValidationError";
@@ -217,6 +227,10 @@ export function parsePublicEnv(source: Record<string, unknown>): PublicEnv {
 
 export function parseServerEnv(source: Record<string, unknown>): ServerEnv {
   return parse(serverEnvSchema, source);
+}
+
+export function parseAuthLimitsEnv(source: Record<string, unknown>): AuthLimitsEnv {
+  return parse(authLimitsEnvSchema, source);
 }
 
 export function parseAiEnv(source: Record<string, unknown>): AiEnv {
@@ -258,6 +272,7 @@ export function getPublicEnv(): PublicEnv {
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
     NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
     NEXT_PUBLIC_AUTH_GOOGLE_ENABLED: process.env.NEXT_PUBLIC_AUTH_GOOGLE_ENABLED || undefined,
+    NEXT_PUBLIC_AUTH_PHONE_ENABLED: process.env.NEXT_PUBLIC_AUTH_PHONE_ENABLED || undefined,
     NEXT_PUBLIC_SUPPORT_EMAIL: process.env.NEXT_PUBLIC_SUPPORT_EMAIL || undefined,
   });
   return cachedPublicEnv;

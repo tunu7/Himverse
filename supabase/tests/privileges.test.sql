@@ -23,7 +23,9 @@ select functions_are('public', array[
   'my_booking_updates', 'mark_bookings_seen', 'partner_booking_alerts',
   'set_deposits_required', 'deposit_checkout', 'attach_deposit_order', 'record_razorpay_payment',
   'record_razorpay_refund', 'claim_refunds', 'refunds_to_check', 'payments_to_reconcile', 'log_payment_event', 'finish_payment_event',
-  'partner_payment_summary', 'admin_partner_balances', 'record_partner_payout'
+  'partner_payment_summary', 'admin_partner_balances', 'record_partner_payout',
+  -- service_role only (request_rate_limits.test.sql, ADR-0011)
+  'hit_rate_limit'
 ], 'public (RPC-exposed) functions are exactly the reviewed set');
 
 select is_empty(

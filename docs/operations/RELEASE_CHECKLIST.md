@@ -32,6 +32,10 @@ Launch scope: discovery, AI itineraries and booking **requests** (no online paym
 - [ ] Supabase Auth: email confirmation on, leaked-password protection, minimum length 8.
 - [ ] **Custom SMTP** configured (Resend via Marketplace). The default Supabase mailer is rate limited
       and not for production.
+- [ ] `SUPABASE_SECRET_KEY` set on production: the request limiter needs it (ADR-0011); check the logs show no
+      `security.rate_limit_unavailable`.
+- [ ] Phone sign-in (optional, ADR-0011): DLT registration, SMS provider in Supabase, `SMS_DAILY_LIMIT`, then
+      `NEXT_PUBLIC_AUTH_PHONE_ENABLED=true` ([ENVIRONMENTS](ENVIRONMENTS.md#phone-sign-in-sms)). Otherwise leave it off.
 - [ ] **CAPTCHA** (Turnstile, ADR-0010; code ready behind `NEXT_PUBLIC_TURNSTILE_SITE_KEY`): site key
       deployed **first**, then CAPTCHA enabled in Supabase Auth ([ENVIRONMENTS](ENVIRONMENTS.md#captcha-turnstile));
       sign-in, sign-up, forgot password, change password and delete account tested on production.
