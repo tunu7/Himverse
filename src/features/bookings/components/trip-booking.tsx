@@ -18,8 +18,9 @@ import { bookTripAction } from "../actions";
 export type TripBookingItem = { ids: readonly string[]; title: string; dateLabel: string };
 
 /**
- * "Book whole trip": one request per experience, transport leg and stay. Each
- * provider confirms its own request; nothing is booked until they do.
+ * "Book whole trip": one booking per experience, transport leg, stay and guide.
+ * Each is confirmed instantly when it has a price and room on its dates
+ * (ADR-0004 amendment 2026-10-29); one that can't be booked doesn't block the rest.
  */
 export function TripBookingForm({
   versionId,
@@ -40,15 +41,18 @@ export function TripBookingForm({
       return result ? [{ ...result, item }] : [];
     });
     const sent = results.filter((r) => r.booking).length;
+    const awaiting = results.some((r) => r.booking?.status === "requested");
     return (
       <div className="flex flex-col gap-3" data-testid="trip-booking-results" role="status">
         <p className="font-medium">
           {sent === results.length
-            ? "Booking requests sent for every item."
-            : `${sent} of ${results.length} items requested.`}{" "}
-          <span className="font-normal text-muted">
-            Each provider confirms its own request; nothing is booked until they do.
-          </span>
+            ? "Every item is booked."
+            : `${sent} of ${results.length} items booked.`}{" "}
+          {awaiting ? (
+            <span className="font-normal text-muted">
+              Items without a listed price wait for the partner to set a price and confirm.
+            </span>
+          ) : null}
         </p>
         <ul className="flex flex-col gap-2 text-sm">
           {results.map((r) => {
@@ -67,13 +71,18 @@ export function TripBookingForm({
                     href={`/bookings/${r.booking.id}`}
                     className="font-medium text-accent underline-offset-4 hover:underline"
                   >
-                    {r.alreadyRequested ? "Already requested" : "Requested"} · {r.booking.reference}
+                    {r.alreadyRequested
+                      ? "Already booked"
+                      : r.booking.status === "confirmed"
+                        ? "Confirmed"
+                        : "Awaiting partner"}{" "}
+                    · {r.booking.reference}
                   </Link>
                 ) : (
                   <span className={r.alreadyRequested ? "text-muted" : "text-danger"}>
                     {r.alreadyRequested
-                      ? "Already requested — see your bookings"
-                      : (r.error ?? "Could not request")}
+                      ? "Already booked — see your bookings"
+                      : (r.error ?? "Could not book")}
                   </span>
                 )}
               </li>
@@ -96,10 +105,11 @@ export function TripBookingForm({
       <input type="hidden" name="idempotencyKey" value={idempotencyKey} />
       <input type="hidden" name="versionId" value={versionId} />
       <p className="text-sm text-fg-soft">
-        Sends {items.length} booking {items.length === 1 ? "request" : "requests"} for this
-        trip&apos;s travellers: each experience and transport leg on its planned day, and each stay
-        for its nights. Partners confirm availability and the final price. Nothing is charged now;
-        any deposits are paid after each partner confirms.
+        Books {items.length} {items.length === 1 ? "item" : "items"} for this trip&apos;s
+        travellers: each experience and transport leg on its planned day, and each stay for its
+        nights. Each booking is confirmed straight away at its listed price when there&apos;s room.
+        Experiences can only be booked on dates their partner has published. If deposits are
+        required, you pay 50% of each booking online within 1 hour.
       </p>
       <ul className="flex flex-col gap-1 text-sm" data-testid="trip-booking-lines">
         {items.map((item) => (

@@ -124,7 +124,7 @@ test.describe("experience detail", () => {
     await expect(page.getByText("From ₹3,500")).toBeVisible();
     await expect(page.getByText("6 h", { exact: true })).toBeVisible();
     await expect(page.getByText("Demo Provider (local seed)")).toBeVisible();
-    await expect(page.getByText(/availability isn't guaranteed/)).toBeVisible();
+    await expect(page.getByText(/confirmed straight away at the listed price/)).toBeVisible();
     await page.getByRole("link", { name: "Pasighat" }).click();
     await expect(page).toHaveURL(/\/destinations\/pasighat$/);
   });

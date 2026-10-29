@@ -116,3 +116,14 @@ join (values
   ('demo-ziro-village-walk', 7, 8),
   ('demo-sela-pass-day-trip', 9, 4)
 ) as d(slug, offset_days, capacity) on d.slug = e.slug;
+
+-- Instant booking: experiences are bookable only on published dates, so every
+-- visible experience gets a daily date for 120 days (the AI planner's trips and
+-- "Book whole trip" need them). The rows above keep their own capacity.
+insert into public.availability_slots (experience_id, starts_on, capacity)
+select e.id, private.today_ist() + g.day, 20
+from public.experiences e
+join public.providers p on p.id = e.provider_id and p.status = 'verified'
+cross join generate_series(1, 120) as g(day)
+where e.status = 'published' and e.listing_type = 'experience'
+on conflict on constraint availability_slots_unique do nothing;

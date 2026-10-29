@@ -134,7 +134,9 @@ test("an itinerary can be deleted", async ({ page }) => {
   await expect(page.getByText("You haven't planned any trips yet.")).toBeVisible();
 });
 
-test("book whole trip: one request per item, retries don't duplicate", async ({ page }) => {
+test("book whole trip: each item is confirmed instantly, retries don't duplicate", async ({
+  page,
+}) => {
   test.setTimeout(120_000);
   await signUp(page, "tripbooker");
   await fillTrip(page, { place: "Ziro Valley", startDate: istDatePlus(9) });
@@ -150,16 +152,18 @@ test("book whole trip: one request per item, retries don't duplicate", async ({ 
   await page.getByLabel(/Contact phone/).fill("+91 98765 43210");
   await page.getByRole("button", { name: "Book whole trip" }).click();
   const results = page.getByTestId("trip-booking-results").filter({ visible: true });
-  await expect(results).toContainText("Booking requests sent for every item.");
+  await expect(results).toContainText("Every item is booked.");
   await expect(results.getByRole("listitem")).toHaveCount(itemCount);
-  await expect(results.getByRole("link", { name: /^Requested · HV-/ })).toHaveCount(itemCount);
+  await expect(results.getByRole("link", { name: /^Confirmed · HV-/ })).toHaveCount(itemCount);
 
-  // A second attempt from a fresh page reports the existing requests instead of duplicating.
+  // A second attempt from a fresh page reports the existing bookings instead of duplicating.
   await page.goto(itineraryUrl);
   await page.getByLabel(/Contact phone/).fill("+91 98765 43210");
   await page.getByRole("button", { name: "Book whole trip" }).click();
-  await expect(results.getByText(/Already requested/)).toHaveCount(itemCount);
+  await expect(results.getByText(/Already booked/)).toHaveCount(itemCount);
 
   await page.goto("/bookings");
-  await expect(page.getByText("Awaiting provider confirmation")).toHaveCount(itemCount);
+  await expect(
+    page.getByTestId("booking-status").filter({ visible: true, hasText: "Confirmed" }),
+  ).toHaveCount(itemCount);
 });

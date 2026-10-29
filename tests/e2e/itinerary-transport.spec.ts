@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 import { localSql, signUp, uniqueEmail } from "./support";
 
 // Phase 3b (ADR-0008): when the plan moves to another destination, it adds a
-// partner vehicle for that leg, and "Book whole trip" requests it on that day.
+// partner vehicle for that leg, and "Book whole trip" books it on that day.
 // Fixture: a region of two destinations with one experience each, so the
 // deterministic mock model spends day 1 at one and moves to the other on day 2,
 // plus a vehicle in each direction (the mock picks whichever matches its order).
@@ -38,6 +38,13 @@ test.beforeAll(() => {
          80000, 'published'
        from public.destinations d where d.slug = '${place.slug}' returning id`,
     );
+    // Experiences are booked on published dates (instant booking): open every day.
+    localSql(
+      `insert into public.availability_slots (experience_id, starts_on, capacity)
+       select e.id, private.today_ist() + g.day, 20
+       from public.experiences e cross join generate_series(1, 60) as g(day)
+       where e.slug = '${place.slug}-walk' returning id`,
+    );
   }
   for (const [from, to] of [
     [places[0], places[1]],
@@ -66,7 +73,7 @@ test.afterAll(() => {
   );
 });
 
-test("AI plan adds a vehicle when the trip moves on, and booking the trip requests it", async ({
+test("AI plan adds a vehicle when the trip moves on, and booking the trip books it", async ({
   page,
 }) => {
   test.setTimeout(180_000);
@@ -100,10 +107,10 @@ test("AI plan adds a vehicle when the trip moves on, and booking the trip reques
   await page.getByLabel(/Contact phone/).fill("+91 98765 43210");
   await page.getByRole("button", { name: "Book whole trip" }).click();
   const results = page.getByTestId("trip-booking-results").filter({ visible: true });
-  await expect(results).toContainText("Booking requests sent for every item.");
+  await expect(results).toContainText("Every item is booked.");
   const legResult = results.getByRole("listitem").filter({ hasText: legTitle });
   await expect(legResult).toHaveCount(1);
-  await legResult.getByRole("link", { name: /^Requested · HV-/ }).click();
+  await legResult.getByRole("link", { name: /^Confirmed · HV-/ }).click();
 
   // One vehicle for the trip on day 2, at the per-vehicle estimate.
   await expect(page).toHaveURL(/\/bookings\/[0-9a-f-]{36}$/);

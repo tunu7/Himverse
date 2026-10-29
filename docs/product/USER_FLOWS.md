@@ -35,17 +35,19 @@ States: progress while generating; partial failure ("we couldn't fit X"); hard f
 1. Traveler adjusts parameters or asks for changes (e.g. "less driving", "add a monastery visit").
 2. A new itinerary version is created; previous versions remain viewable.
 
-## T4 — Request a booking — implemented (Phase 4; see BOOKING_POLICY.md)
+## T4 — Book — implemented (instant booking 2026-10-29; see BOOKING_POLICY.md)
 
-1. From an experience page, traveler selects any future date (published dates shown as hints) and group
-   size; or, from an itinerary, uses **Book this trip** to request every item on its day at once.
-2. Server checks availability from authoritative data and creates a booking request with an
-   idempotency key (double-click/retry safe).
-3. Status shows **Requested — awaiting provider confirmation**.
-4. Provider confirms or declines (P2). Traveler is notified and sees the updated status.
-   Requests not answered within 48 h (or by the start, if sooner) expire.
-5. If the provider's final total is more than 10% above the estimate (or there was no estimate), the
-   traveller sees **New price awaiting approval** and accepts it, or cancels the request, within 48 h.
+1. From a listing page, traveler picks one of the dates the provider published (experiences) or a date
+   range and quantity (guides, stays, transport), and the group size; or, from an itinerary, uses
+   **Book whole trip** to book every item on its day at once.
+2. Server checks availability from authoritative data under a lock and, if there is room, **confirms
+   the booking at the listed price straight away** (idempotency key: double-click/retry safe). A full
+   date is refused with a clear message.
+3. Status shows **Confirmed**. When an admin requires deposits, the traveller pays 50% online within
+   1 hour or the booking is cancelled and the place freed.
+4. **Listings without a price** stay a request (**Awaiting provider confirmation**): the provider sets a
+   total or declines (P2), the traveller sees **New price awaiting approval** and accepts it or cancels,
+   within 48 h. Unanswered requests expire.
 
 ## T5 — View trip — implemented (itineraries and bookings)
 
@@ -66,11 +68,13 @@ vehicles, duration).
 
 ## P2 — Partner manages bookings — implemented (Phase 4)
 
-Provider sees incoming requests for their experiences only, confirms or declines with optional note,
-manages availability, and switches each listing **online or offline** (online = taking booking
-requests and usable in AI trip plans; offline listings stay published but take no new requests).
-A per-type switch takes every stay, guide, transport or experience listing offline or online at once,
-for example a homestay closed for the season. Existing bookings are unaffected.
+Provider sees its own bookings only. Instant bookings arrive already confirmed and are flagged as new
+for 48 hours; the provider can cancel one with a reason (full refund of any deposit). Requests for
+listings without a price are priced or declined. The provider publishes and closes experience dates
+(experiences are booked only on those) and switches each listing **online or offline** (online = taking
+bookings and usable in AI trip plans; offline listings stay published but take no new bookings). A
+per-type switch takes every stay, guide, transport or experience listing offline or online at once, for
+example a homestay closed for the season. Existing bookings are unaffected.
 
 ## A1 — Admin verification and curation — implemented (admin console)
 

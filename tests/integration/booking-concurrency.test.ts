@@ -99,7 +99,8 @@ describe("booking concurrency (parallel connections)", () => {
       "select count(*)::int as n from public.booking_events e join public.bookings b on b.id = e.booking_id where b.idempotency_key = $1",
       [key],
     );
-    expect(events.rows[0].n).toBe(1);
+    // The request and its instant confirmation (migration instant_booking).
+    expect(events.rows[0].n).toBe(2);
   });
 
   it("simultaneous submissions with different keys for the same date create one active booking", async () => {
@@ -116,27 +117,19 @@ describe("booking concurrency (parallel connections)", () => {
     );
   });
 
-  it("parallel confirmations never exceed capacity", async () => {
+  it("parallel instant bookings never exceed capacity", async () => {
     const slot = await newSlot(3);
-    const bookingIds: string[] = [];
-    for (const traveler of ids.travelers) {
-      const [sql, params] = request(slot, randomUUID());
-      const result = await asUser(traveler, sql, [...params]);
-      expect(result.ok).toBe(true);
-      if (result.ok) bookingIds.push(result.rows[0].booking_id);
-    }
-
-    const confirmations = await Promise.all(
-      bookingIds.map((id) =>
-        asUser(
-          ids.owner,
-          "select public.respond_to_booking($1, 'confirmed', 10000, null) as status",
-          [id],
-        ),
-      ),
+    const results = await Promise.all(
+      ids.travelers.map((traveler) => {
+        const [sql, params] = request(slot, randomUUID());
+        return asUser(traveler, sql, [...params]);
+      }),
     );
-    expect(confirmations.filter((r) => r.ok)).toHaveLength(3);
-    expect(confirmations.filter((r) => !r.ok).every((r) => !r.ok && r.code === "55000")).toBe(true);
+    expect(results.filter((r) => r.ok)).toHaveLength(3);
+    expect(
+      results.filter((r) => r.ok).every((r) => r.ok && r.rows[0].booking_status === "confirmed"),
+    ).toBe(true);
+    expect(results.filter((r) => !r.ok).every((r) => !r.ok && r.code === "55000")).toBe(true);
 
     const { rows } = await pool.query(
       "select seats_confirmed, capacity, (select count(*)::int from public.bookings where slot_id = $1 and status = 'confirmed') as confirmed from public.availability_slots where id = $1",

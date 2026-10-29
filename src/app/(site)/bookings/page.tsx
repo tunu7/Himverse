@@ -60,8 +60,8 @@ async function BookingList({ searchParams }: PageProps<"/bookings">) {
   );
   if (all.length === 0) {
     return (
-      <EmptyState title="You haven't requested any bookings yet.">
-        <p>Find an experience you like, pick a date and send the provider a request.</p>
+      <EmptyState title="You haven't made any bookings yet.">
+        <p>Find an experience you like, pick a date and book it.</p>
         <Link href="/experiences" className={`${buttonClass} mt-3`}>
           Find an experience
         </Link>

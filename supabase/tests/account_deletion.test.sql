@@ -28,22 +28,26 @@ insert into public.provider_members (provider_id, user_id) values
 insert into public.destinations (id, slug, name, district, is_published)
 values ('ad100000-0000-4000-8000-000000000001', 'ad-ziro', 'AD Ziro', 'Lower Subansiri', true);
 insert into public.experiences (id, provider_id, destination_id, slug, title, category, duration_minutes, price_from_minor, status) values
-  ('ad200000-0000-4000-8000-000000000001', 'ad000000-0000-4000-8000-000000000001', 'ad100000-0000-4000-8000-000000000001', 'ad-walk', 'AD walk', 'culture', 120, 100000, 'published'),
+  ('ad200000-0000-4000-8000-000000000001', 'ad000000-0000-4000-8000-000000000001', 'ad100000-0000-4000-8000-000000000001', 'ad-walk', 'AD walk', 'culture', 120, null, 'published'),
   ('ad200000-0000-4000-8000-000000000002', 'ad000000-0000-4000-8000-000000000002', 'ad100000-0000-4000-8000-000000000001', 'ad-trek', 'AD trek', 'trekking', 120, 100000, 'published');
+-- Published dates (instant booking). The walk has no price, so its bookings stay
+-- requests for the partner; the priced trek is confirmed instantly.
+insert into public.availability_slots (experience_id, starts_on, capacity) values
+  ('ad200000-0000-4000-8000-000000000001', private.today_ist() + 20, 10),
+  ('ad200000-0000-4000-8000-000000000001', private.today_ist() + 50, 10),
+  ('ad200000-0000-4000-8000-000000000002', private.today_ist() + 25, 10),
+  ('ad200000-0000-4000-8000-000000000002', private.today_ist() + 1, 10);
 
 set local role authenticated;
 create temp table ids (label text primary key, id uuid) on commit drop;
 
--- T requests three trips: one Pv request (open), one Qv trip that Q confirms, one past-to-be.
+-- T books: one Pv request (open), one Qv trip confirmed instantly, one to cancel.
 select set_config('request.jwt.claims', '{"sub":"d1111111-1111-4111-8111-111111111111","role":"authenticated","aal":"aal1"}', true);
 insert into ids select 'open', booking_id from public.request_booking_on_date('ad200000-0000-4000-8000-000000000001', private.today_ist() + 20, 2, 0, '+91 98765 43210', 'Veg', gen_random_uuid());
 insert into ids select 'confirmed', booking_id from public.request_booking_on_date('ad200000-0000-4000-8000-000000000002', private.today_ist() + 25, 2, 0, '+91 98765 43210', 'Hi', gen_random_uuid());
--- U has a trip tomorrow that Q confirms.
+-- U has a trip tomorrow, confirmed instantly.
 select set_config('request.jwt.claims', '{"sub":"d2222222-2222-4222-8222-222222222222","role":"authenticated","aal":"aal1"}', true);
 insert into ids select 'soon', booking_id from public.request_booking_on_date('ad200000-0000-4000-8000-000000000002', private.today_ist() + 1, 1, 0, '+91 98765 43211', '', gen_random_uuid());
-select set_config('request.jwt.claims', '{"sub":"d4444444-4444-4444-8444-444444444444","role":"authenticated","aal":"aal2"}', true);
-select public.respond_to_booking((select id from ids where label = 'confirmed'), 'confirmed', 200000, null);
-select public.respond_to_booking((select id from ids where label = 'soon'), 'confirmed', 100000, null);
 
 -- T cancels one more request with a personal note, and adds a pickup address to the open one.
 select set_config('request.jwt.claims', '{"sub":"d1111111-1111-4111-8111-111111111111","role":"authenticated","aal":"aal1"}', true);

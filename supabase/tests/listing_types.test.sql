@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(24);
+select plan(23);
 
 insert into auth.users (id, email, aud, role, raw_user_meta_data) values
   ('d1111111-1111-4111-8111-111111111111', 'lt.traveller@example.test', 'authenticated', 'authenticated', '{"account_type":"traveller"}'),
@@ -91,7 +91,7 @@ select throws_ok(
   '22023', null, 'a one-way trip is one date');
 select throws_ok(
   $$ select * from public.request_booking_on_date('de000000-0000-4000-8000-000000000001', private.today_ist() + 20, 1, 0, '+91 98765 43210', '', gen_random_uuid()) $$,
-  '22023', null, 'non-experience listings cannot be booked as a single-date experience');
+  'P0002', null, 'non-experience listings cannot be booked as a single-date experience (they have no published dates)');
 
 select lives_ok(
   $$ select * from public.request_listing_booking('de000000-0000-4000-8000-000000000002', private.today_ist() + 10, private.today_ist() + 12,
@@ -115,22 +115,21 @@ select results_eq(
             ('f1000000-0000-4000-8000-000000000004', 300000::bigint) $$,
   'estimates: guide per group x days, vehicle per trip, per person x days');
 
--- Capacity on confirmation ----------------------------------------------------------------
+-- Instant confirmation takes capacity ---------------------------------------------------------
+select results_eq(
+  $$ select idempotency_key::text, status::text, confirmed_total_minor from public.bookings
+     where idempotency_key in ('f1000000-0000-4000-8000-000000000002', 'f1000000-0000-4000-8000-000000000003', 'f1000000-0000-4000-8000-000000000004')
+     order by idempotency_key $$,
+  $$ values ('f1000000-0000-4000-8000-000000000002', 'confirmed', 600000::bigint),
+            ('f1000000-0000-4000-8000-000000000003', 'confirmed', 900000::bigint),
+            ('f1000000-0000-4000-8000-000000000004', 'confirmed', 300000::bigint) $$,
+  'guide and transport bookings are confirmed instantly at their estimate');
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"d2222222-2222-4222-8222-222222222222","role":"authenticated"}', true);
-select lives_ok(
+select throws_ok(
   $$ select * from public.request_listing_booking('de000000-0000-4000-8000-000000000002', private.today_ist() + 12, private.today_ist() + 12,
        1, 2, 0, '+91 91234 56789', '', '', 'f2000000-0000-4000-8000-000000000001') $$,
-  'another traveller requests the guide on an overlapping day');
-
-select set_config('request.jwt.claims', '{"sub":"d3333333-3333-4333-8333-333333333333","role":"authenticated","aal":"aal2"}', true);
-select is(
-  public.respond_to_booking((select id from public.bookings where idempotency_key = 'f1000000-0000-4000-8000-000000000002'), 'confirmed', 600000, null),
-  'confirmed'::public.booking_status, 'the partner confirms the 3-day guide booking');
-select throws_ok(
-  $$ select public.respond_to_booking((select id from public.bookings where idempotency_key = 'f2000000-0000-4000-8000-000000000001'), 'confirmed', 200000, null) $$,
-  '55000', null, 'the overlapping day is now fully booked: confirmation refused');
-select set_config('request.jwt.claims', '{"sub":"d2222222-2222-4222-8222-222222222222","role":"authenticated"}', true);
+  '55000', null, 'another traveller cannot book the guide on an overlapping day: it is fully booked');
 select throws_ok(
   $$ select * from public.request_listing_booking('de000000-0000-4000-8000-000000000002', private.today_ist() + 11, private.today_ist() + 11,
        1, 2, 0, '+91 91234 56789', '', '', gen_random_uuid()) $$,

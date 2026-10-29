@@ -28,7 +28,8 @@ Deposits are **off** until an admin turns them on at `/admin/payments`. Without 
 
 | When | What happens | Where |
 | --- | --- | --- |
-| A partner confirms (or a traveller accepts a proposed price) | Deposit = 50% of the confirmed total, due within 24 h or by the start | `bookings_c_deposit_terms` trigger |
+| A traveller books (instant booking) | Deposit = 50% of the confirmed total, due within **1 hour** or by the start; unpaid → cancelled by the 5-minute sweep | `bookings_c_deposit_terms` trigger + `private.instant_confirm` |
+| A partner confirms a request for an unpriced listing (the traveller accepts the price) | Deposit = 50% of the confirmed total, due within 24 h or by the start | `bookings_c_deposit_terms` trigger |
 | The traveller pays | Checkout → the server checks the signature and asks Razorpay → recorded as paid | `completeDepositCheckout` |
 | Razorpay sends `payment.captured` | Recorded once (deduplicated by event id); amount and currency must match | `/api/webhooks/razorpay` |
 | The deposit is unpaid at the deadline | The booking is cancelled by the system and its date freed | pg_cron `himverse-unpaid-deposits`, 15 min |

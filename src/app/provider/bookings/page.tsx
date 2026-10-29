@@ -80,7 +80,7 @@ async function ProviderBookings({ searchParams }: PageProps<"/provider/bookings"
   await requireAccountForPage("/provider/bookings", ["partner"]);
   await connection();
   const raw = (await searchParams).view;
-  const view: View = typeof raw === "string" && raw in VIEWS ? (raw as View) : "needs-response";
+  const view: View = typeof raw === "string" && raw in VIEWS ? (raw as View) : "upcoming";
   const now = new Date();
   const bookings = await listProviderBookings();
   const by = (...statuses: BookingStatus[]) =>

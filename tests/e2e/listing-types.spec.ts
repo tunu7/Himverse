@@ -69,17 +69,20 @@ test("stays: partner lists a room type, traveller requests nights, partner confi
   await page.getByLabel("Adults").fill("3");
   await expect(page.getByTestId("listing-estimate")).toContainText("₹5,000 for 2 nights");
   await page.getByLabel(/Contact phone/).fill("+91 98765 43210");
-  await page.getByRole("button", { name: "Request booking" }).click();
+  await page.getByRole("button", { name: "Book now" }).click();
   await expect(page).toHaveURL(/\/bookings\/[0-9a-f-]{36}$/);
   const bookingUrl = page.url();
   await expect(page.getByText(/\(2 nights\)/)).toBeVisible();
-  await expect(page.getByTestId("booking-price").filter({ visible: true })).toContainText("₹5,000");
+  // Confirmed instantly at the listed price; the host just sees it.
+  await expect(page.getByTestId("booking-status").filter({ visible: true })).toHaveText(
+    "Confirmed",
+  );
+  await expect(page.getByTestId("booking-price").filter({ visible: true })).toContainText(
+    "₹5,000 (confirmed)",
+  );
 
-  // The host confirms.
   await signIn(page, partnerEmail, "partner");
   await page.goto(bookingUrl.replace("/bookings/", "/provider/bookings/"));
-  await page.getByLabel(/Final price/).fill("5000");
-  await page.getByRole("button", { name: "Confirm booking" }).click();
   await expect(page.getByTestId("booking-status").filter({ visible: true })).toHaveText(
     "Confirmed",
   );

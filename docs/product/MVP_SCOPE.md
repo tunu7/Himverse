@@ -1,7 +1,7 @@
 # MVP scope and requirements
 
 The single source of truth for what is in and out of the MVP. If another document disagrees, this file
-wins and the other must be corrected. Last reviewed: 2026-10-16. Status: **built** = implemented and
+wins and the other must be corrected. Last reviewed: 2026-10-29. Status: **built** = implemented and
 tested; _(planned)_ = decided by the owner, not built yet. Flows: [USER_FLOWS](USER_FLOWS.md); phases:
 [ROADMAP](ROADMAP.md).
 
@@ -38,9 +38,9 @@ provider.
 | Areas | **Built:** traveller site, partner portal `/provider` (dashboard and listings adapt to the types a partner offers; online/offline per listing and per type), admin console `/admin` |
 | Catalogue | **Built:** admin-curated destinations; listings managed by partners, publishable only while verified; admin moderation; search, filters, detail pages |
 | Listings | **Built:** experiences, guides, stays (one room type), transport (vehicle hire), each with capacity per day ([ADR-0008](../decisions/ADR-0008-LISTING-TYPES.md)) |
-| Itinerary | **Built:** AI plans grounded in bookable listings: experiences, stays, transport and guides, each only while its partner accepts bookings; refine, regenerate, versions; Ollama (Cloud in production) or AI Gateway ([ADR-0006](../decisions/ADR-0006-SWITCHABLE-AI-PROVIDER-OLLAMA.md)) |
-| Booking | **Built:** requests for any future date; "Book whole trip"; partner switch; confirm/decline with final price (more than 10% above the estimate needs the traveller's acceptance); cancellation; expiry; in-app alerts ([BOOKING_POLICY](BOOKING_POLICY.md)) |
-| Payments | **Built (Test Mode):** 50% online deposits via Razorpay after confirmation, refunds by cancellation timing, manual partner payouts; off until an admin turns them on ([ADR-0005](../decisions/ADR-0005-PAYMENTS-RAZORPAY.md)) |
+| Itinerary | **Built:** AI plans grounded in bookable listings: experiences, stays, transport and guides, each only while its partner accepts bookings (experiences only with an open date during the trip); refine, regenerate, versions; Ollama (Cloud in production) or AI Gateway ([ADR-0006](../decisions/ADR-0006-SWITCHABLE-AI-PROVIDER-OLLAMA.md)) |
+| Booking | **Built:** **instant booking** at the listed price for all listing types, with capacity checked (owner decision 2026-10-29); experiences on published dates only; "Book whole trip"; partner switch; listings without a price stay requests the partner prices and the traveller accepts; cancellation; expiry; in-app alerts ([BOOKING_POLICY](BOOKING_POLICY.md)) |
+| Payments | **Built (Test Mode):** 50% online deposits via Razorpay, due within 1 hour of an instant booking, refunds by cancellation timing, manual partner payouts; off until an admin turns them on ([ADR-0005](../decisions/ADR-0005-PAYMENTS-RAZORPAY.md)) |
 | Admin | **Built:** overview, partner verification, destinations, moderation, bookings, payments, users |
 | Legal | **Built:** privacy policy and terms pages (legal review pending) |
 
@@ -70,7 +70,7 @@ provider.
 Every in-scope flow in [USER_FLOWS](USER_FLOWS.md) works end to end in production, with:
 
 - RLS tests for every table;
-- E2E tests for the critical journeys (browse → plan → refine → book → the partner confirms → pay the
+- E2E tests for the critical journeys (browse → plan → refine → book (confirmed instantly) → pay the
   deposit);
 - no known high-severity security issues.
 
@@ -78,7 +78,7 @@ Initial success metrics (to validate):
 
 - the share of AI plans that are valid and grounded;
 - plans that lead to a booking request;
-- partner response time;
+- partner response time (requests for listings without a price);
 - duplicate bookings (target: zero).
 
 ## Open questions

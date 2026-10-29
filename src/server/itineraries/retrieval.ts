@@ -2,20 +2,22 @@ import "server-only";
 
 import { createSupabasePublicClient } from "@/lib/supabase/public";
 import { toAppError } from "@/lib/supabase/errors";
-import { type TripPreferences, travelerCount } from "@/server/itineraries/preferences";
+import { dateOfDay, type TripPreferences, travelerCount } from "@/server/itineraries/preferences";
 import type { Candidates } from "@/server/itineraries/schemas";
 
 /**
  * Deterministic retrieval of eligible inventory. Uses the anonymous client, so
  * only publicly visible experiences (published, verified provider, published
  * destination) can ever be candidates, and only those whose provider accepts
- * booking requests at planning time (ADR-0004 amendment). Bounded to keep prompts small.
+ * booking requests at planning time (ADR-0004 amendment). Experiences must also
+ * have an open published date during the trip, since they are booked only on
+ * those (instant booking, 2026-10-29). Bounded to keep prompts small.
  */
 export const MAX_CANDIDATE_EXPERIENCES = 40;
 export const MAX_CANDIDATE_DESTINATIONS = 10;
 
 const COLUMNS =
-  "id, slug, title, summary, category, duration_minutes, price_from_minor, destination_id, destination:destinations!experiences_destination_id_fkey!inner(id, slug, name, district)";
+  "id, slug, title, summary, category, duration_minutes, price_from_minor, destination_id, destination:destinations!experiences_destination_id_fkey!inner(id, slug, name, district), availability_slots!inner(id)";
 
 export async function retrieveCandidates(prefs: TripPreferences): Promise<Candidates> {
   const first = await query(prefs, prefs.interests);
@@ -144,7 +146,10 @@ async function query(prefs: TripPreferences, categories: TripPreferences["intere
     // Day plans use experiences; stays and transport are queried separately (ADR-0008).
     .eq("listing_type", "experience")
     // Must fit inside the trip.
-    .lte("duration_minutes", prefs.durationDays * 1440);
+    .lte("duration_minutes", prefs.durationDays * 1440)
+    // An open published date during the trip (anon sees only open, upcoming slots).
+    .gte("availability_slots.starts_on", prefs.startDate)
+    .lte("availability_slots.starts_on", dateOfDay(prefs, prefs.durationDays));
   if (prefs.destinationSlug) {
     q = q.eq("destination.slug", prefs.destinationSlug);
   } else if (prefs.district) {

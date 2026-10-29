@@ -28,6 +28,8 @@ insert into public.experiences (id, provider_id, destination_id, slug, title, ca
    'is-guide', 'IS guide', 'culture', 480, 200000, 'published', 'guide', 'per_group_day', 1, 8, null),
   ('ee000000-0000-4000-8000-000000000005', 'ec000000-0000-4000-8000-000000000001', 'ed000000-0000-4000-8000-000000000001',
    'is-draft', 'IS draft', 'culture', 120, 100000, 'draft', 'experience', 'per_person', null, null, null);
+-- Experiences are booked on published dates (instant booking).
+insert into public.availability_slots (experience_id, starts_on, capacity) values ('ee000000-0000-4000-8000-000000000001', private.today_ist() + 30, 10), ('ee000000-0000-4000-8000-000000000001', private.today_ist() + 40, 10);
 
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"e1111111-1111-4111-8111-111111111111","role":"authenticated","aal":"aal1"}', true);
@@ -145,16 +147,15 @@ select throws_ok(
   $$ select * from public.request_listing_booking('ee000000-0000-4000-8000-000000000004', private.today_ist() + 40, private.today_ist() + 40,
        1, 2, 0, '+91 98765 43210', '', '', gen_random_uuid()) $$,
   '42501', null, 'partners cannot book (their own listings included)');
--- Confirm the transport leg (2 vehicles/day), cancel it, and capacity frees up.
-select lives_ok(
-  $$ select public.respond_to_booking((select b.id from public.bookings b join public.experiences e on e.id = b.experience_id
-       where b.traveler_note = 'Trip' and e.listing_type = 'transport'), 'confirmed', 900000, null) $$,
-  'the partner confirms the transport leg');
-update public.experiences set daily_capacity = 1 where id = 'ee000000-0000-4000-8000-000000000002';
+-- The transport leg was confirmed instantly; the partner cancels it and capacity frees up.
+select is(
+  (select b.status::text from public.bookings b join public.experiences e on e.id = b.experience_id
+   where b.traveler_note = 'Trip' and e.listing_type = 'transport'), 'confirmed',
+  'the transport leg was confirmed instantly');
 select throws_ok(
   $$ select public.respond_to_booking((select b.id from public.bookings b join public.experiences e on e.id = b.experience_id
        where b.traveler_note = 'Trip' and e.listing_type = 'stay'), 'confirmed', 1200000, null) $$,
-  '55000', null, 'after the partner lowers rooms to 1, a 2-room booking cannot be confirmed');
+  '55000', null, 'an instantly confirmed stay needs no partner response');
 select lives_ok(
   $$ select public.cancel_booking((select b.id from public.bookings b join public.experiences e on e.id = b.experience_id
        where b.traveler_note = 'Trip' and e.listing_type = 'transport'), 'Vehicle broke down') $$,

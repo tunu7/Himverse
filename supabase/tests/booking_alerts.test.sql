@@ -1,4 +1,4 @@
--- In-app booking alerts (migration booking_alerts).
+-- In-app booking alerts (migrations booking_alerts, instant_booking).
 begin;
 create extension if not exists pgtap with schema extensions;
 
@@ -16,9 +16,15 @@ insert into public.provider_members (provider_id, user_id)
 values ('ba000000-0000-4000-8000-000000000001', 'ba333333-3333-4333-8333-333333333333');
 insert into public.destinations (id, slug, name, district, is_published)
 values ('ba100000-0000-4000-8000-000000000001', 'ba-ziro', 'BA Ziro', 'Lower Subansiri', true);
-insert into public.experiences (id, provider_id, destination_id, slug, title, category, duration_minutes, price_from_minor, status)
-values ('ba200000-0000-4000-8000-000000000001', 'ba000000-0000-4000-8000-000000000001', 'ba100000-0000-4000-8000-000000000001',
-  'ba-walk', 'BA walk', 'culture', 120, 100000, 'published');
+-- The walk has no price (bookings wait for the partner); the trek is booked instantly.
+insert into public.experiences (id, provider_id, destination_id, slug, title, category, duration_minutes, price_from_minor, status) values
+  ('ba200000-0000-4000-8000-000000000001', 'ba000000-0000-4000-8000-000000000001', 'ba100000-0000-4000-8000-000000000001',
+   'ba-walk', 'BA walk', 'culture', 120, null, 'published'),
+  ('ba200000-0000-4000-8000-000000000002', 'ba000000-0000-4000-8000-000000000001', 'ba100000-0000-4000-8000-000000000001',
+   'ba-trek', 'BA trek', 'trekking', 120, 100000, 'published');
+insert into public.availability_slots (experience_id, starts_on, capacity)
+select 'ba200000-0000-4000-8000-000000000001'::uuid, private.today_ist() + d, 10 from unnest(array[20, 21, 22]) d
+union all select 'ba200000-0000-4000-8000-000000000002', private.today_ist() + 23, 10;
 -- Accounts last looked an hour ago, so this test's events count as new.
 update public.profiles set bookings_seen_at = now() - interval '1 hour'
 where id in ('ba111111-1111-4111-8111-111111111111', 'ba222222-2222-4222-8222-222222222222');
@@ -29,18 +35,19 @@ select set_config('request.jwt.claims', '{"sub":"ba111111-1111-4111-8111-1111111
 insert into ids select 'a', booking_id from public.request_booking_on_date('ba200000-0000-4000-8000-000000000001', private.today_ist() + 20, 2, 0, '+91 98765 43210', '', gen_random_uuid());
 insert into ids select 'b', booking_id from public.request_booking_on_date('ba200000-0000-4000-8000-000000000001', private.today_ist() + 21, 2, 0, '+91 98765 43210', '', gen_random_uuid());
 insert into ids select 'c', booking_id from public.request_booking_on_date('ba200000-0000-4000-8000-000000000001', private.today_ist() + 22, 2, 0, '+91 98765 43210', '', gen_random_uuid());
+insert into ids select 'd', booking_id from public.request_booking_on_date('ba200000-0000-4000-8000-000000000002', private.today_ist() + 23, 2, 0, '+91 98765 43210', '', gen_random_uuid());
 select public.cancel_booking((select id from ids where label = 'c'), null);
 
 select is_empty($$ select * from public.my_booking_updates() $$,
-  'the traveller''s own requests and cancellations are not updates');
+  'the traveller''s own requests, instant bookings and cancellations are not updates');
 
--- Partner alerts: two open requests (c was cancelled); one is due within 12 hours.
+-- Partner alerts: two open requests (c was cancelled), one due within 12 hours; one instant booking.
 reset role;
 update public.bookings set request_expires_at = now() + interval '3 hours' where id = (select id from ids where label = 'b');
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"ba333333-3333-4333-8333-333333333333","role":"authenticated","aal":"aal2"}', true);
-select results_eq($$ select needs_response, expiring_soon from public.partner_booking_alerts() $$,
-  $$ values (2, 1) $$, 'the partner sees open requests and those expiring soon');
+select results_eq($$ select needs_response, expiring_soon, new_bookings from public.partner_booking_alerts() $$,
+  $$ values (2, 1, 1) $$, 'the partner sees open requests, those expiring soon and new instant bookings');
 select set_config('request.jwt.claims', '{"sub":"ba333333-3333-4333-8333-333333333333","role":"authenticated","aal":"aal1"}', true);
 select results_eq($$ select needs_response from public.partner_booking_alerts() $$,
   $$ values (0) $$, 'nothing before two-step login');
@@ -48,7 +55,7 @@ select set_config('request.jwt.claims', '{"sub":"ba444444-4444-4444-8444-4444444
 select results_eq($$ select needs_response from public.partner_booking_alerts() $$,
   $$ values (0) $$, 'another partner sees nothing');
 
--- The partner confirms a; the traveller sees it as an update.
+-- The partner prices a; the traveller sees it as an update.
 select set_config('request.jwt.claims', '{"sub":"ba333333-3333-4333-8333-333333333333","role":"authenticated","aal":"aal2"}', true);
 select public.respond_to_booking((select id from ids where label = 'a'), 'confirmed', 200000, null);
 select set_config('request.jwt.claims', '{"sub":"ba111111-1111-4111-8111-111111111111","role":"authenticated","aal":"aal1"}', true);

@@ -14,7 +14,8 @@ See [ITINERARY_GENERATION](ITINERARY_GENERATION.md) for the module map and check
 [ADR-0003](../decisions/ADR-0003-AI-ITINERARY-GENERATION.md) for the decisions.
 
 1. **Input schema:** validated trip preferences.
-2. **Retriever:** deterministic SQL filters over public, **bookable** catalogue data (`accepts_bookings`; region, interests, duration,
+2. **Retriever:** deterministic SQL filters over public, **bookable** catalogue data (`accepts_bookings`; experiences with an open
+   published date during the trip; region, interests, duration,
    budget), plus bookable stays, transport and guides at the candidate destinations that fit the group. Semantic search only via a future ADR.
 3. **Prompt builder:** versioned (`itinerary-v4`, which spells out the answer schema), stored with each version. Records appear as aliases;
    traveller text is fenced as data.

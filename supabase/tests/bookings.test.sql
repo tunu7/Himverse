@@ -1,11 +1,12 @@
--- Booking lifecycle: transitions, authorization, provider isolation, idempotency,
--- seat limits, price snapshots, cancellation windows, expiry and history
--- (ADR-0004, migration 20261012180243_bookings). Concurrency is covered by
+-- Booking lifecycle: instant confirmation (migration instant_booking), the
+-- partner-confirmed path for listings without a price, authorization, provider
+-- isolation, idempotency, seat limits, price snapshots, cancellation windows,
+-- expiry and history (ADR-0004, migration 20261012180243_bookings). Concurrency is covered by
 -- tests/integration/booking-concurrency.test.ts (parallel connections).
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(59);
+select plan(64);
 
 truncate public.refunds, public.payments, public.partner_payouts, public.booking_events, public.bookings, public.availability_slots, public.itinerary_items,
   public.experiences, public.destinations, public.provider_status_events,
@@ -34,9 +35,10 @@ insert into public.experiences (id, provider_id, destination_id, slug, title, ca
   ('e0000000-0000-4000-8000-000000000001', 'a0000000-0000-4000-8000-000000000001', 'd0000000-0000-4000-8000-000000000001', 'x1-walk', 'X1 walk', 'culture', 120, 100000, 'published'),
   ('e0000000-0000-4000-8000-000000000002', 'a0000000-0000-4000-8000-000000000001', 'd0000000-0000-4000-8000-000000000002', 'x2-hidden', 'X2 hidden', 'nature', 120, 50000, 'published'),
   ('e0000000-0000-4000-8000-000000000003', 'a0000000-0000-4000-8000-000000000003', 'd0000000-0000-4000-8000-000000000001', 'x3-suspended', 'X3 suspended', 'nature', 120, 50000, 'published'),
-  ('e0000000-0000-4000-8000-000000000004', 'a0000000-0000-4000-8000-000000000002', 'd0000000-0000-4000-8000-000000000001', 'x4-q', 'X4 by Q', 'nature', 120, 70000, 'published');
+  ('e0000000-0000-4000-8000-000000000004', 'a0000000-0000-4000-8000-000000000002', 'd0000000-0000-4000-8000-000000000001', 'x4-q', 'X4 by Q', 'nature', 120, 70000, 'published'),
+  ('e0000000-0000-4000-8000-000000000005', 'a0000000-0000-4000-8000-000000000001', 'd0000000-0000-4000-8000-000000000001', 'x5-unpriced', 'X5 unpriced', 'culture', 120, null, 'published');
 -- S1 future cap 3 | S2 past | S3 closed | S4 draft destination | S5 suspended provider
--- S6 Q's experience | S7 starts in about 6 hours
+-- S6 Q's experience | S7 starts in about 6 hours | S8, S9 unpriced X5
 insert into public.availability_slots (id, experience_id, starts_on, start_time, capacity, status) values
   ('50000000-0000-4000-8000-000000000001', 'e0000000-0000-4000-8000-000000000001', private.today_ist() + 10, null, 3, 'open'),
   ('50000000-0000-4000-8000-000000000002', 'e0000000-0000-4000-8000-000000000001', private.today_ist() - 1, null, 3, 'open'),
@@ -46,28 +48,32 @@ insert into public.availability_slots (id, experience_id, starts_on, start_time,
   ('50000000-0000-4000-8000-000000000006', 'e0000000-0000-4000-8000-000000000004', private.today_ist() + 10, null, 5, 'open'),
   ('50000000-0000-4000-8000-000000000007', 'e0000000-0000-4000-8000-000000000001',
      ((now() + interval '6 hours') at time zone 'Asia/Kolkata')::date,
-     ((now() + interval '6 hours') at time zone 'Asia/Kolkata')::time(0), 10, 'open');
+     ((now() + interval '6 hours') at time zone 'Asia/Kolkata')::time(0), 10, 'open'),
+  ('50000000-0000-4000-8000-000000000008', 'e0000000-0000-4000-8000-000000000005', private.today_ist() + 12, null, 3, 'open'),
+  ('50000000-0000-4000-8000-000000000009', 'e0000000-0000-4000-8000-000000000005', private.today_ist() + 13, null, 5, 'open');
 
 -- Anonymous ---------------------------------------------------------------------------
 set local role anon;
 select set_config('request.jwt.claims', '{"role":"anon"}', true);
 select results_eq(
   $$ select id from public.availability_slots order by id $$,
-  $$ values ('50000000-0000-4000-8000-000000000001'::uuid), ('50000000-0000-4000-8000-000000000006'::uuid), ('50000000-0000-4000-8000-000000000007'::uuid) $$,
+  $$ values ('50000000-0000-4000-8000-000000000001'::uuid), ('50000000-0000-4000-8000-000000000006'::uuid),
+            ('50000000-0000-4000-8000-000000000007'::uuid), ('50000000-0000-4000-8000-000000000008'::uuid),
+            ('50000000-0000-4000-8000-000000000009'::uuid) $$,
   'anon sees only open, upcoming slots of public experiences');
 select throws_ok($$ select * from public.request_booking('50000000-0000-4000-8000-000000000001', 1, 0, '+91 98765 43210', '', gen_random_uuid()) $$,
   '42501', null, 'anon cannot request bookings');
 select throws_ok($$ select id from public.bookings $$, '42501', null, 'anon cannot read bookings');
 
--- Traveler T requests ------------------------------------------------------------------
+-- Traveler T books ---------------------------------------------------------------------
 reset role;
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"11111111-1111-4111-8111-111111111111","role":"authenticated","aal":"aal2"}', true);
 
 select results_eq(
   $$ select booking_status, replayed from public.request_booking('50000000-0000-4000-8000-000000000001', 2, 0, '+91 98765 43210', 'Vegetarian', 'f0000000-0000-4000-8000-000000000001') $$,
-  $$ values ('requested'::public.booking_status, false) $$,
-  'traveler requests a booking');
+  $$ values ('confirmed'::public.booking_status, false) $$,
+  'a priced booking on a published date is confirmed instantly');
 select results_eq(
   $$ select replayed from public.request_booking('50000000-0000-4000-8000-000000000001', 2, 0, '+91 98765 43210', 'Vegetarian', 'f0000000-0000-4000-8000-000000000001') $$,
   $$ values (true) $$,
@@ -82,17 +88,16 @@ select throws_ok(
 
 reset role;
 select set_config('test.b1', (select id::text from public.bookings where idempotency_key = 'f0000000-0000-4000-8000-000000000001'), true);
-select is(
-  (select estimated_total_minor from public.bookings where id = current_setting('test.b1')::uuid),
-  200000::bigint, 'estimate is snapshotted from the database price x party');
-select ok(
-  (select request_expires_at between now() + interval '47 hours 59 minutes' and now() + interval '48 hours'
-   from public.bookings where id = current_setting('test.b1')::uuid),
-  'request expires 48 hours after it is made');
 select results_eq(
-  $$ select from_status::text, to_status::text, actor_role::text from public.booking_events where booking_id = current_setting('test.b1')::uuid $$,
-  $$ values (null::text, 'requested'::text, 'traveler'::text) $$,
-  'the request is recorded in the history');
+  $$ select estimated_total_minor, confirmed_total_minor from public.bookings where id = current_setting('test.b1')::uuid $$,
+  $$ values (200000::bigint, 200000::bigint) $$,
+  'the estimate is snapshotted from the database price x party and becomes the confirmed price');
+select is((select seats_confirmed from public.availability_slots where id = '50000000-0000-4000-8000-000000000001'), 2,
+  'an instant booking takes its seats');
+select results_eq(
+  $$ select from_status::text, to_status::text, actor_role::text from public.booking_events where booking_id = current_setting('test.b1')::uuid order by id $$,
+  $$ values (null::text, 'requested'::text, 'traveler'::text), ('requested', 'confirmed', 'system') $$,
+  'the booking and its instant confirmation are recorded in the history');
 set local role authenticated;
 
 -- Unavailable or invalid requests
@@ -103,6 +108,9 @@ select throws_ok($$ select * from public.request_booking('50000000-0000-4000-800
 select throws_ok($$ select * from public.request_booking('99999999-9999-4999-8999-999999999999', 1, 0, '+91 98765 43210', '', gen_random_uuid()) $$, 'P0002', null, 'unknown slots are not found');
 select throws_ok($$ select * from public.request_booking('50000000-0000-4000-8000-000000000006', 6, 0, '+91 98765 43210', '', gen_random_uuid()) $$, '55000', null, 'parties larger than the remaining seats are refused');
 select throws_ok($$ select * from public.request_booking('50000000-0000-4000-8000-000000000006', 1, 0, 'call me', '', gen_random_uuid()) $$, '22023', null, 'an invalid contact phone is refused');
+select throws_ok(
+  $$ select * from public.request_booking_on_date('e0000000-0000-4000-8000-000000000001', private.today_ist() + 40, 1, 0, '+91 98765 43210', '', gen_random_uuid()) $$,
+  'P0002', null, 'experiences can only be booked on dates the provider published');
 
 -- No direct writes
 select throws_ok($$ update public.bookings set status = 'confirmed' $$, '42501', null, 'travelers cannot change status directly');
@@ -113,16 +121,32 @@ select throws_ok(
   '42501', null, 'bookings cannot be inserted directly');
 select throws_ok(
   $$ select public.respond_to_booking(current_setting('test.b1')::uuid, 'confirmed', 1, null) $$,
-  'P0002', null, 'travelers cannot confirm their own booking');
+  'P0002', null, 'travelers cannot respond to their own booking');
+
+-- Without a listed price the partner sets the total: the booking stays a request.
+select results_eq(
+  $$ select booking_status from public.request_booking('50000000-0000-4000-8000-000000000008', 2, 0, '+91 98765 43210', '', 'f0000000-0000-4000-8000-000000000005') $$,
+  $$ values ('requested'::public.booking_status) $$,
+  'a booking without a listed price waits for the partner');
+reset role;
+select set_config('test.b5', (select id::text from public.bookings where idempotency_key = 'f0000000-0000-4000-8000-000000000005'), true);
+select ok(
+  (select request_expires_at between now() + interval '47 hours 59 minutes' and now() + interval '48 hours'
+   from public.bookings where id = current_setting('test.b5')::uuid),
+  'the request expires 48 hours after it is made');
+set local role authenticated;
 
 -- Traveler T2 ----------------------------------------------------------------------------
 select set_config('request.jwt.claims', '{"sub":"22222222-2222-4222-8222-222222222222","role":"authenticated","aal":"aal2"}', true);
 select is_empty($$ select 1 from public.bookings $$, 'another traveler cannot see the booking');
 select is_empty($$ select 1 from public.booking_events $$, 'another traveler cannot see its history');
 select throws_ok($$ select public.cancel_booking(current_setting('test.b1')::uuid, null) $$, 'P0002', null, 'another traveler cannot cancel it');
+select throws_ok(
+  $$ select * from public.request_booking('50000000-0000-4000-8000-000000000001', 2, 0, '+91 91234 56789', '', gen_random_uuid()) $$,
+  '55000', null, 'a date without enough seats left refuses the booking');
 select lives_ok(
-  $$ select * from public.request_booking('50000000-0000-4000-8000-000000000001', 2, 0, '+91 91234 56789', '', 'f0000000-0000-4000-8000-000000000002') $$,
-  'a second traveler requests the same date');
+  $$ select * from public.request_booking('50000000-0000-4000-8000-000000000008', 2, 0, '+91 91234 56789', '', 'f0000000-0000-4000-8000-000000000002') $$,
+  'a second traveler requests the unpriced date');
 reset role;
 select set_config('test.b2', (select id::text from public.bookings where idempotency_key = 'f0000000-0000-4000-8000-000000000002'), true);
 set local role authenticated;
@@ -130,7 +154,7 @@ set local role authenticated;
 -- Other provider Q ---------------------------------------------------------------------
 select set_config('request.jwt.claims', '{"sub":"44444444-4444-4444-8444-444444444444","role":"authenticated","aal":"aal2"}', true);
 select is_empty($$ select 1 from public.bookings $$, 'another provider cannot see these bookings');
-select throws_ok($$ select public.respond_to_booking(current_setting('test.b1')::uuid, 'confirmed', 1, null) $$, 'P0002', null, 'another provider cannot confirm them');
+select throws_ok($$ select public.respond_to_booking(current_setting('test.b5')::uuid, 'confirmed', 1, null) $$, 'P0002', null, 'another provider cannot respond to them');
 select throws_ok(
   $$ insert into public.availability_slots (experience_id, starts_on, capacity) values ('e0000000-0000-4000-8000-000000000001', private.today_ist() + 20, 5) $$,
   '42501', null, 'another provider cannot add slots to this experience');
@@ -141,30 +165,38 @@ select is_empty(
 -- Provider P ---------------------------------------------------------------------------
 select set_config('request.jwt.claims', '{"sub":"33333333-3333-4333-8333-333333333333","role":"authenticated","aal":"aal2"}', true);
 select results_eq(
-  $$ select traveler_name, contact_phone from public.bookings order by created_at $$,
-  $$ values ('traveler.one'::text, '+91 98765 43210'::text), ('traveler.two'::text, '+91 91234 56789'::text) $$,
+  $$ select traveler_name, contact_phone from public.bookings order by traveler_name, experience_title $$,
+  $$ values ('traveler.one'::text, '+91 98765 43210'::text), ('traveler.one', '+91 98765 43210'), ('traveler.two', '+91 91234 56789') $$,
   'the provider sees its bookings with the traveler''s name and booking phone');
 select throws_ok($$ select * from public.request_booking('50000000-0000-4000-8000-000000000001', 1, 0, '+91 98765 43210', '', gen_random_uuid()) $$, '42501', null, 'providers cannot book their own experiences');
-select throws_ok($$ select public.respond_to_booking(current_setting('test.b1')::uuid, 'confirmed', null, null) $$, '22023', null, 'confirming requires a final total');
-select throws_ok($$ select public.respond_to_booking(current_setting('test.b1')::uuid, 'declined', null, '  ') $$, '22023', null, 'declining requires a reason');
-select throws_ok($$ select public.respond_to_booking(current_setting('test.b1')::uuid, 'completed', 1, null) $$, '22023', null, 'providers cannot jump to other states');
+select throws_ok($$ select public.respond_to_booking(current_setting('test.b1')::uuid, 'confirmed', 1, null) $$, '55000', null, 'an instant booking needs no response');
+select throws_ok($$ select public.respond_to_booking(current_setting('test.b5')::uuid, 'confirmed', null, null) $$, '22023', null, 'confirming requires a final total');
+select throws_ok($$ select public.respond_to_booking(current_setting('test.b5')::uuid, 'declined', null, '  ') $$, '22023', null, 'declining requires a reason');
+select throws_ok($$ select public.respond_to_booking(current_setting('test.b5')::uuid, 'completed', 1, null) $$, '22023', null, 'providers cannot jump to other states');
 select is(
-  (select public.respond_to_booking(current_setting('test.b1')::uuid, 'confirmed', 210000, 'See you at 9am')),
-  'confirmed'::public.booking_status, 'the provider confirms with a final price');
-select throws_ok($$ select public.respond_to_booking(current_setting('test.b2')::uuid, 'confirmed', 200000, null) $$, '55000', null, 'confirmation re-checks seats: the date is now full');
-select throws_ok($$ select public.respond_to_booking(current_setting('test.b1')::uuid, 'confirmed', 1, null) $$, '55000', null, 'a confirmed booking cannot be confirmed again');
+  (select public.respond_to_booking(current_setting('test.b5')::uuid, 'confirmed', 210000, 'See you at 9am')),
+  'requested'::public.booking_status, 'with no estimate, the partner''s total goes to the traveler to accept');
+select is(
+  (select public.respond_to_booking(current_setting('test.b2')::uuid, 'confirmed', 200000, null)),
+  'requested'::public.booking_status, 'the partner prices the second request too');
 select throws_ok($$ update public.availability_slots set capacity = 1 where id = '50000000-0000-4000-8000-000000000001' $$, '23514', null, 'capacity cannot drop below confirmed seats');
 select throws_ok($$ update public.availability_slots set seats_confirmed = 0 $$, '42501', null, 'confirmed seats cannot be edited directly');
 select throws_ok(
   $$ insert into public.availability_slots (experience_id, starts_on, capacity) values ('e0000000-0000-4000-8000-000000000001', private.today_ist() - 2, 5) $$,
   '42501', null, 'slots cannot be added in the past');
+select set_config('request.jwt.claims', '{"sub":"11111111-1111-4111-8111-111111111111","role":"authenticated","aal":"aal2"}', true);
+select is((select public.accept_booking_price(current_setting('test.b5')::uuid, 210000)), 'confirmed'::public.booking_status,
+  'the traveler accepts and the booking is confirmed');
+select set_config('request.jwt.claims', '{"sub":"22222222-2222-4222-8222-222222222222","role":"authenticated","aal":"aal2"}', true);
+select throws_ok($$ select public.accept_booking_price(current_setting('test.b2')::uuid, 200000) $$, '55000', null,
+  'acceptance re-checks seats: the date is now full');
 
--- Price changes after the request don't rewrite the booking -----------------------------
+-- Price changes after booking don't rewrite it ----------------------------------------
 reset role;
 update public.experiences set price_from_minor = 999999 where id = 'e0000000-0000-4000-8000-000000000001';
 select results_eq(
   $$ select estimated_total_minor, confirmed_total_minor from public.bookings where id = current_setting('test.b1')::uuid $$,
-  $$ values (200000::bigint, 210000::bigint) $$,
+  $$ values (200000::bigint, 200000::bigint) $$,
   'later price changes leave the estimate and confirmed price unchanged');
 
 -- Cancellation ---------------------------------------------------------------------------
@@ -172,41 +204,44 @@ set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"11111111-1111-4111-8111-111111111111","role":"authenticated","aal":"aal2"}', true);
 select is((select public.cancel_booking(current_setting('test.b1')::uuid, 'Plans changed')), 'cancelled'::public.booking_status, 'the traveler cancels a confirmed booking well ahead');
 select throws_ok($$ select public.cancel_booking(current_setting('test.b1')::uuid, null) $$, '55000', null, 'a cancelled booking cannot be cancelled again');
+select set_config('request.jwt.claims', '{"sub":"22222222-2222-4222-8222-222222222222","role":"authenticated","aal":"aal2"}', true);
+select results_eq(
+  $$ select booking_status from public.request_booking('50000000-0000-4000-8000-000000000001', 2, 0, '+91 91234 56789', '', 'f0000000-0000-4000-8000-000000000003') $$,
+  $$ values ('confirmed'::public.booking_status) $$,
+  'freed seats can be booked by another traveler');
+reset role;
+select set_config('test.b3', (select id::text from public.bookings where idempotency_key = 'f0000000-0000-4000-8000-000000000003'), true);
+set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"33333333-3333-4333-8333-333333333333","role":"authenticated","aal":"aal2"}', true);
-select is((select public.respond_to_booking(current_setting('test.b2')::uuid, 'confirmed', 200000, null)), 'confirmed'::public.booking_status, 'freed seats can be confirmed for the waiting traveler');
-select throws_ok($$ select public.cancel_booking(current_setting('test.b2')::uuid, null) $$, '22023', null, 'providers must give a reason to cancel');
-select is((select public.cancel_booking(current_setting('test.b2')::uuid, 'Guide unwell')), 'cancelled'::public.booking_status, 'the provider cancels with a reason');
+select throws_ok($$ select public.cancel_booking(current_setting('test.b3')::uuid, null) $$, '22023', null, 'providers must give a reason to cancel');
+select is((select public.cancel_booking(current_setting('test.b3')::uuid, 'Guide unwell')), 'cancelled'::public.booking_status, 'the provider cancels with a reason');
 reset role;
 select is((select seats_confirmed from public.availability_slots where id = '50000000-0000-4000-8000-000000000001'), 0, 'cancellations release their seats');
 select results_eq(
   $$ select from_status::text, to_status::text, actor_role::text from public.booking_events where booking_id = current_setting('test.b1')::uuid order by id $$,
-  $$ values (null::text, 'requested'::text, 'traveler'::text), ('requested', 'confirmed', 'provider'), ('confirmed', 'cancelled', 'traveler') $$,
+  $$ values (null::text, 'requested'::text, 'traveler'::text), ('requested', 'confirmed', 'system'), ('confirmed', 'cancelled', 'traveler') $$,
   'every transition is in the history with its actor');
 
 -- 24-hour cancellation window ----------------------------------------------------------
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"11111111-1111-4111-8111-111111111111","role":"authenticated","aal":"aal2"}', true);
-select lives_ok($$ select * from public.request_booking('50000000-0000-4000-8000-000000000007', 1, 0, '+91 98765 43210', '', 'f0000000-0000-4000-8000-000000000007') $$, 'requests close to the start are accepted');
+select lives_ok($$ select * from public.request_booking('50000000-0000-4000-8000-000000000007', 1, 0, '+91 98765 43210', '', 'f0000000-0000-4000-8000-000000000007') $$, 'bookings close to the start are accepted');
 reset role;
 select set_config('test.b7', (select id::text from public.bookings where idempotency_key = 'f0000000-0000-4000-8000-000000000007'), true);
-select ok(
-  (select b.request_expires_at = private.slot_starts_at(s.starts_on, s.start_time)
-   from public.bookings b join public.availability_slots s on s.id = b.slot_id where b.id = current_setting('test.b7')::uuid),
-  'a request expires at the slot start when that comes before 48 hours');
+select is((select status::text from public.bookings where id = current_setting('test.b7')::uuid), 'confirmed',
+  'the short-notice booking is confirmed instantly');
 set local role authenticated;
-select set_config('request.jwt.claims', '{"sub":"33333333-3333-4333-8333-333333333333","role":"authenticated","aal":"aal2"}', true);
-select lives_ok($$ select public.respond_to_booking(current_setting('test.b7')::uuid, 'confirmed', 100000, null) $$, 'the provider confirms the short-notice booking');
 select set_config('request.jwt.claims', '{"sub":"11111111-1111-4111-8111-111111111111","role":"authenticated","aal":"aal2"}', true);
 select throws_ok($$ select public.cancel_booking(current_setting('test.b7')::uuid, null) $$, '55000', null, 'travelers cannot cancel within 24 hours of the start');
 
 -- Expiry and completion --------------------------------------------------------------
 select set_config('request.jwt.claims', '{"sub":"22222222-2222-4222-8222-222222222222","role":"authenticated","aal":"aal2"}', true);
-select lives_ok($$ select * from public.request_booking('50000000-0000-4000-8000-000000000006', 1, 0, '+91 91234 56789', '', 'f0000000-0000-4000-8000-000000000006') $$, 'a request to provider Q');
+select lives_ok($$ select * from public.request_booking('50000000-0000-4000-8000-000000000009', 1, 0, '+91 91234 56789', '', 'f0000000-0000-4000-8000-000000000006') $$, 'another unpriced request');
 reset role;
 select set_config('test.b6', (select id::text from public.bookings where idempotency_key = 'f0000000-0000-4000-8000-000000000006'), true);
 update public.bookings set request_expires_at = now() - interval '1 minute' where id = current_setting('test.b6')::uuid;
 set local role authenticated;
-select set_config('request.jwt.claims', '{"sub":"44444444-4444-4444-8444-444444444444","role":"authenticated","aal":"aal2"}', true);
+select set_config('request.jwt.claims', '{"sub":"33333333-3333-4333-8333-333333333333","role":"authenticated","aal":"aal2"}', true);
 select throws_ok($$ select public.respond_to_booking(current_setting('test.b6')::uuid, 'confirmed', 1, null) $$, '55000', null, 'overdue requests cannot be confirmed even before the sweep runs');
 select throws_ok($$ select * from private.sweep_bookings() $$, '42501', null, 'API roles cannot run the sweep');
 reset role;
@@ -221,7 +256,7 @@ select results_eq(
 -- Admin --------------------------------------------------------------------------------
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"55555555-5555-4555-8555-555555555555","role":"authenticated","aal":"aal2"}', true);
-select is((select count(*) from public.bookings), 4::bigint, 'admins can read all bookings for support');
+select is((select count(*) from public.bookings), 6::bigint, 'admins can read all bookings for support');
 
 select * from finish();
 rollback;

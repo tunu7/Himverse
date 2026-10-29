@@ -56,7 +56,9 @@ function ListingRow({ listing: e, verified }: { listing: ProviderExperience; ver
           {!e.acceptsBookings
             ? "Offline: not accepting booking requests (hidden from AI trip plans)"
             : e.status === "published"
-              ? "Online: accepting booking requests for any date"
+              ? e.listingType === "experience"
+                ? "Online: accepting bookings on the dates you publish"
+                : "Online: accepting bookings when there's capacity"
               : "Online: will accept booking requests once it goes live"}
         </p>
         {e.moderationLocked ? (

@@ -12,9 +12,9 @@ import { BookingRequestForm } from "./booking-forms";
 import { ListingBookingForm } from "./listing-booking-form";
 
 /**
- * "Request to book" for an experience page. Rendered at request time. Any
- * future date can be requested when the provider accepts bookings; published
- * dates are shown as hints (ADR-0004).
+ * "Book now" for a listing page. Rendered at request time. Bookings are
+ * confirmed instantly (ADR-0004 amendment 2026-10-29); experiences can be
+ * booked only on dates the provider has published.
  */
 export async function ExperienceBooking({
   experienceId,
@@ -40,7 +40,7 @@ export async function ExperienceBooking({
     return (
       <div className="flex flex-col gap-3 rounded-2xl border border-dashed border-line-strong p-5">
         <p className="text-sm text-muted">
-          This provider isn&apos;t taking booking requests for this experience right now.
+          This provider isn&apos;t taking bookings for this listing right now.
         </p>
         <Link
           href="/experiences"
@@ -74,7 +74,7 @@ export async function ExperienceBooking({
         >
           Finish setting up your account
         </Link>{" "}
-        to request a booking.
+        to book.
       </p>
     );
   }
@@ -87,10 +87,12 @@ export async function ExperienceBooking({
         >
           Sign in
         </Link>{" "}
-        to request a booking
-        {slots.length > 0
-          ? ` (${slots.length} ${slots.length === 1 ? "date" : "dates"} open)`
-          : " for any date"}
+        to book
+        {listing.type === "experience"
+          ? slots.length > 0
+            ? ` (${slots.length} ${slots.length === 1 ? "date" : "dates"} open)`
+            : " once the provider publishes dates"
+          : ""}
         .
       </p>
     );
@@ -111,16 +113,22 @@ export async function ExperienceBooking({
       />
     );
   }
+  if (slots.length === 0) {
+    return (
+      <p className="rounded-2xl bg-surface-muted p-4 text-sm text-fg-soft" data-testid="no-dates">
+        No dates are open for booking yet. Check back soon.
+      </p>
+    );
+  }
   return (
     <BookingRequestForm
       // One key per rendered form; resubmitting this form reuses it.
       idempotencyKey={crypto.randomUUID()}
       experienceId={experienceId}
-      minDate={istDate(new Date(), 1)}
-      maxDate={istDate(new Date(), MAX_BOOKING_DAYS_AHEAD)}
       priceFromMinor={priceFromMinor}
       slots={slots.map((s) => ({
         id: s.id,
+        date: s.startsOn,
         label: formatSlot(s.startsOn, s.startTime),
         seatsLeft: s.seatsLeft,
       }))}

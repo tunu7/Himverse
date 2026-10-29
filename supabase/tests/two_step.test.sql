@@ -19,6 +19,8 @@ values ('bd000000-0000-4000-8000-000000000001', 'mfa-town', 'MFA Town', 'Tawang'
 insert into public.experiences (id, provider_id, destination_id, slug, title, category, duration_minutes, status)
 values ('be000000-0000-4000-8000-000000000001', 'bc000000-0000-4000-8000-000000000001', 'bd000000-0000-4000-8000-000000000001',
   'mfa-walk', 'MFA walk', 'culture', 60, 'published');
+-- Experiences are booked on published dates (instant booking).
+insert into public.availability_slots (experience_id, starts_on, capacity) values ('be000000-0000-4000-8000-000000000001', private.today_ist() + 10, 10);
 
 set local role authenticated;
 

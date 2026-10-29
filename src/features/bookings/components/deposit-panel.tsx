@@ -62,7 +62,8 @@ export function DepositPanel({ booking, now }: { booking: BookingDetail; now: Da
         booking.isTraveler ? (
           <>
             <p className="text-sm text-fg-soft">
-              The partner confirmed your booking. A 50% deposit of {amount} secures it.
+              Your booking is confirmed. Pay the 50% deposit of {amount} to keep it; unpaid bookings
+              are cancelled automatically.
             </p>
             <PayDeposit
               bookingId={booking.id}

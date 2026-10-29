@@ -20,8 +20,8 @@ Test what would hurt if it broke: business rules, authorization boundaries, and 
 - Every Server Action: input validation and authorization failure paths tested (unit or integration).
 - Booking: duplicate submission with the same idempotency key yields one booking.
 - AI: invalid, ungrounded and malicious outputs are rejected ([AI_EVALUATION](../ai/AI_EVALUATION.md)).
-- Critical E2E journeys (once built): browse catalogue → generate itinerary → refine → request booking →
-  provider confirms.
+- Critical E2E journeys: browse catalogue → generate itinerary → refine → book (confirmed instantly) →
+  pay the deposit; for unpriced listings, request → provider prices → traveller accepts.
 - Async Server Components are covered by E2E, not Vitest (not supported by Vitest).
 
 ## Conventions

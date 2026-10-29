@@ -45,7 +45,7 @@ test.afterAll(() => {
   );
 });
 
-test("AI plan includes a partner stay and guide; booking the trip requests each once", async ({
+test("AI plan includes a partner stay and guide; booking the trip books each once", async ({
   page,
 }) => {
   test.setTimeout(180_000);
@@ -89,11 +89,11 @@ test("AI plan includes a partner stay and guide; booking the trip requests each 
   await page.getByLabel(/Contact phone/).fill("+91 98765 43210");
   await page.getByRole("button", { name: "Book whole trip" }).click();
   const results = page.getByTestId("trip-booking-results").filter({ visible: true });
-  await expect(results).toContainText("Booking requests sent for every item.");
+  await expect(results).toContainText("Every item is booked.");
   await expect(results.getByRole("listitem").filter({ hasText: guideTitle })).toHaveCount(1);
   const stayResult = results.getByRole("listitem").filter({ hasText: title });
   await expect(stayResult).toHaveCount(1);
-  await stayResult.getByRole("link", { name: /^Requested · HV-/ }).click();
+  await stayResult.getByRole("link", { name: /^Confirmed · HV-/ }).click();
 
   // The stay booking spans check-in to check-out: 2 nights x 1 room x ₹2,500.
   await expect(page).toHaveURL(/\/bookings\/[0-9a-f-]{36}$/);

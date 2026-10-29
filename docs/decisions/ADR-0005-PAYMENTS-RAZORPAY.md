@@ -122,3 +122,16 @@ webhooks and manual refunds; owner sign-off. **No live credentials before this p
 - Cancellation rules gain money consequences; BOOKING_POLICY questions 1–2 must be answered first.
 - Marketplace collection would add KYC, payouts and possibly regulatory requirements: decide before
   implementation.
+
+## Amendment (2026-10-29): deposits with instant booking
+
+Owner decision, with ADR-0004's instant-booking amendment (migration `20261029150442_instant_booking`).
+
+- With deposits required, an instant booking is `confirmed` with 50% due **within 1 hour** (or by the
+  start, if sooner) instead of 24 hours: the booking holds capacity from the moment it is made.
+  Partner-confirmed requests (listings without a price) keep 24 hours.
+- The unpaid-deposit sweep (`himverse-unpaid-deposits`) now runs **every 5 minutes**. With the existing
+  30-minute grace for a checkout in progress, an unpaid instant booking is cancelled 1 to about
+  1 h 35 min after it was made, and its capacity is freed.
+- With deposits off, an instant booking is confirmed with nothing to pay online (paid on the day).
+- Refund tiers, webhook handling and payouts are unchanged.

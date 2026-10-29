@@ -507,7 +507,7 @@ isOneToOne: true
                            },
 "partner_booking_alerts":
 { Args: Record<PropertyKey, never>; Returns: {
-              "expiring_soon": number,"needs_response": number
+              "expiring_soon": number,"needs_response": number,"new_bookings": number
             }[]
                            },
 "partner_payment_summary":

@@ -22,7 +22,7 @@ function istDatePlus(days: number): string {
   return d.toISOString().slice(0, 10);
 }
 
-test("a traveller deletes their account; their request is cancelled and anonymised", async ({
+test("a traveller deletes their account; their booking is cancelled and anonymised", async ({
   page,
 }) => {
   test.setTimeout(120_000);
@@ -31,10 +31,10 @@ test("a traveller deletes their account; their request is cancelled and anonymis
   const userId = await currentUserId(page);
 
   await page.goto("/experiences/demo-siang-rafting");
-  await page.getByLabel("Date").fill(istDatePlus(40));
+  await page.getByLabel("Date").selectOption(istDatePlus(40));
   await page.getByLabel("Adults").fill("1");
   await page.getByLabel(/Contact phone/).fill("+91 98765 43210");
-  await page.getByRole("button", { name: "Request booking" }).click();
+  await page.getByRole("button", { name: "Book now" }).click();
   await expect(page).toHaveURL(/\/bookings\/[0-9a-f-]{36}$/);
   const bookingId = page.url().split("/").at(-1);
 

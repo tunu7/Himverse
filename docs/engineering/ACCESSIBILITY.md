@@ -26,7 +26,7 @@ Fixed in the first audit (2026-10-15):
 Automated checks find only part of the problems. Check by hand:
 
 - [ ] **Keyboard only:** every flow can be completed with Tab, Shift+Tab, Enter, Space and Esc (sign up,
-      plan a trip, book, the partner confirms, delete an account). Focus is always visible and the
+      plan a trip, book, the partner sees the booking, delete an account). Focus is always visible and the
       order is logical.
 - [ ] **Screen reader** (VoiceOver on macOS/iOS, TalkBack on Android):
   - pages have one `h1`;

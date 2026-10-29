@@ -96,7 +96,7 @@ test("deposit: required by admin, paid via Checkout, verified, refunded on cance
   await page.getByRole("button", { name: "Require deposits" }).click();
   await expect(page.getByTestId("deposits-state").filter({ visible: true })).toContainText("On");
 
-  // A partner of the rafting provider, and a traveller who requests a date 40 days ahead.
+  // A partner of the rafting provider, and a traveller who books a date 40 days ahead.
   const partnerEmail = uniqueEmail("pay-host");
   await signUp(page, partnerEmail, "Pay Host", "partner");
   const partnerId = await currentUserId(page, "partner");
@@ -106,17 +106,20 @@ test("deposit: required by admin, paid via Checkout, verified, refunded on cance
   const travellerEmail = uniqueEmail("pay-guest");
   await signUp(page, travellerEmail, "Pay Guest");
   await page.goto("/experiences/demo-siang-rafting");
-  await page.getByLabel("Date").fill(istDatePlus(40));
+  await page.getByLabel("Date").selectOption(istDatePlus(40));
   await page.getByLabel("Adults").fill("1");
   await page.getByLabel(/Contact phone/).fill("+91 98765 43210");
-  await page.getByRole("button", { name: "Request booking" }).click();
+  await page.getByRole("button", { name: "Book now" }).click();
   await expect(page).toHaveURL(/\/bookings\/[0-9a-f-]{36}$/);
   const bookingUrl = page.url();
 
-  // The partner confirms at the estimate; a 50% deposit becomes due.
+  // Confirmed instantly at the listed price; a 50% deposit is due within the hour.
+  await expect(page.getByTestId("booking-status").filter({ visible: true })).toHaveText(
+    "Confirmed",
+  );
+  await expect(page.getByRole("button", { name: /^Pay ₹[\d,]+ deposit$/ })).toBeVisible();
   await signIn(page, partnerEmail, "partner");
   await page.goto(bookingUrl.replace("/bookings/", "/provider/bookings/"));
-  await page.getByRole("button", { name: "Confirm booking" }).click();
   await expect(page.getByTestId("deposit-status").filter({ visible: true })).toContainText(
     "Waiting for the traveller",
   );

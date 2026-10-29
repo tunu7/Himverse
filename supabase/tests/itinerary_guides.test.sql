@@ -27,6 +27,8 @@ insert into public.experiences (id, provider_id, destination_id, slug, title, ca
    'ig-tawang-guide', 'IG Tawang guide', 'culture', 480, 300000, 'published', 'guide', 'per_group_day', 1, 6, '{}', true),
   ('9ae00000-0000-4000-8000-000000000005', '9a000000-0000-4000-8000-000000000001', '9ad00000-0000-4000-8000-000000000001',
    'ig-closed-guide', 'IG closed guide', 'culture', 480, 100000, 'published', 'guide', 'per_group_day', 3, 6, '{}', false);
+-- Experiences are booked on published dates (instant booking).
+insert into public.availability_slots (experience_id, starts_on, capacity) values ('9ae00000-0000-4000-8000-000000000001', private.today_ist() + 30, 10);
 
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"9a111111-1111-4111-8111-111111111111","role":"authenticated","aal":"aal1"}', true);

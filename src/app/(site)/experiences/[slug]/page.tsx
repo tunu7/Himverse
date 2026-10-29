@@ -130,8 +130,8 @@ async function ExperienceDetail({ params }: PageProps<"/experiences/[slug]">) {
       ) : null}
 
       <p className="rounded-2xl bg-surface-muted p-4 text-sm text-fg-soft">
-        Prices are indicative and availability isn&apos;t guaranteed until the provider confirms
-        your booking.
+        Bookings are confirmed straight away at the listed price when there&apos;s room on your
+        dates. Listings without a price are priced and confirmed by the provider.
       </p>
 
       <section
@@ -139,7 +139,7 @@ async function ExperienceDetail({ params }: PageProps<"/experiences/[slug]">) {
         aria-labelledby="book-heading"
       >
         <h2 id="book-heading" className="text-xl font-semibold tracking-tight">
-          Request to book
+          Book
         </h2>
         <Suspense fallback={<LoadingBlock label="Loading dates…" variant="form" />}>
           <ExperienceBooking

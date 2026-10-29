@@ -4,22 +4,25 @@
 
 Himverse.AI is an AI-assisted Himalayan tourism platform. Travellers discover curated listings from
 verified local partners, generate and refine itineraries grounded in **our own tourism database**, and
-send booking requests that partners confirm. Launch region: Arunachal Pradesh.
+book them: priced listings are confirmed instantly when there is room (ADR-0004 amendment 2026-10-29). Launch region: Arunachal Pradesh.
 
 **Scope is defined by [MVP_SCOPE](docs/product/MVP_SCOPE.md)** — it wins over every other doc. Check it before
 building; anything not listed there needs the owner's approval. Status and next phases: [ROADMAP](docs/product/ROADMAP.md).
 
-## Current state (2026-10-15)
+## Current state (2026-10-29)
 
-- **Built:** discovery, AI itineraries (with stays and transport), booking requests (any date, whole
-  trip, partner switch), listing types (experience, guide, stay, transport — ADR-0008), one role per
+- **Built:** discovery, AI itineraries (with stays and transport), **instant booking** at the listed
+  price (experiences on published dates only; whole trip; partner switch; unpriced listings stay
+  requests — ADR-0004 amendment 2026-10-29), listing types (experience, guide, stay, transport — ADR-0008), one role per
   account (ADR-0007), password reset/change, TOTP for admins and partners, partner portal `/provider`,
   admin console `/admin`, account deletion and in-app booking alerts (ADR-0009), privacy/terms pages,
   automated a11y checks. Production is live on Vercel + Supabase with sample content; no staging yet.
 - **Remaining for launch:** [RELEASE_CHECKLIST](docs/operations/RELEASE_CHECKLIST.md) — Sentry, email
   notifications (needs a domain), CAPTCHA, staging, legal review, sample content removal.
-- **Payments:** 50% online deposits via Razorpay (ADR-0005), off until an admin turns them on; Test Mode
-  until the go-live gate ([PAYMENTS](docs/operations/PAYMENTS.md)).
+- **Payments:** 50% online deposits via Razorpay (ADR-0005), due within 1 hour of an instant booking;
+  off until an admin turns them on; Test Mode until the go-live gate ([PAYMENTS](docs/operations/PAYMENTS.md)).
+- **Sample content:** 10 bookable sample partners with 16 experiences (`supabase/sample-content/`); must be
+  removed before launch.
 - **Not in MVP:** reviews, email/SMS notifications, other regions.
 
 ## Roles and terms
@@ -63,7 +66,8 @@ Client code never imports `src/server/**`. Details: [PROJECT_STRUCTURE](docs/arc
    `supabase/migrations/`; migrations must stay compatible with the deployed code (expand → contract).
 4. **AI output is untrusted.** Validate it, reference catalogue items only by IDs that exist in our DB, store it apart
    from curated data, and never present it as availability, price or booking confirmation.
-5. **Bookings:** confirm only from authoritative partner (later payment) state; every mutating booking operation is
+5. **Bookings:** confirm only from authoritative state (the database's locked capacity check for instant
+   bookings, a partner response for unpriced requests, verified payment state); every mutating booking operation is
    idempotent. Rules live in [BOOKING_POLICY](docs/product/BOOKING_POLICY.md).
 6. **No `any`** without an inline justification comment. No disabled tests, skipped checks, or weakened RLS to get green.
 7. **Minimal dependencies and infrastructure.** New services, libraries or patterns of significance need an ADR.

@@ -98,7 +98,7 @@ export async function BookingDetail({
           <dt className="text-xs font-medium tracking-wide text-subtle uppercase">Price</dt>
           <dd className="font-medium" data-testid="booking-price">
             {confirmed
-              ? `${confirmed} (confirmed by the provider)`
+              ? `${confirmed} (confirmed)`
               : estimate
                 ? `Estimated from ${estimate}; the provider confirms the final price`
                 : "Price on request"}
@@ -203,7 +203,8 @@ export async function BookingDetail({
           {booking.events.map((e, i) => (
             <li key={i}>
               {new Date(e.at).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })}:{" "}
-              {BOOKING_STATUS_LABELS[e.toStatus]} ({e.actor}){e.note ? `: ${e.note}` : ""}
+              {e.toStatus === "requested" ? "Requested" : BOOKING_STATUS_LABELS[e.toStatus]} (
+              {e.actor}){e.note ? `: ${e.note}` : ""}
             </li>
           ))}
         </ol>

@@ -13,7 +13,7 @@ vi.mock("@/lib/supabase/public", () => ({
       const calls: Call[] = [];
       state.calls.push(calls);
       const self: Record<string, unknown> = {};
-      for (const m of ["select", "lte", "eq", "in", "or", "order"]) {
+      for (const m of ["select", "lte", "gte", "eq", "in", "or", "order"]) {
         self[m] = (...args: unknown[]) => {
           calls.push([m, ...args]);
           return self;
@@ -63,6 +63,7 @@ describe("retrieveCandidates", () => {
       prefs({
         district: "Tawang",
         interests: ["culture"],
+        startDate: "2026-11-01",
         durationDays: 2,
         adults: 2,
         children: 1,
@@ -77,7 +78,13 @@ describe("retrieveCandidates", () => {
       ["destination.district", "Tawang"],
     ]);
     expect(by(calls, "in")).toEqual([["category", ["culture"]]]);
-    expect(by(calls, "lte")).toEqual([["duration_minutes", 2880]]);
+    // Only experiences with an open published date during the trip can be booked.
+    expect(by(calls, "lte")).toEqual([
+      ["duration_minutes", 2880],
+      ["availability_slots.starts_on", "2026-11-02"],
+    ]);
+    expect(by(calls, "gte")).toEqual([["availability_slots.starts_on", "2026-11-01"]]);
+    expect(String(by(calls, "select")[0]?.[0])).toContain("availability_slots!inner(id)");
     // floor(30000 / 3 travellers): a server-computed integer, never user text.
     expect(by(calls, "or")).toEqual([["price_from_minor.is.null,price_from_minor.lte.10000"]]);
     expect(result.widened).toBe(false);

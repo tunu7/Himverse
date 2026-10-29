@@ -1,5 +1,5 @@
--- Online deposits (migration payments, ADR-0005): the admin switch, deposit terms
--- on confirmation, checkout, system-only payment recording, refunds by
+-- Online deposits (migration payments, ADR-0005; instant booking 2026-10-29): the
+-- admin switch, deposit terms on instant confirmation (due within 1 hour), checkout, system-only payment recording, refunds by
 -- cancellation timing (claimed once), unpaid cancellation with a grace period,
 -- held vs payable partner balances and payouts.
 begin;
@@ -27,36 +27,45 @@ insert into public.experiences (id, provider_id, destination_id, slug, title, ca
 values ('fa200000-0000-4000-8000-000000000001', 'fa000000-0000-4000-8000-000000000001', 'fa100000-0000-4000-8000-000000000001',
   'pay-walk', 'Pay walk', 'culture', 120, 100001, 'published');
 
+-- Instant booking: experiences are bookable on published dates.
+insert into public.availability_slots (experience_id, starts_on, capacity)
+select 'fa200000-0000-4000-8000-000000000001', private.today_ist() + d, 10
+from unnest(array[3, 20, 25, 30, 31, 35, 36]) d;
+
 create temp table ids (label text primary key, id uuid) on commit drop;
 grant all on ids to authenticated, service_role;
 
--- T requests seven trips (2 adults, estimate 2 x 1000.01 = 2000.02).
+-- T books trips (2 adults, estimate 2 x 1000.01 = 2000.02); each is confirmed instantly.
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"fa111111-1111-4111-8111-111111111111","role":"authenticated","aal":"aal1"}', true);
-insert into ids select l.label, r.booking_id
-from (values ('before', 31), ('far', 30), ('near', 3), ('partner', 20), ('unpaid', 25), ('kept', 35), ('grace', 36)) l(label, days)
-cross join lateral public.request_booking_on_date('fa200000-0000-4000-8000-000000000001', private.today_ist() + l.days, 2, 0,
+insert into ids select 'before', r.booking_id
+from public.request_booking_on_date('fa200000-0000-4000-8000-000000000001', private.today_ist() + 31, 2, 0,
   '+91 98765 43210', '', gen_random_uuid()) r;
 
 -- The switch -----------------------------------------------------------------------------------
 select is((select deposits_required from public.platform_settings), false, 'deposits are off by default');
+select results_eq(
+  $$ select status::text, deposit_minor from public.bookings where id = (select id from ids where label = 'before') $$,
+  $$ values ('confirmed'::text, null::bigint) $$,
+  'with deposits off, a booking is confirmed instantly with no deposit');
 select set_config('request.jwt.claims', '{"sub":"fa333333-3333-4333-8333-333333333333","role":"authenticated","aal":"aal2"}', true);
-select public.respond_to_booking((select id from ids where label = 'before'), 'confirmed', 200002, null);
-select is((select deposit_minor from public.bookings where id = (select id from ids where label = 'before')), null::bigint,
-  'with deposits off, confirmed bookings need no deposit');
 select throws_ok($$ select public.set_deposits_required(true) $$, '42501', null, 'partners cannot turn deposits on');
 select set_config('request.jwt.claims', '{"sub":"fa555555-5555-4555-8555-555555555555","role":"authenticated","aal":"aal1"}', true);
 select throws_ok($$ select public.set_deposits_required(true) $$, '42501', null, 'admins need two-step login');
 select set_config('request.jwt.claims', '{"sub":"fa555555-5555-4555-8555-555555555555","role":"authenticated","aal":"aal2"}', true);
 select is(public.set_deposits_required(true), true, 'an admin turns deposits on');
 
--- Deposit terms on confirmation ----------------------------------------------------------------
-select set_config('request.jwt.claims', '{"sub":"fa333333-3333-4333-8333-333333333333","role":"authenticated","aal":"aal2"}', true);
-select public.respond_to_booking(id, 'confirmed', 200002, null) from ids where label not in ('before');
+-- Deposit terms on instant confirmation ----------------------------------------------------------
+select set_config('request.jwt.claims', '{"sub":"fa111111-1111-4111-8111-111111111111","role":"authenticated","aal":"aal1"}', true);
+insert into ids select l.label, r.booking_id
+from (values ('far', 30), ('near', 3), ('partner', 20), ('unpaid', 25), ('kept', 35), ('grace', 36)) l(label, days)
+cross join lateral public.request_booking_on_date('fa200000-0000-4000-8000-000000000001', private.today_ist() + l.days, 2, 0,
+  '+91 98765 43210', '', gen_random_uuid()) r;
 select results_eq(
-  $$ select deposit_minor, payment_due_at <= now() + interval '24 hours', payment_due_at > now()
+  $$ select status::text, deposit_minor, payment_due_at <= now() + interval '1 hour', payment_due_at > now()
      from public.bookings where id = (select id from ids where label = 'far') $$,
-  $$ values (100001::bigint, true, true) $$, 'the deposit is half the confirmed total, rounded up, due within 24 hours');
+  $$ values ('confirmed'::text, 100001::bigint, true, true) $$,
+  'an instant booking is confirmed with half the total, rounded up, due within 1 hour');
 
 -- Checkout -------------------------------------------------------------------------------------
 select set_config('request.jwt.claims', '{"sub":"fa222222-2222-4222-8222-222222222222","role":"authenticated","aal":"aal1"}', true);

@@ -27,15 +27,23 @@ export async function markBookingsSeen(): Promise<void> {
   if (error) logger.error("bookings.mark_seen_failed", { code: error.code });
 }
 
-export type PartnerAlerts = { needsResponse: number; expiringSoon: number };
+export type PartnerAlerts = { needsResponse: number; expiringSoon: number; newBookings: number };
 
-/** Requests waiting for the signed-in partner's businesses, and those due within 12 hours. */
+/**
+ * Requests waiting for the signed-in partner's businesses, those due within 12
+ * hours, and instant bookings made in the last 48 hours.
+ */
 export async function getPartnerAlerts(): Promise<PartnerAlerts> {
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase.rpc("partner_booking_alerts").single();
   if (error) {
     logger.error("bookings.partner_alerts_failed", { code: error.code });
-    return { needsResponse: 0, expiringSoon: 0 };
+    return { needsResponse: 0, expiringSoon: 0, newBookings: 0 };
   }
-  return { needsResponse: data.needs_response, expiringSoon: data.expiring_soon };
+  return {
+    needsResponse: data.needs_response,
+    expiringSoon: data.expiring_soon,
+    // Missing until migration instant_booking is applied (app may deploy first).
+    newBookings: data.new_bookings ?? 0,
+  };
 }

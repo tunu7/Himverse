@@ -123,10 +123,14 @@ in `.env.local`, and the secret `1x0000000000000000000000000000000AA` under `[au
 
 ## Sample content (pre-launch)
 
-`supabase/sample-content/apply.sql` adds 8 destinations and 22 experiences under one provider, "Sample
-listings (not bookable)". The provider has no dates and isn't bookable, the script is idempotent, and
-it's kept outside the migrations. Applied to production on 2026-10-13. Remove it before launch with
-`npx supabase db query --linked -f supabase/sample-content/remove.sql`.
+`supabase/sample-content/apply.sql` adds 8 destinations, **10 sample partners** (each named "… (sample)")
+and **16 experiences** between them, each **bookable** on a daily date for the next 60 days (10 places a
+day), so instant booking and deposits can be tried end to end (owner decision 2026-10-29). It replaces
+the earlier single "Sample listings (not bookable)" provider (applied 2026-10-13). The script is
+idempotent and kept outside the migrations; re-run it to extend the dates. Nobody operates these
+partners: bookings made with them are confirmed but never served. Remove it before launch with
+`npx supabase db query --linked -f supabase/sample-content/remove.sql`, which also deletes bookings made
+with the sample partners (it refuses if any has a payment or refund).
 
 To start from an empty catalogue, run `remove-all.sql` the same way. It deletes every destination,
 listing (all types), saved itinerary and booking, plus the sample provider; accounts and partners

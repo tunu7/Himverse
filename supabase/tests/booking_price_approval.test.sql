@@ -1,5 +1,7 @@
 -- Price approval (migration booking_price_approval): totals more than 10% above
--- the estimate, or with no estimate, need the traveller's acceptance.
+-- the estimate, or with no estimate, need the traveller's acceptance. Since
+-- instant booking (migration instant_booking) this applies to listings without a
+-- price and to requests made before that migration, which the fixtures emulate.
 begin;
 create extension if not exists pgtap with schema extensions;
 
@@ -27,7 +29,9 @@ insert into public.experiences (id, provider_id, destination_id, slug, title, ca
 update public.profiles set bookings_seen_at = now() - interval '1 hour'
 where id = 'a1111111-1111-4111-8111-111111111111';
 
--- Five one-night requests (estimate 300000 each), one unpriced.
+-- Requests made before instant booking: create them while the room has no price,
+-- then give them the estimate they would have had (300000 each), one unpriced.
+update public.experiences set price_from_minor = null where id = 'ae000000-0000-4000-8000-000000000001';
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"a1111111-1111-4111-8111-111111111111","role":"authenticated"}', true);
 select * from public.request_listing_booking('ae000000-0000-4000-8000-000000000001', private.today_ist() + 10, private.today_ist() + 10,
@@ -49,6 +53,11 @@ create temp table b as
   select idempotency_key as k, id from public.bookings
   where idempotency_key::text like 'f3000000-%';
 grant select on b to authenticated;
+reset role;
+update public.bookings set estimated_total_minor = 300000
+where experience_id = 'ae000000-0000-4000-8000-000000000001' and idempotency_key::text like 'f3000000-%';
+update public.experiences set price_from_minor = 300000 where id = 'ae000000-0000-4000-8000-000000000001';
+set local role authenticated;
 
 -- Partner -------------------------------------------------------------------------------
 -- Before the second step, the partner holds no provider authority.

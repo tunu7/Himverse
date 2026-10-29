@@ -153,7 +153,7 @@ export function ListingBookingForm({
       </div>
       <p className="text-xs text-subtle">
         Up to {maxGuests} people per {labels.unitOne}; {capacityText(listingType, dailyCapacity)}.
-        The partner confirms what&apos;s free on your dates.
+        Availability on your dates is checked when you book.
       </p>
       {listingType === "transport" ? (
         <label className="flex flex-col gap-1">
@@ -180,16 +180,18 @@ export function ListingBookingForm({
       </label>
       <p className="text-sm text-muted" data-testid="listing-estimate">
         {formatted
-          ? `Estimated from ${formatted} for ${days} ${isStay ? (days === 1 ? "night" : "nights") : days === 1 ? "day" : "days"}. `
+          ? `${formatted} for ${days} ${isStay ? (days === 1 ? "night" : "nights") : days === 1 ? "day" : "days"}. Your booking is confirmed straight away at this price. If a deposit is required, you pay 50% online within 1 hour or the booking is cancelled.`
           : priceFromMinor === null
-            ? "Price on request. "
+            ? "Price on request: the partner sets the price and confirms your booking."
             : ""}
-        The partner confirms availability and the final price. Nothing is charged now; if a deposit
-        is needed, you pay it after the partner confirms.
       </p>
       <FormAlert state={state} />
       <button type="submit" disabled={pending} className={`${buttonClass} self-start`}>
-        <PendingLabel pending={pending} busy="Sending request…" idle="Request booking" />
+        <PendingLabel
+          pending={pending}
+          busy="Booking…"
+          idle={priceFromMinor === null ? "Request booking" : "Book now"}
+        />
       </button>
     </form>
   );

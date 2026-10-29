@@ -50,12 +50,14 @@ async function AuthLinks() {
       </span>
     );
   }
-  // Alert counts: traveller booking updates, or partner requests awaiting a reply.
+  // Alert counts: traveller booking updates, or partner requests awaiting a reply
+  // plus instant bookings from the last 48 hours.
   const counts: Record<string, number> = {};
   if (account.accountType === "traveller") {
     counts["/bookings"] = (await getMyBookingUpdates()).size;
   } else if (account.accountType === "partner") {
-    counts["/provider/bookings"] = (await getPartnerAlerts()).needsResponse;
+    const alerts = await getPartnerAlerts();
+    counts["/provider/bookings"] = alerts.needsResponse + alerts.newBookings;
   }
   const links = MENU[account.accountType ?? "untyped"].map((link) => ({
     ...link,

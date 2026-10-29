@@ -80,8 +80,8 @@ Launch scope: discovery, AI itineraries and booking **requests** (no online paym
 - [ ] Security headers checked on the staging domain (e.g. securityheaders.com), no CSP violations in
       the console.
 
-- [ ] Sample content removed (`supabase/sample-content/remove.sql`, or `remove-all.sql` for an empty catalogue) or kept deliberately, clearly
-      labelled and not bookable.
+- [ ] Sample content removed (`supabase/sample-content/remove.sql`, or `remove-all.sql` for an empty catalogue). The sample
+      partners are **bookable** (testing instant booking, 2026-10-29), so they must not stay live at launch.
 
 ## 8. Go / no-go
 

@@ -179,3 +179,33 @@ Owner decision; answers BOOKING_POLICY question 9 (security review L1). Migratio
   sweep, with its own event note.
 - Bookings also store `listing_type` (migration `20261016140505_booking_listing_type`), copied by trigger
   at insert and immutable, so labels survive a hidden listing.
+
+## Amendment (2026-10-29): instant booking
+
+Owner decision. Migration `20261029150442_instant_booking`. Supersedes "the provider confirms" (section 1)
+for every listing that has a price.
+
+- **Confirmed in the same transaction:** `private.create_booking_request` and
+  `public.request_listing_booking` insert the request, then call `private.instant_confirm`, which runs
+  `private.confirm_booking` at the estimate with actor `system`. The functions return the real status, so
+  single bookings and "Book whole trip" report `confirmed`. A full date or listing raises `55000` and
+  nothing is inserted. History shows `requested (traveller)` then `confirmed (system)`.
+- **All listing types:** experiences, guides, stays and transport. Guides, stays and transport use their
+  daily capacity (unchanged).
+- **Experiences only on published dates:** a date request without an open slot is refused (`P0002`), so
+  experience seats are always capped. This replaces "any future date can be requested" (2026-10-15
+  amendment). The AI planner only offers experiences with an open date during the trip.
+- **No price → request as before:** a listing without a price can't be priced instantly; its booking stays
+  `requested` and the partner sets a total, which the traveller accepts (price-approval amendment).
+  `respond_to_booking`, `accept_booking_price` and the expiry sweep stay for these and for requests made
+  before this migration.
+- **Locking:** the slot path locks the listing, then the slot, before inserting (the order
+  `confirm_booking` uses). Without it, parallel bookings deadlocked on the foreign-key share locks
+  (caught by `tests/integration/booking-concurrency.test.ts`).
+- **Partner switch:** "accepts bookings" still gates both booking and the AI planner.
+- **Alerts:** `partner_booking_alerts()` adds `new_bookings` (confirmed in the last 48 hours).
+  `my_booking_updates()` ignores the instant confirmation of the traveller's own booking.
+- **Deposits:** see the ADR-0005 amendment (due within 1 hour).
+- **Risks accepted by the owner:** a partner may not notice a booking (in-app alerts only until email
+  exists). With deposits off nothing deters fake bookings or no-shows (request limits still apply: 30 an
+  hour, 60 a day).

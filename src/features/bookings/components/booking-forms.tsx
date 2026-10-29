@@ -23,21 +23,17 @@ import {
 } from "../actions";
 import { PendingLabel } from "@/components/ui";
 
-export type SlotOption = { id: string; label: string; seatsLeft: number };
+export type SlotOption = { id: string; date: string; label: string; seatsLeft: number };
 
+/** Instant booking for an experience: only the dates the partner has published. */
 export function BookingRequestForm({
   experienceId,
-  minDate,
-  maxDate,
   slots,
   idempotencyKey,
   priceFromMinor,
 }: {
   experienceId: string;
-  /** First and last requestable dates (India), YYYY-MM-DD. */
-  minDate: string;
-  maxDate: string;
-  /** Published dates, shown as availability hints; any future date can be requested. */
+  /** Open published dates; at least one. Full dates are listed but can't be chosen. */
   slots: readonly SlotOption[];
   idempotencyKey: string;
   priceFromMinor: number | null;
@@ -52,28 +48,24 @@ export function BookingRequestForm({
       <input type="hidden" name="experienceId" value={experienceId} />
       <label className="flex flex-col gap-1">
         <span className="text-sm font-medium">Date</span>
-        <input
-          type="date"
+        <select
           name="date"
-          min={minDate}
-          max={maxDate}
           required
+          defaultValue=""
           className={inputClass}
-        />
+          data-testid="published-dates"
+        >
+          <option value="" disabled>
+            Choose a date
+          </option>
+          {slots.map((s) => (
+            <option key={s.id} value={s.date} disabled={s.seatsLeft === 0}>
+              {s.label} · {s.seatsLeft === 0 ? "full" : `${s.seatsLeft} seats left`}
+            </option>
+          ))}
+        </select>
         <FieldError errors={errors("date")} />
       </label>
-      {slots.length > 0 ? (
-        <div className="flex flex-col gap-1 text-sm">
-          <span className="text-muted">Dates the provider has published:</span>
-          <ul className="flex flex-wrap gap-2" data-testid="published-dates">
-            {slots.map((s) => (
-              <li key={s.id} className="rounded-full border border-line px-3 py-1 text-fg-soft">
-                {s.label} · {s.seatsLeft === 0 ? "full" : `${s.seatsLeft} seats left`}
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="flex flex-col gap-1">
           <span className="text-sm font-medium">Adults</span>
@@ -118,13 +110,17 @@ export function BookingRequestForm({
         <textarea name="note" rows={2} maxLength={500} className={inputClass} />
       </label>
       <p className="text-sm text-muted">
-        {price ? `Indicative price from ${price} per person. ` : "Price on request. "}
-        The provider confirms the final price. Nothing is charged now (any deposit is paid after
-        confirmation), and your booking isn&apos;t confirmed until the provider confirms it.
+        {price
+          ? `${price} per person. Your booking is confirmed straight away at this price. If a deposit is required, you pay 50% online within 1 hour or the booking is cancelled.`
+          : "Price on request: the provider sets the price and confirms your booking."}
       </p>
       <FormAlert state={state} />
       <button type="submit" disabled={pending} className={`${buttonClass} self-start`}>
-        <PendingLabel pending={pending} busy="Sending request…" idle="Request booking" />
+        <PendingLabel
+          pending={pending}
+          busy="Booking…"
+          idle={price ? "Book now" : "Request booking"}
+        />
       </button>
     </form>
   );

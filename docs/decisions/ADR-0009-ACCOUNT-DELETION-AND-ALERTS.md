@@ -55,8 +55,9 @@ doesn't have yet. Until now, deleting a user cascaded to their bookings, erasing
   system events since then. The account menu shows a count; "My bookings" labels them "Updated" and
   then calls `mark_bookings_seen()`.
 - **Partners:** `partner_booking_alerts()` counts open requests and those expiring within 12 hours
-  (after two-step login, via `is_provider_member`). A bar on every partner-portal page and a menu count
-  show them.
+  (after two-step login, via `is_provider_member`), and, since instant booking (ADR-0004 amendment
+  2026-10-29), bookings confirmed in the last 48 hours (`new_bookings`). Bars on every partner-portal
+  page and a menu count show them.
 
 ## Alternatives considered
 

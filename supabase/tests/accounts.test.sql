@@ -59,6 +59,8 @@ values ('ad000000-0000-4000-8000-000000000001', 'acct-town', 'Acct Town', 'Tawan
 insert into public.experiences (id, provider_id, destination_id, slug, title, category, duration_minutes, price_from_minor, status)
 values ('ae000000-0000-4000-8000-000000000001', 'ac000000-0000-4000-8000-000000000001', 'ad000000-0000-4000-8000-000000000001',
   'acct-walk', 'Acct walk', 'culture', 60, 1000, 'published');
+-- Experiences are booked on published dates (instant booking).
+insert into public.availability_slots (experience_id, starts_on, capacity) values ('ae000000-0000-4000-8000-000000000001', private.today_ist() + 10, 10), ('ae000000-0000-4000-8000-000000000001', private.today_ist() + 11, 10);
 
 select throws_ok(
   $$ insert into public.provider_members (provider_id, user_id) values ('ac000000-0000-4000-8000-000000000001', 'a1111111-1111-4111-8111-111111111111') $$,

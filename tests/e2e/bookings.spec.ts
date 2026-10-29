@@ -2,8 +2,8 @@ import { expect, type Page, test } from "@playwright/test";
 
 import { currentUserId, localSql, signIn, signUp, uniqueEmail, UUID } from "./support";
 
-// Booking lifecycle through the UI against the local seed (bookable dates on the
-// demo providers' experiences). Provider membership is granted with owner SQL on
+// Booking lifecycle through the UI against the local seed (daily bookable dates on
+// the demo providers' experiences; instant booking, ADR-0004 amendment 2026-10-29). Provider membership is granted with owner SQL on
 // the local stack, as an operator would. Next.js keeps hidden copies of previous
 // routes, so test-id lookups only match visible elements.
 
@@ -25,13 +25,17 @@ function istDatePlus(days: number): string {
   return d.toISOString().slice(0, 10);
 }
 
-// The seed publishes rafting dates 5 and 12 days ahead; any future date can be requested.
-async function requestRafting(page: Page, daysAhead: number) {
-  await page.goto("/experiences/demo-siang-rafting");
-  await page.getByLabel("Date").fill(istDatePlus(daysAhead));
+// The seed publishes a date every day for 120 days; experiences are booked only on those.
+async function chooseDate(page: Page, slug: string, daysAhead: number) {
+  await page.goto(`/experiences/${slug}`);
+  await page.getByLabel("Date").selectOption(istDatePlus(daysAhead));
   await page.getByLabel("Adults").fill("1");
   await page.getByLabel(/Contact phone/).fill("+91 98765 43210");
 }
+
+// A random day among the 60 dates the booking form lists: one active booking per
+// traveller, experience and date, and the shared local seed keeps bookings across runs.
+const someDay = () => 20 + Math.floor(Math.random() * 30);
 
 // Unique per run: the demo provider accumulates bookings across local runs.
 const run = `${Date.now() % 1_000_000}`;
@@ -43,10 +47,10 @@ test("signed-out visitors are asked to sign in before booking", async ({ page })
   await expect(
     page.getByRole("link", { name: "Sign in" }).filter({ hasText: "Sign in" }).last(),
   ).toBeVisible();
-  await expect(page.getByText(/to request a booking \(2 dates open\)/)).toBeVisible();
+  await expect(page.getByText(/to book \(\d+ dates open\)/)).toBeVisible();
 });
 
-test("request → provider confirms → traveller sees it → traveller cancels; others can't see it", async ({
+test("book → confirmed instantly → partner sees it → traveller cancels; others can't see it", async ({
   page,
 }) => {
   test.setTimeout(150_000);
@@ -54,33 +58,31 @@ test("request → provider confirms → traveller sees it → traveller cancels;
   await signUp(page, travelerEmail, `Booker ${run}`);
 
   // A double click still creates exactly one booking (button pending state + idempotency key).
-  await requestRafting(page, 5);
-  await page.getByRole("button", { name: "Request booking" }).dblclick();
+  await chooseDate(page, "demo-siang-rafting", 5);
+  await page.getByRole("button", { name: "Book now" }).dblclick();
   await expect(page).toHaveURL(/\/bookings\/[0-9a-f-]{36}$/);
   const bookingUrl = page.url();
-  await expect(status(page)).toHaveText("Awaiting provider confirmation");
+  await expect(status(page)).toHaveText("Confirmed");
   await expect(page.getByTestId("booking-price").filter({ visible: true })).toContainText(
-    "Estimated from ₹3,500",
+    "₹3,500 (confirmed)",
   );
   await page.goto("/bookings");
   await expect(page.getByRole("link", { name: "Siang river rafting (sample)" })).toHaveCount(1);
 
-  // Provider confirms with a final price.
+  // The partner sees the new booking, already confirmed, with nothing to answer.
   const providerEmail = uniqueEmail("provider");
   await signUp(page, providerEmail, "Rafting Guide", "partner");
   addMember(DEMO_PROVIDER, await currentUserId(page, "partner"));
   await page.goto("/provider/bookings");
-  const pending = page
+  await expect(page.getByTestId("partner-new-bookings")).toBeVisible();
+  const booked = page
     .getByTestId("provider-booking")
     .filter({ visible: true })
     .filter({ hasText: `Booker ${run}` });
-  await expect(pending).toContainText("Awaiting provider confirmation");
-  await pending.getByRole("link").click();
+  await expect(booked).toContainText("Confirmed");
+  await booked.getByRole("link").click();
   await expect(page.getByText("+91 98765 43210")).toBeVisible();
-  await page.getByLabel(/Final price/).fill("3600");
-  await page.getByLabel(/Message to the traveller/).fill("Meet at the jetty at 8am");
-  await page.getByRole("button", { name: "Confirm booking" }).click();
-  await expect(status(page)).toHaveText("Confirmed");
+  await expect(page.getByRole("button", { name: "Confirm booking" })).toHaveCount(0);
 
   // Another provider and another traveller can't open it.
   await signUp(page, uniqueEmail("other-provider"), "Other Provider", "partner");
@@ -98,15 +100,10 @@ test("request → provider confirms → traveller sees it → traveller cancels;
   await page.goto(bookingUrl);
   await expect(page.getByRole("heading", { name: "Booking not found" })).toBeVisible();
 
-  // The traveller sees the confirmed price, the original estimate and the history, then cancels.
+  // The traveller sees the history (requested, then confirmed automatically), then cancels.
   await signIn(page, travelerEmail);
   await page.goto(bookingUrl);
   await expect(status(page)).toHaveText("Confirmed");
-  await expect(page.getByTestId("booking-price").filter({ visible: true })).toContainText(
-    "₹3,600 (confirmed by the provider)",
-  );
-  await expect(page.getByText("Original estimate: from ₹3,500")).toBeVisible();
-  await expect(page.getByText("Provider's message: Meet at the jetty at 8am")).toBeVisible();
   await expect(
     page.getByTestId("booking-history").filter({ visible: true }).getByRole("listitem"),
   ).toHaveCount(2);
@@ -115,18 +112,19 @@ test("request → provider confirms → traveller sees it → traveller cancels;
   await expect(status(page)).toHaveText("Cancelled");
 });
 
-test("a price more than 10% above the estimate waits for the traveller to accept", async ({
+test("without a listed price, the partner's price waits for the traveller to accept", async ({
   page,
 }) => {
   test.setTimeout(150_000);
   const travelerEmail = uniqueEmail("approver");
   await signUp(page, travelerEmail, `Approver ${run}`);
-  await requestRafting(page, 12);
+  await chooseDate(page, "demo-pasighat-picnic", someDay());
   await page.getByRole("button", { name: "Request booking" }).click();
   await expect(page).toHaveURL(/\/bookings\/[0-9a-f-]{36}$/);
   const bookingUrl = page.url();
+  await expect(status(page)).toHaveText("Awaiting provider confirmation");
 
-  // Estimate ₹3,500: ₹5,000 is a proposal, not a confirmation.
+  // No estimate: any total is a proposal, not a confirmation.
   await signUp(page, uniqueEmail("pricer"), "Pricing Guide", "partner");
   addMember(DEMO_PROVIDER, await currentUserId(page, "partner"));
   await page.goto(bookingUrl.replace("/bookings/", "/provider/bookings/"));
@@ -145,11 +143,10 @@ test("a price more than 10% above the estimate waits for the traveller to accept
   await expect(status(page)).toHaveText("New price awaiting approval");
   const proposal = page.getByTestId("price-proposal").filter({ visible: true });
   await expect(proposal).toContainText("₹5,000");
-  await expect(proposal).toContainText("your estimate was from ₹3,500");
   await proposal.getByRole("button", { name: "Accept ₹5,000" }).click();
   await expect(status(page)).toHaveText("Confirmed");
   await expect(page.getByTestId("booking-price").filter({ visible: true })).toContainText(
-    "₹5,000 (confirmed by the provider)",
+    "₹5,000 (confirmed)",
   );
   await expect(page.getByText("Provider's message: Peak-season permit fees")).toBeVisible();
 });
@@ -158,7 +155,7 @@ test("providers must give a reason to decline", async ({ page }) => {
   test.setTimeout(120_000);
   const travelerEmail = uniqueEmail("declined");
   await signUp(page, travelerEmail, "Hopeful");
-  await requestRafting(page, 12);
+  await chooseDate(page, "demo-pasighat-picnic", someDay());
   await page.getByRole("button", { name: "Request booking" }).click();
   await expect(page).toHaveURL(/\/bookings\/[0-9a-f-]{36}$/);
   const bookingUrl = page.url();
@@ -181,20 +178,16 @@ test("providers must give a reason to decline", async ({ page }) => {
   await expect(page.getByRole("button", { name: "Cancel booking" })).toHaveCount(0);
 });
 
-test("providers add and close dates; closed dates can't be requested", async ({
-  page,
-  browser,
-}) => {
+test("providers add and close dates; closed dates can't be booked", async ({ page, browser }) => {
   test.setTimeout(120_000);
   // Published dates are shown to travellers (partners can't book), in a second browser.
   const traveller = await (await browser.newContext()).newPage();
   await signUp(traveller, uniqueEmail("date-viewer"), "Date Viewer");
   await signUp(page, uniqueEmail("scheduler"), "Scheduler", "partner");
   addMember(DEMO_PROVIDER, await currentUserId(page, "partner"));
-  // Random future date: dates are unique per experience and persist across local runs.
-  const date = new Date(Date.now() + (40 + Math.floor(Math.random() * 600)) * 86_400_000)
-    .toISOString()
-    .slice(0, 10);
+  // The seed publishes every day; free one (days 56-59, which no other test books)
+  // so the partner can add it again. Dates persist across local runs.
+  const date = istDatePlus(56 + Math.floor(Math.random() * 4));
   const label = new Intl.DateTimeFormat("en-IN", {
     weekday: "short",
     day: "numeric",
@@ -207,6 +200,9 @@ test("providers add and close dates; closed dates can't be requested", async ({
     "select id from public.experiences where slug = 'demo-pasighat-picnic'",
   ) as Array<{ id: string }>;
   expect(picnic?.id).toMatch(UUID);
+  localSql(
+    `delete from public.availability_slots where experience_id = '${picnic!.id}' and starts_on = '${date}' returning id`,
+  );
   // Dates are managed on the listing's own page in the partner portal.
   await page.goto(`/provider/listings/${picnic!.id}`);
   const manager = page.getByTestId("slot-manager").filter({ visible: true });
@@ -218,7 +214,7 @@ test("providers add and close dates; closed dates can't be requested", async ({
 
   await traveller.goto("/experiences/demo-pasighat-picnic");
   const published = traveller.getByTestId("published-dates").filter({ visible: true });
-  await expect(published.getByText(label)).toHaveCount(1);
+  await expect(published.locator("option", { hasText: label })).toHaveCount(1);
 
   await page.goto(`/provider/listings/${picnic!.id}`);
   const row = page
@@ -230,32 +226,14 @@ test("providers add and close dates; closed dates can't be requested", async ({
   await expect(row).toContainText("closed");
 
   await traveller.goto("/experiences/demo-pasighat-picnic");
-  await expect(traveller.getByRole("heading", { name: "Request to book" })).toBeVisible();
-  await expect(traveller.getByText(label)).toHaveCount(0);
+  await expect(traveller.getByRole("heading", { name: "Book", exact: true })).toBeVisible();
+  await expect(
+    traveller
+      .getByTestId("published-dates")
+      .filter({ visible: true })
+      .locator("option", { hasText: label }),
+  ).toHaveCount(0);
   await traveller.context().close();
-});
-
-test("any future date can be requested when the provider has published none", async ({ page }) => {
-  test.setTimeout(120_000);
-  await signUp(page, uniqueEmail("any-date"), "Any Date");
-  await page.goto("/experiences/demo-dirang-orchard-walk");
-  await expect(page.getByTestId("published-dates")).toHaveCount(0);
-  // Random date: one active request per traveller, experience and date.
-  await page.getByLabel("Date").fill(istDatePlus(20 + Math.floor(Math.random() * 300)));
-  await page.getByLabel("Adults").fill("2");
-  await page.getByLabel(/Contact phone/).fill("+91 98765 43210");
-  await page.getByRole("button", { name: "Request booking" }).click();
-  await expect(page).toHaveURL(/\/bookings\/[0-9a-f-]{36}$/);
-  await expect(status(page)).toHaveText("Awaiting provider confirmation");
-});
-
-test("dates must be in the future", async ({ page }) => {
-  await signUp(page, uniqueEmail("past-date"), "Past Date");
-  await page.goto("/experiences/demo-dirang-orchard-walk");
-  await page.getByLabel("Date").fill(istDatePlus(0));
-  await page.getByLabel(/Contact phone/).fill("+91 98765 43210");
-  await page.getByRole("button", { name: "Request booking" }).click();
-  await expect(page.getByText("Choose a date from tomorrow onwards.")).toBeVisible();
 });
 
 test("providers can stop and resume booking requests for an experience", async ({ page }) => {
@@ -279,7 +257,7 @@ test("providers can stop and resume booking requests for an experience", async (
   await expect(row.getByTestId("booking-requests-state")).toHaveText(/Offline: not accepting/);
 
   await page.goto("/experiences/demo-sangti-birding");
-  await expect(page.getByText(/isn.t taking booking requests/)).toBeVisible();
+  await expect(page.getByText(/isn.t taking bookings/)).toBeVisible();
   await expect(page.getByLabel("Date")).toHaveCount(0);
 
   // Restore: the local seed is shared across runs.
